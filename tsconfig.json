@@ -7,6 +7,12 @@
     "sourceMap": true,
     "strict": true,
     "rootDir": "src",
+    "baseUrl": "./src",
+    "moduleResolution": "node",
+    "paths": {
+      "@editors/*": ["editors/*"]
+    }
   },
+  "include": ["src/**/*.ts"],
   "exclude": ["node_modules", ".vscode-test"],
 }
