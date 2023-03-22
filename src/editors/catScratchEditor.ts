@@ -1,5 +1,5 @@
 import * as vscode from 'vscode';
-import { getNonce } from './util';
+import { getNonce } from '../util';
 
 /**
  * Provider for cat scratch editors.
