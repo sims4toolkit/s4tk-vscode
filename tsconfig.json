@@ -10,7 +10,8 @@
     "baseUrl": "./src",
     "moduleResolution": "node",
     "paths": {
-      "@editors/*": ["editors/*"]
+      "@editors/*": ["editors/*"],
+      "@helpers/*": ["helpers/*"]
     }
   },
   "include": ["src/**/*.ts"],
