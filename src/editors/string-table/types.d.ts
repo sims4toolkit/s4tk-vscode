@@ -1,4 +1,8 @@
+type StringTableOperation = 'create' | 'update' | 'delete';
+
 export interface StringTableEdit {
-  readonly color: string;
-  readonly stroke: ReadonlyArray<[number, number]>;
+  readonly op: StringTableOperation;
+  readonly id: number;
+  readonly key?: number;
+  readonly value?: string;
 }

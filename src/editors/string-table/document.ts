@@ -1,4 +1,5 @@
 import * as vscode from 'vscode';
+import { StringTableResource } from '@s4tk/models';
 import { Disposable } from '@helpers/dispose';
 import type { StringTableEdit } from './types';
 
@@ -12,14 +13,13 @@ interface StringTableDocumentDelegate {
 export default class StringTableDocument extends Disposable implements vscode.CustomDocument {
   //#region Properties
 
+  private readonly _uri: vscode.Uri;
   private readonly _delegate: StringTableDocumentDelegate;
-  private _documentData: Uint8Array;
   private _edits: StringTableEdit[] = [];
   private _savedEdits: StringTableEdit[] = [];
-  private readonly _uri: vscode.Uri;
-  // TODO: stbl
+  private _stbl: StringTableResource;
 
-  public get documentData(): Uint8Array { return this._documentData; }
+  public get stbl(): StringTableResource { return this._stbl; }
   public get uri() { return this._uri; }
 
   //#endregion
@@ -33,7 +33,7 @@ export default class StringTableDocument extends Disposable implements vscode.Cu
   ) {
     super();
     this._uri = uri;
-    this._documentData = initialContent;
+    this._stbl = StringTableResource.from(Buffer.from(initialContent));
     this._delegate = delegate;
   }
 
@@ -106,7 +106,7 @@ export default class StringTableDocument extends Disposable implements vscode.Cu
    */
   async revert(_cancellation: vscode.CancellationToken): Promise<void> {
     const diskContent = await StringTableDocument._readFile(this.uri);
-    this._documentData = diskContent;
+    this._stbl = StringTableResource.from(Buffer.from(diskContent));
     this._edits = this._savedEdits;
     this._onDidChangeDocument.fire({
       content: diskContent,
@@ -144,7 +144,7 @@ export default class StringTableDocument extends Disposable implements vscode.Cu
     this._edits.push(edit);
 
     this._onDidChange.fire({
-      label: 'Stroke',
+      label: 'Stroke', // FIXME: what to call this?
       undo: async () => {
         this._edits.pop();
         this._onDidChangeDocument.fire({

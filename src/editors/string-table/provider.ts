@@ -11,7 +11,7 @@ import type { StringTableEdit } from './types';
 export default class StringTableEditorProvider implements vscode.CustomEditorProvider<StringTableDocument> {
   //#region Properties
 
-  private static readonly viewType = 'catCustoms.pawDraw';
+  private static readonly viewType = 'catCustoms.stringTable';
 
   private readonly _callbacks = new Map<number, (response: any) => void>();
   private _requestId = 1;
@@ -111,10 +111,10 @@ export default class StringTableEditorProvider implements vscode.CustomEditorPro
         } else {
           const editable = vscode.workspace.fs.isWritableFileSystem(document.uri.scheme);
 
-          this._postMessage(webviewPanel, 'init', {
-            value: document.documentData,
-            editable,
-          });
+          // this._postMessage(webviewPanel, 'init', {
+          //   value: document.documentData,
+          //   editable,
+          // });
         }
       }
     });
