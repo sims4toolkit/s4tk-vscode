@@ -72,10 +72,7 @@ export default class StringTableEditorProvider implements vscode.CustomEditorPro
     listeners.push(document.onDidChangeContent(e => {
       // Update all webviews when the document changes
       for (const webviewPanel of this._webviews.get(document.uri)) {
-        this._postMessage(webviewPanel, 'update', {
-          edits: e.edits,
-          content: e.content,
-        });
+        this._postMessage(webviewPanel, 'update', document.stbl.toJsonObject());
       }
     }));
 
@@ -103,19 +100,16 @@ export default class StringTableEditorProvider implements vscode.CustomEditorPro
     // Wait for the webview to be properly ready before we init
     webviewPanel.webview.onDidReceiveMessage(e => {
       if (e.type === 'ready') {
-        if (document.uri.scheme === 'untitled') {
-          this._postMessage(webviewPanel, 'init', {
-            untitled: true,
-            editable: true,
-          });
-        } else {
-          const editable = vscode.workspace.fs.isWritableFileSystem(document.uri.scheme);
+        this._postMessage(webviewPanel, 'init', document.stbl.toJsonObject());
+        // if (document.uri.scheme === 'untitled') {
+        // } else {
+        //   const editable = vscode.workspace.fs.isWritableFileSystem(document.uri.scheme);
 
-          // this._postMessage(webviewPanel, 'init', {
-          //   value: document.documentData,
-          //   editable,
-          // });
-        }
+        //   // this._postMessage(webviewPanel, 'init', {
+        //   //   value: document.documentData,
+        //   //   editable,
+        //   // });
+        // }
       }
     });
   }
@@ -144,9 +138,8 @@ export default class StringTableEditorProvider implements vscode.CustomEditorPro
   //#region Private Methods
 
   private _getHtmlForWebview(webview: vscode.Webview): string {
-    // Local path to script and css for the webview
     const scriptUri = webview.asWebviewUri(vscode.Uri.joinPath(
-      this._context.extensionUri, 'media', 'pawDraw.js'));
+      this._context.extensionUri, 'media', 'editors', 'stbl.js'));
 
     const styleResetUri = webview.asWebviewUri(vscode.Uri.joinPath(
       this._context.extensionUri, 'media', 'reset.css'));
@@ -155,42 +148,24 @@ export default class StringTableEditorProvider implements vscode.CustomEditorPro
       this._context.extensionUri, 'media', 'vscode.css'));
 
     const styleMainUri = webview.asWebviewUri(vscode.Uri.joinPath(
-      this._context.extensionUri, 'media', 'pawDraw.css'));
+      this._context.extensionUri, 'media', 'editors', 'stbl.css'));
 
-    // Use a nonce to whitelist which scripts can be run
     const nonce = getNonce();
 
-    return /* html */`
+    return `
 			<!DOCTYPE html>
 			<html lang="en">
 			<head>
 				<meta charset="UTF-8">
-
-				<!--
-				Use a content security policy to only allow loading images from https or from our extension directory,
-				and only allow scripts that have a specific nonce.
-				-->
 				<meta http-equiv="Content-Security-Policy" content="default-src 'none'; img-src ${webview.cspSource} blob:; style-src ${webview.cspSource}; script-src 'nonce-${nonce}';">
-
 				<meta name="viewport" content="width=device-width, initial-scale=1.0">
-
 				<link href="${styleResetUri}" rel="stylesheet" />
 				<link href="${styleVSCodeUri}" rel="stylesheet" />
 				<link href="${styleMainUri}" rel="stylesheet" />
-
-				<title>Paw Draw</title>
+				<title>String Table</title>
 			</head>
 			<body>
-				<div class="drawing-canvas"></div>
-
-				<div class="drawing-controls">
-					<button data-color="black" class="black active" title="Black"></button>
-					<button data-color="white" class="white" title="White"></button>
-					<button data-color="red" class="red" title="Red"></button>
-					<button data-color="green" class="green" title="Green"></button>
-					<button data-color="blue" class="blue" title="Blue"></button>
-				</div>
-
+				<div id="stbl-editor"></div>
 				<script nonce="${nonce}" src="${scriptUri}"></script>
 			</body>
 			</html>`;

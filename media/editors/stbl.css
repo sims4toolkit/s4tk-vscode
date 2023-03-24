@@ -1,0 +1,20 @@
+#stbl-editor {
+
+}
+
+#stbl-metadata {
+
+}
+
+#stbl-wrapper {
+
+}
+
+#stbl-wrapper .stbl-entry {
+  display: flex;
+  gap: 1rem;
+}
+
+#stbl-wrapper .stbl-entry .key {
+  font-family: monospace;
+}

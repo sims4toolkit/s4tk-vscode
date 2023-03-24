@@ -47,6 +47,15 @@
 						"filenamePattern": "*.pawdraw"
 					}
 				]
+			},
+			{
+				"viewType": "catCustoms.stringTable",
+				"displayName": "String Table",
+				"selector": [
+					{
+						"filenamePattern": "*.stbl"
+					}
+				]
 			}
 		],
 		"commands": [
