@@ -1,7 +1,7 @@
 {
-	"name": "cat-customs",
-	"displayName": "Cat Customs",
-	"description": "Custom Editor API Samples",
+	"name": "s4tk-vsc",
+	"displayName": "Sims 4 Toolkit",
+	"description": "Sims 4 Toolkit support for VS Code.",
 	"version": "0.1.0",
 	"private": true,
 	"license": "MIT",
@@ -31,25 +31,7 @@
 	"contributes": {
 		"customEditors": [
 			{
-				"viewType": "catCustoms.catScratch",
-				"displayName": "Cat Scratch",
-				"selector": [
-					{
-						"filenamePattern": "*.cscratch"
-					}
-				]
-			},
-			{
-				"viewType": "catCustoms.pawDraw",
-				"displayName": "Paw Draw",
-				"selector": [
-					{
-						"filenamePattern": "*.pawdraw"
-					}
-				]
-			},
-			{
-				"viewType": "catCustoms.stringTable",
+				"viewType": "s4tk.stringTable",
 				"displayName": "String Table",
 				"selector": [
 					{
@@ -60,9 +42,9 @@
 		],
 		"commands": [
 			{
-				"command": "catCustoms.pawDraw.new",
-				"title": "Create new Paw Draw Document",
-				"category": "Paw Draw"
+				"command": "s4tk.stringTable.new",
+				"title": "Create new String Table Document",
+				"category": "String Table"
 			}
 		]
 	}

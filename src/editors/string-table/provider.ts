@@ -11,7 +11,7 @@ import type { StringTableEdit } from './types';
 export default class StringTableEditorProvider implements vscode.CustomEditorProvider<StringTableDocument> {
   //#region Properties
 
-  private static readonly viewType = 'catCustoms.stringTable';
+  private static readonly viewType = 's4tk.stringTable';
 
   private readonly _callbacks = new Map<number, (response: any) => void>();
   private _requestId = 1;
@@ -139,7 +139,7 @@ export default class StringTableEditorProvider implements vscode.CustomEditorPro
 
   private _getHtmlForWebview(webview: vscode.Webview): string {
     const scriptUri = webview.asWebviewUri(vscode.Uri.joinPath(
-      this._context.extensionUri, 'media', 'editors', 'stbl.js'));
+      this._context.extensionUri, 'media', 'editors', 'string-table.js'));
 
     const styleResetUri = webview.asWebviewUri(vscode.Uri.joinPath(
       this._context.extensionUri, 'media', 'reset.css'));
@@ -148,7 +148,7 @@ export default class StringTableEditorProvider implements vscode.CustomEditorPro
       this._context.extensionUri, 'media', 'vscode.css'));
 
     const styleMainUri = webview.asWebviewUri(vscode.Uri.joinPath(
-      this._context.extensionUri, 'media', 'editors', 'stbl.css'));
+      this._context.extensionUri, 'media', 'editors', 'string-table.css'));
 
     const nonce = getNonce();
 
