@@ -1,4 +1,4 @@
-#stbl-editor {
+/* #stbl-editor {
 
 }
 
@@ -7,14 +7,27 @@
 }
 
 #stbl-wrapper {
-
-}
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+} */
 
 #stbl-wrapper .stbl-entry {
   display: flex;
   gap: 1rem;
+  padding: 1rem 0;
+  border-top: 1px solid rgb(50, 50, 50);
 }
 
 #stbl-wrapper .stbl-entry .key {
   font-family: monospace;
+  opacity: 0.8;
+}
+
+/* #stbl-wrapper .stbl-entry .value {
+  font-family: monospace;
+} */
+
+#stbl-wrapper .stbl-entry .value .token {
+  color: rgb(36, 173, 246);
 }

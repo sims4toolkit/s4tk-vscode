@@ -3,10 +3,6 @@ import { StringTableResource } from '@s4tk/models';
 import { Disposable } from '@helpers/dispose';
 import type { StringTableEdit } from './types';
 
-interface StringTableDocumentDelegate {
-  getFileData(): Promise<Uint8Array>;
-}
-
 /**
  * Document containing binary STBL data.
  */
@@ -14,7 +10,6 @@ export default class StringTableDocument extends Disposable implements vscode.Cu
   //#region Properties
 
   private readonly _uri: vscode.Uri;
-  private readonly _delegate: StringTableDocumentDelegate;
   private _edits: StringTableEdit[] = [];
   private _savedEdits: StringTableEdit[] = [];
   private _stbl: StringTableResource;
@@ -26,26 +21,19 @@ export default class StringTableDocument extends Disposable implements vscode.Cu
 
   //#region Initialization
 
-  private constructor(
-    uri: vscode.Uri,
-    initialContent: Uint8Array,
-    delegate: StringTableDocumentDelegate
-  ) {
+  private constructor(uri: vscode.Uri, initialContent: Uint8Array) {
     super();
     this._uri = uri;
     this._stbl = StringTableResource.from(Buffer.from(initialContent));
-    this._delegate = delegate;
   }
 
   static async create(
     uri: vscode.Uri,
-    backupId: string | undefined,
-    delegate: StringTableDocumentDelegate,
+    backupId: string | undefined
   ): Promise<StringTableDocument | PromiseLike<StringTableDocument>> {
-    // If we have a backup, read that. Otherwise read the resource from the workspace
     const dataFile = typeof backupId === 'string' ? vscode.Uri.parse(backupId) : uri;
     const fileData = await StringTableDocument._readFile(dataFile);
-    return new StringTableDocument(uri, fileData, delegate);
+    return new StringTableDocument(uri, fileData);
   }
 
   //#endregion
@@ -126,7 +114,7 @@ export default class StringTableDocument extends Disposable implements vscode.Cu
    * Called by VS Code when the user saves the document to a new location.
    */
   async saveAs(targetResource: vscode.Uri, cancellation: vscode.CancellationToken): Promise<void> {
-    const fileData = await this._delegate.getFileData();
+    const fileData = this._stbl.getBuffer();
     if (cancellation.isCancellationRequested) return;
     await vscode.workspace.fs.writeFile(targetResource, fileData);
   }
@@ -143,16 +131,36 @@ export default class StringTableDocument extends Disposable implements vscode.Cu
   makeEdit(edit: StringTableEdit) {
     this._edits.push(edit);
 
+    switch (edit.op) {
+      case "create": {
+        this._stbl.add(0, "");
+        break;
+      }
+      case "update": {
+        const entry = this._stbl.get(edit.id);
+        // FIXME: error handling in case can't parse
+        if (edit.key !== undefined) entry.key = parseInt(edit.key, 16);
+        if (edit.value !== undefined) entry.value = edit.value;
+        break;
+      }
+      case "delete": {
+        this._stbl.delete(edit.id);
+        break;
+      }
+    }
+
     this._onDidChange.fire({
-      label: 'Stroke', // FIXME: what to call this?
+      label: edit.op,
       undo: async () => {
         this._edits.pop();
+        // FIXME: actually undo change?
         this._onDidChangeDocument.fire({
           edits: this._edits,
         });
       },
       redo: async () => {
         this._edits.push(edit);
+        // FIXME: actually undo change?
         this._onDidChangeDocument.fire({
           edits: this._edits,
         });
@@ -166,7 +174,7 @@ export default class StringTableDocument extends Disposable implements vscode.Cu
 
   private static async _readFile(uri: vscode.Uri): Promise<Uint8Array> {
     if (uri.scheme === 'untitled') return new Uint8Array();
-    return new Uint8Array(await vscode.workspace.fs.readFile(uri));
+    return await vscode.workspace.fs.readFile(uri);
   }
 
   //#endregion

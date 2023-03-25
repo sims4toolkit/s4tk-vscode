@@ -4,8 +4,8 @@
   class StringTableEditor {
     constructor(parent) {
       this.ready = false;
-      this.editable = false;
       this.parent = parent;
+      this._entryMap = new Map();
       this._initElements();
     }
 
@@ -19,59 +19,76 @@
       this.parent.appendChild(this.wrapper);
     }
 
-    /**
-     * @param {Array<Object> | undefined} entries
-     */
-    async redraw(entries) {
+    async redrawEntries(entries) {
       this.wrapper.replaceChildren(
-        ...entries?.map((entry) => {
-          const entryDiv = document.createElement("div");
-          entryDiv.classList.add("stbl-entry");
-
-          const keyP = document.createElement("p");
-          keyP.classList.add("key");
-          keyP.innerText = entry.key;
-          entryDiv.appendChild(keyP);
-
-          const valueP = document.createElement("p");
-          valueP.classList.add("value");
-          valueP.innerText = entry.value;
-          entryDiv.appendChild(valueP);
-
-          return entryDiv;
-        })
+        ...entries.map((entry) => this._addEntry(entry))
       );
+    }
+
+    _addEntry(entry) {
+      const entryDiv = document.createElement("div");
+      entryDiv.classList.add("stbl-entry");
+      entryDiv.setAttribute("data-id", entry.id);
+      this._entryMap.set(entry.id, entryDiv);
+
+      const keyP = document.createElement("p");
+      keyP.classList.add("key");
+      keyP.innerText = entry.key;
+      entryDiv.appendChild(keyP);
+
+      const valueP = document.createElement("p");
+      valueP.classList.add("value");
+      valueP.innerHTML = entry.value.replace(/{[^}]+\.[^}]+}/g, (substring) => {
+        return `<span class="token">${substring}</span>`;
+      });
+      entryDiv.appendChild(valueP);
+
+      return entryDiv;
+    }
+
+    async applyEdit(edit) {
+      switch (edit.op) {
+        case "create": {
+          const entryDiv = this._addEntry(edit);
+          this.wrapper.appendChild(entryDiv);
+          return;
+        }
+        case "update": {
+          const entryDiv = this._entryMap(edit.id);
+          if (edit.key !== undefined) {
+            const keyP = entryDiv.querySelector(".key");
+            keyP.innerText = edit.key;
+          }
+          if (edit.value !== undefined) {
+            const valueP = entryDiv.querySelector(".value");
+            valueP.innerText = edit.value;
+          }
+          return;
+        }
+        case "delete": {
+          const entryDiv = this._entryMap(edit.id);
+          entryDiv.remove();
+          return;
+        }
+      }
     }
   }
 
   const editor = new StringTableEditor(document.getElementById("stbl-editor"));
 
-  // Handle messages from the extension
   window.addEventListener("message", async (e) => {
-    const { type, body, requestId } = e.data;
+    const { type, body } = e.data;
     switch (type) {
       case "init": {
-        await editor.redraw(body);
+        await editor.redrawEntries(body);
         return;
       }
-      case "update": {
-        await editor.redraw(body);
+      case "edit": {
+        await editor.applyEdit(body);
         return;
       }
-      // case "getFileData": {
-      //   // Get the image data for the canvas and post it back to the extension.
-      //   editor.getImageData().then((data) => {
-      //     vscode.postMessage({
-      //       type: "response",
-      //       requestId,
-      //       body: Array.from(data),
-      //     });
-      //   });
-      //   return;
-      // }
     }
   });
 
-  // Signal to VS Code that the webview is initialized.
   vscode.postMessage({ type: "ready" });
 })();
