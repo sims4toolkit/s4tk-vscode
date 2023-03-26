@@ -34,6 +34,9 @@ export default class StringTableEditorProvider implements vscode.CustomEditorPro
       StringTableEditorProvider.viewType,
       new StringTableEditorProvider(context), {
       supportsMultipleEditorsPerDocument: true,
+      webviewOptions: {
+        enableFindWidget: true
+      }
     });
   }
 
@@ -61,6 +64,7 @@ export default class StringTableEditorProvider implements vscode.CustomEditorPro
     listeners.push(document.onDidChangeContent(e => {
       // Update all webviews when the document changes
       for (const webviewPanel of this._webviews.get(document.uri)) {
+        webviewPanel.options.enableFindWidget
         this._postMessage(webviewPanel, {
           type: "init",
           body: document.stbl.toJsonObject(true, true) as StringTableJson,

@@ -16,7 +16,7 @@
   display: flex;
   gap: 1rem;
   padding: 1rem 0;
-  border-top: 1px solid rgb(50, 50, 50);
+  /* border-top: 1px solid var(--vscode-foreground); */
 }
 
 #stbl-wrapper .stbl-entry .key {
@@ -28,6 +28,6 @@
   font-family: monospace;
 } */
 
-#stbl-wrapper .stbl-entry .value .token {
+/* #stbl-wrapper .stbl-entry .value .token {
   color: rgb(36, 173, 246);
-}
+} */

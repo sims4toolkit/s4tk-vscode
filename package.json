@@ -32,6 +32,7 @@
 		"customEditors": [
 			{
 				"viewType": "s4tk.stringTable",
+				"priority": "default",
 				"displayName": "String Table",
 				"selector": [
 					{

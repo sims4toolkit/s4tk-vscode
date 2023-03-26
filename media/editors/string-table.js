@@ -38,9 +38,7 @@
 
       const valueP = document.createElement("p");
       valueP.classList.add("value");
-      valueP.innerHTML = entry.value.replace(/{[^}]+\.[^}]+}/g, (substring) => {
-        return `<span class="token">${substring}</span>`;
-      });
+      valueP.innerText = entry.value;
       entryDiv.appendChild(valueP);
 
       return entryDiv;
