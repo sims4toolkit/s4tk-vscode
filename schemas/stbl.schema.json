@@ -1,0 +1,40 @@
+{
+  "$schema": "http://json-schema.org/schema",
+  "definitions": {
+    "key": {
+      "description": "The 32-bit key for this string entry.",
+      "oneOf": [
+        {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 4294967295
+        },
+        {
+          "type": "string",
+          "pattern": "^0[xX][0-9a-fA-F]{8}$"
+        }
+      ]
+    },
+    "value": {
+      "description": "The text value of this string entry.",
+      "type": "string",
+      "minLength": 1
+    }
+  },
+  "type": "array",
+  "items": {
+    "type": "object",
+    "required": [
+      "key",
+      "value"
+    ],
+    "properties": {
+      "key": {
+        "$ref": "#/definitions/key"
+      },
+      "value": {
+        "$ref": "#/definitions/value"
+      }
+    }
+  }
+}

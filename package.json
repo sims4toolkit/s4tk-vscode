@@ -29,6 +29,18 @@
 	],
 	"activationEvents": [],
 	"contributes": {
+		"commands": [
+			{
+				"command": "s4tk.stringTable.new",
+				"title": "Create new STBL",
+				"category": "TS4 Files"
+			},
+			{
+				"command": "s4tk.stringTableJson.new",
+				"title": "Create new STBL JSON",
+				"category": "TS4 Files"
+			}
+		],
 		"customEditors": [
 			{
 				"viewType": "s4tk.stringTable",
@@ -41,11 +53,21 @@
 				]
 			}
 		],
-		"commands": [
+		"jsonValidation": [
 			{
-				"command": "s4tk.stringTable.new",
-				"title": "Create new String Table Document",
-				"category": "String Table"
+				"fileMatch": "*.stbl.json",
+				"url": "./schemas/stbl.schema.json"
+			}
+		],
+		"languages": [
+			{
+				"id": "json",
+				"aliases": [
+					"STBL JSON"
+				],
+				"filenamePatterns": [
+					"*.stbl.json"
+				]
 			}
 		]
 	}
