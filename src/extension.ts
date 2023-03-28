@@ -10,6 +10,10 @@ export function activate(context: vscode.ExtensionContext) {
 		new StringTableJsonCodeLensProvider()
 	);
 
+	vscode.commands.registerCommand("s4tk.stringTableJson.copyAsXml", (xml: string) => {
+		vscode.env.clipboard.writeText(xml);
+	});
+
 	context.subscriptions.push(
 		StringTableEditorProvider.register(context),
 	);
