@@ -6,9 +6,22 @@ export default class StringTableJsonCodeLensProvider implements vscode.CodeLensP
   private _onDidChangeCodeLenses: vscode.EventEmitter<void> = new vscode.EventEmitter<void>();
   public readonly onDidChangeCodeLenses: vscode.Event<void> = this._onDidChangeCodeLenses.event;
 
-  constructor() {
+  private constructor() {
     vscode.workspace.onDidChangeConfiguration((_) => {
       this._onDidChangeCodeLenses.fire();
+    });
+  }
+
+  public static register() {
+    vscode.languages.registerCodeLensProvider(
+      {
+        pattern: "**/*.stbl.json",
+      },
+      new StringTableJsonCodeLensProvider()
+    );
+
+    vscode.commands.registerCommand("s4tk.stringTableJson.copyAsXml", (xml: string) => {
+      vscode.env.clipboard.writeText(xml);
     });
   }
 

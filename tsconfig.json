@@ -11,6 +11,7 @@
     "moduleResolution": "node",
     "paths": {
       "@codelens/*": ["codelens/*"],
+      "@commands/*": ["commands/*"],
       "@editors/*": ["editors/*"],
       "@helpers/*": ["helpers/*"],
     }

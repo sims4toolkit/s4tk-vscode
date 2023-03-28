@@ -13,10 +13,13 @@
 		"watch": "tsc -w -p ./"
 	},
 	"dependencies": {
-		"@s4tk/models": "^0.6.6"
+		"@s4tk/hashing": "^0.2.1",
+		"@s4tk/models": "^0.6.6",
+		"uuid": "^9.0.0"
 	},
 	"devDependencies": {
 		"@types/node": "^16.11.7",
+		"@types/uuid": "^9.0.1",
 		"@types/vscode": "^1.73.0",
 		"tsc-alias": "^1.8.4",
 		"typescript": "^5.0.2"
@@ -30,6 +33,31 @@
 	"activationEvents": [],
 	"contributes": {
 		"commands": [
+			{
+				"command": "s4tk.hashing.fnv31",
+				"title": "Hash text with FNV31",
+				"category": "FNV Hashing"
+			},
+			{
+				"command": "s4tk.hashing.fnv32",
+				"title": "Hash text with FNV32",
+				"category": "FNV Hashing"
+			},
+			{
+				"command": "s4tk.hashing.fnv64",
+				"title": "Hash text with FNV64",
+				"category": "FNV Hashing"
+			},
+			{
+				"command": "s4tk.hashing.random32",
+				"title": "Generate random FNV32 hash",
+				"category": "FNV Hashing"
+			},
+			{
+				"command": "s4tk.hashing.random64",
+				"title": "Generate random FNV64 hash",
+				"category": "FNV Hashing"
+			},
 			{
 				"command": "s4tk.stringTable.new",
 				"title": "Create new STBL",
