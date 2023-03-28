@@ -1,5 +1,5 @@
 {
-	"name": "s4tk-vsc",
+	"name": "s4tk-vscode",
 	"displayName": "Sims 4 Toolkit",
 	"description": "Sims 4 Toolkit support for VS Code.",
 	"version": "0.1.0",
@@ -57,6 +57,10 @@
 			{
 				"fileMatch": "*.stbl.json",
 				"url": "./schemas/stbl.schema.json"
+			},
+			{
+				"fileMatch": "s4tk.config.json",
+				"url": "./schemas/s4tk-config.schema.json"
 			}
 		],
 		"languages": [
@@ -67,6 +71,15 @@
 				],
 				"filenamePatterns": [
 					"*.stbl.json"
+				]
+			},
+			{
+				"id": "json",
+				"aliases": [
+					"S4TK Config"
+				],
+				"filenamePatterns": [
+					"s4tk.config.json"
 				]
 			}
 		]
