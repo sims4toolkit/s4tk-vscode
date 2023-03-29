@@ -123,10 +123,10 @@ export default class StringTableEditorProvider implements vscode.CustomEditorPro
       this._context.extensionUri, 'media', 'vscode.css'));
 
     const styleMainUri = webview.asWebviewUri(vscode.Uri.joinPath(
-      this._context.extensionUri, 'media', 'editors', 'string-table.css'));
+      this._context.extensionUri, 'media', 'editors', 'stbl-binary.css'));
 
     const scriptUri = webview.asWebviewUri(vscode.Uri.joinPath(
-      this._context.extensionUri, 'media', 'editors', 'string-table.js'));
+      this._context.extensionUri, 'media', 'editors', 'stbl-binary.js'));
 
     const nonce = getNonce();
 
