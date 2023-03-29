@@ -59,19 +59,19 @@
 				"category": "FNV Hashing"
 			},
 			{
-				"command": "s4tk.stringTable.new",
-				"title": "Create new STBL",
+				"command": "s4tk.fileCreate.stblBinary",
+				"title": "Create empty STBL",
 				"category": "TS4 Files"
 			},
 			{
-				"command": "s4tk.stringTableJson.new",
-				"title": "Create new STBL JSON",
+				"command": "s4tk.fileCreate.stblJson",
+				"title": "Create empty STBL JSON",
 				"category": "TS4 Files"
 			}
 		],
 		"customEditors": [
 			{
-				"viewType": "s4tk.stringTable",
+				"viewType": "s4tk.editor.stblBinary",
 				"priority": "default",
 				"displayName": "String Table",
 				"selector": [

@@ -1,5 +1,4 @@
 import * as vscode from 'vscode';
-import { StringTableResource } from '@s4tk/models';
 import { disposeAll } from '@helpers/dispose';
 import { getNonce } from '@helpers/nonce';
 import WebviewCollection from '@helpers/webview-collection';
@@ -12,7 +11,7 @@ import type { StringTableEdit, StringTableInMessage, StringTableJson, StringTabl
 export default class StringTableEditorProvider implements vscode.CustomEditorProvider<StringTableDocument> {
   //#region Properties
 
-  private static readonly viewType = 's4tk.stringTable';
+  public static readonly viewType = 's4tk.editor.stblBinary';
 
   private readonly _webviews = new WebviewCollection();
 
@@ -29,14 +28,6 @@ export default class StringTableEditorProvider implements vscode.CustomEditorPro
   //#region VSC
 
   public static register(context: vscode.ExtensionContext): vscode.Disposable {
-    vscode.commands.registerCommand('s4tk.stringTable.new', () => {
-      this._createNewStringTable(false);
-    });
-
-    vscode.commands.registerCommand('s4tk.stringTableJson.new', () => {
-      this._createNewStringTable(true);
-    });
-
     return vscode.window.registerCustomEditorProvider(
       StringTableEditorProvider.viewType,
       new StringTableEditorProvider(context), {
@@ -123,43 +114,6 @@ export default class StringTableEditorProvider implements vscode.CustomEditorPro
   //#endregion
 
   //#region Private Methods
-
-  private static async _createNewStringTable(json: boolean) {
-    const workspaceFolders = vscode.workspace.workspaceFolders;
-    if (!workspaceFolders) {
-      vscode.window.showErrorMessage("Creating a new String Table requires opening a workspace");
-      return;
-    }
-
-    let filename = await vscode.window.showInputBox({
-      title: "Name of String Table"
-    });
-
-    if (!filename) return;
-
-    const ext = json ? ".stbl.json" : ".stbl";
-
-    if (!filename.endsWith(ext)) filename = filename + ext;
-
-    const uri = vscode.Uri.joinPath(workspaceFolders[0].uri, filename);
-
-    try {
-      // there isn't an "exists" method, weirdly...
-      await vscode.workspace.fs.stat(uri);
-    } catch (e) {
-      const content = json
-        ? new Uint8Array([91, 93])
-        : (new StringTableResource()).getBuffer();
-
-      await vscode.workspace.fs.writeFile(uri, content);
-    }
-
-    if (json) {
-      vscode.window.showTextDocument(uri);
-    } else {
-      vscode.commands.executeCommand('vscode.openWith', uri, StringTableEditorProvider.viewType);
-    }
-  }
 
   private _getHtmlForWebview(webview: vscode.Webview): string {
     const styleResetUri = webview.asWebviewUri(vscode.Uri.joinPath(

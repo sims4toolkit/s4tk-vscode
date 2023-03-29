@@ -1,12 +1,11 @@
 import * as vscode from 'vscode';
+import registerCommands from '@commands/index';
+import registerCodeLensProviders from '@codelens/index';
 import StringTableEditorProvider from '@editors/string-table/provider';
-import StringTableJsonCodeLensProvider from '@codelens/stbl-codelens';
-import registerHashingCommands from '@commands/hashing';
 
 export function activate(context: vscode.ExtensionContext) {
-	StringTableJsonCodeLensProvider.register();
-
-	registerHashingCommands();
+	registerCommands();
+	registerCodeLensProviders();
 
 	context.subscriptions.push(
 		StringTableEditorProvider.register(context),
