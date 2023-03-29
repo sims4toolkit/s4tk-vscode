@@ -1,50 +1,60 @@
 import * as vscode from "vscode";
 import { Package, StringTableResource } from "@s4tk/models";
-import StringTableEditorProvider from "@editors/string-table/provider";
+import StringTableEditorProvider from "@editors/stbl-binary/provider";
 
 export default function registerFileCreateCommands() {
   vscode.commands.registerCommand('s4tk.fileCreate.stblBinary', () => {
-    _createNewStringTable(false);
+    _createNewFile({
+      promptTitle: "Name of new String Table",
+      extension: ".stbl",
+      contentGenerator: () => (new StringTableResource()).getBuffer(),
+      launchFile: (uri) => vscode.commands.executeCommand(
+        'vscode.openWith',
+        uri,
+        StringTableEditorProvider.viewType
+      ),
+    });
   });
 
   vscode.commands.registerCommand('s4tk.fileCreate.stblJson', () => {
-    _createNewStringTable(true);
+    _createNewFile({
+      promptTitle: "Name of new String Table JSON",
+      extension: ".stbl.json",
+      contentGenerator: () => new Uint8Array([91, 93]),
+      launchFile: (uri) => vscode.window.showTextDocument(uri),
+    });
   });
 }
 
-async function _createNewStringTable(json: boolean) {
+async function _createNewFile(options: {
+  promptTitle: string;
+  extension: string;
+  contentGenerator: () => Uint8Array;
+  launchFile: (uri: vscode.Uri) => void;
+}) {
   const workspaceFolders = vscode.workspace.workspaceFolders;
   if (!workspaceFolders) {
-    vscode.window.showErrorMessage("Creating a new String Table requires opening a workspace");
+    vscode.window.showErrorMessage("Creating a new file requires opening a workspace");
     return;
   }
 
-  let filename = await vscode.window.showInputBox({
-    title: "Name of String Table"
-  });
-
+  let filename = await vscode.window.showInputBox({ title: options.promptTitle });
   if (!filename) return;
-
-  const ext = json ? ".stbl.json" : ".stbl";
-
-  if (!filename.endsWith(ext)) filename = filename + ext;
-
+  if (!filename.endsWith(options.extension)) filename = filename + options.extension;
   const uri = vscode.Uri.joinPath(workspaceFolders[0].uri, filename);
 
-  try {
-    // there isn't an "exists" method, weirdly...
-    await vscode.workspace.fs.stat(uri);
-  } catch (e) {
-    const content = json
-      ? new Uint8Array([91, 93])
-      : (new StringTableResource()).getBuffer();
-
-    await vscode.workspace.fs.writeFile(uri, content);
+  if (!_fileExists(uri)) {
+    await vscode.workspace.fs.writeFile(uri, options.contentGenerator());
   }
 
-  if (json) {
-    vscode.window.showTextDocument(uri);
-  } else {
-    vscode.commands.executeCommand('vscode.openWith', uri, StringTableEditorProvider.viewType);
+  options.launchFile(uri);
+}
+
+async function _fileExists(uri: vscode.Uri): Promise<boolean> {
+  try {
+    await vscode.workspace.fs.stat(uri);
+    return true;
+  } catch (e) {
+    return false;
   }
 }
