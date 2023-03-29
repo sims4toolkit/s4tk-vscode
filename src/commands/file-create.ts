@@ -1,5 +1,5 @@
 import * as vscode from "vscode";
-import { Package, StringTableResource } from "@s4tk/models";
+import { StringTableResource } from "@s4tk/models";
 import StringTableEditorProvider from "@editors/stbl-binary/provider";
 
 export default function registerFileCreateCommands() {
