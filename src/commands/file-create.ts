@@ -1,6 +1,7 @@
 import * as vscode from "vscode";
 import { StringTableResource } from "@s4tk/models";
 import StringTableEditorProvider from "@editors/stbl-binary/provider";
+import { fileExists } from "@helpers/utils";
 
 export default function registerFileCreateCommands() {
   vscode.commands.registerCommand('s4tk.fileCreate.stblBinary', () => {
@@ -43,18 +44,9 @@ async function _createNewFile(options: {
   if (!filename.endsWith(options.extension)) filename = filename + options.extension;
   const uri = vscode.Uri.joinPath(workspaceFolders[0].uri, filename);
 
-  if (!_fileExists(uri)) {
+  if (!fileExists(uri)) {
     await vscode.workspace.fs.writeFile(uri, options.contentGenerator());
   }
 
   options.launchFile(uri);
-}
-
-async function _fileExists(uri: vscode.Uri): Promise<boolean> {
-  try {
-    await vscode.workspace.fs.stat(uri);
-    return true;
-  } catch (e) {
-    return false;
-  }
 }

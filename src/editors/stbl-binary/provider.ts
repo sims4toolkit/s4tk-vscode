@@ -1,6 +1,6 @@
 import * as vscode from 'vscode';
 import { disposeAll } from '@helpers/dispose';
-import { getNonce } from '@helpers/nonce';
+import { getNonce } from '@helpers/utils';
 import WebviewCollection from '@helpers/webview-collection';
 import StringTableDocument from './document';
 import type { StringTableEdit, StringTableInMessage, StringTableJson, StringTableOutMessage } from './types';

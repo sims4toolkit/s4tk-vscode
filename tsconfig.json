@@ -14,6 +14,7 @@
       "@commands/*": ["commands/*"],
       "@editors/*": ["editors/*"],
       "@helpers/*": ["helpers/*"],
+      "@project/*": ["project/*"],
     }
   },
   "include": ["src/**/*.ts"],
