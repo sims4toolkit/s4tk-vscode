@@ -1,7 +1,7 @@
 import * as vscode from "vscode";
 import { v4 as uuidv4 } from "uuid";
 
-export function getNonce() {
+export function getNonce(): string {
 	let text = '';
 	const possible = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
 	for (let i = 0; i < 32; i++) {
@@ -21,5 +21,5 @@ export async function fileExists(uri: vscode.Uri): Promise<boolean> {
 
 export function saltedUuid(): string {
 	//@ts-ignore This is valid, TS just doesn't like it
-	return `${Math.floor(new Date())}-${uuidv4()}`;
+	return `${Math.floor(new Date())}${uuidv4()}`;
 }
