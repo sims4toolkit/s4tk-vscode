@@ -35,8 +35,14 @@ export default class StringTableJsonCodeLensProvider implements vscode.CodeLensP
 
     let json: string[];
     try {
-      const parsed: { key: number | string; value: string; }[] = JSON.parse(document.getText());
-      json = parsed.map(({ key, value }) => {
+      const parsed = JSON.parse(document.getText());
+
+      const array: { key: number | string; value: string; }[] =
+        Array.isArray(parsed)
+          ? parsed
+          : parsed.entries;
+
+      json = array.map(({ key, value }) => {
         if (typeof key === "number") key = formatStringKey(key);
         return `${key}<!--${value}-->`;
       });

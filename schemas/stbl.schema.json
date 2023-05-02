@@ -1,8 +1,7 @@
 {
   "$schema": "http://json-schema.org/schema",
   "definitions": {
-    "key": {
-      "description": "The 32-bit key for this string entry.",
+    "32bitNumber": {
       "oneOf": [
         {
           "type": "number",
@@ -15,26 +14,80 @@
         }
       ]
     },
-    "value": {
-      "description": "The text value of this string entry.",
+    "entries": {
+      "description": "The list of key/value pairs in this string table.",
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "key",
+          "value"
+        ],
+        "properties": {
+          "key": {
+            "$ref": "#/definitions/32bitNumber",
+            "description": "The 32-bit key for this string entry. It can either be an integer or a hex string."
+          },
+          "value": {
+            "type": "string",
+            "minLength": 1,
+            "description": "The text value for this string entry."
+          }
+        }
+      }
+    },
+    "stringTableLocale": {
       "type": "string",
-      "minLength": 1
+      "enum": [
+        "English",
+        "ChineseSimplified",
+        "ChineseTraditional",
+        "Czech",
+        "Danish",
+        "Dutch",
+        "Finnish",
+        "French",
+        "German",
+        "Italian",
+        "Japanese",
+        "Korean",
+        "Norwegian",
+        "Polish",
+        "Portuguese",
+        "Russian",
+        "Spanish",
+        "Swedish"
+      ]
     }
   },
-  "type": "array",
-  "items": {
-    "type": "object",
-    "required": [
-      "key",
-      "value"
-    ],
-    "properties": {
-      "key": {
-        "$ref": "#/definitions/key"
-      },
-      "value": {
-        "$ref": "#/definitions/value"
+  "oneOf": [
+    {
+      "$ref": "#/definitions/entries"
+    },
+    {
+      "type": "object",
+      "required": [
+        "entries"
+      ],
+      "properties": {
+        "group": {
+          "$ref": "#/definitions/32bitNumber",
+          "description": "The 32-bit number to use for this string table's group.\n\nIf omitted, it is assumed to be 0x80000000."
+        },
+        "instanceBase": {
+          "description": "The 14-digit hex number to use as the base for this string table's instance.\n\nIf omitted, a random FNV64 hash will be generated every time this string table is built into a package.",
+          "type": "string",
+          "pattern": "^0[xX][0-9a-fA-F]{14}$"
+        },
+        "locale": {
+          "$ref": "#/definitions/stringTableLocale",
+          "description": "The locale of this string table.\n\nIf omitted, it is assumed to be English.",
+          "default": "English"
+        },
+        "entries": {
+          "$ref": "#/definitions/entries"
+        }
       }
     }
-  }
+  ]
 }
