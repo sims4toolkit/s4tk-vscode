@@ -1,11 +1,10 @@
 import * as vscode from "vscode";
-import { v4 as uuidv4 } from "uuid";
 import { StringTableResource } from "@s4tk/models";
 import { StringTableLocale } from "@s4tk/models/enums";
 import { fnv64 } from "@s4tk/hashing";
 import { formatAsHexString } from "@s4tk/hashing/formatting";
 import StringTableEditorProvider from "@editors/stbl-binary/provider";
-import { fileExists } from "@helpers/utils";
+import { fileExists, saltedUuid } from "@helpers/utils";
 
 export default function registerFileCreateCommands() {
   vscode.commands.registerCommand('s4tk.fileCreate.stblBinary', () => {
@@ -37,7 +36,7 @@ function _getStblJsonContent(): Uint8Array {
   const json = {
     group: "0x80000000",
     instanceBase: formatAsHexString(
-      StringTableLocale.getInstanceBase(fnv64(uuidv4())),
+      StringTableLocale.getInstanceBase(fnv64(saltedUuid())),
       14,
       true
     ),

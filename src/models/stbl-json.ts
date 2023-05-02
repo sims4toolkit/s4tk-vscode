@@ -1,10 +1,10 @@
-import { v4 as uuidv4 } from "uuid";
 import { fnv32, fnv64 } from "@s4tk/hashing";
 import { formatStringKey } from "@s4tk/hashing/formatting";
 import { StringTableResource } from "@s4tk/models";
 import { StringTableLocale, BinaryResourceType } from "@s4tk/models/enums";
 import { ResourceKey } from "@s4tk/models/types";
 import { KeyStringPair } from "@s4tk/models/lib/resources/stbl/types";
+import { saltedUuid } from "@helpers/utils";
 
 interface StringTableJsonEntry {
   key: number | string;
@@ -58,7 +58,7 @@ export default class StringTableJson {
    */
   addEntry(value = '', addToStart = false) {
     const entry = {
-      key: formatStringKey(fnv32(uuidv4())),
+      key: formatStringKey(fnv32(saltedUuid())),
       value
     };
 
@@ -98,7 +98,7 @@ export default class StringTableJson {
       instance: StringTableLocale.setHighByte(
         //@ts-ignore
         StringTableLocale[this.locale] ?? StringTableLocale.English,
-        this.instanceBase ? BigInt(this.instanceBase) : fnv64(uuidv4())
+        this.instanceBase ? BigInt(this.instanceBase) : fnv64(saltedUuid())
       )
     }
   }

@@ -1,7 +1,7 @@
 import * as vscode from "vscode";
-import { v4 as uuidv4 } from "uuid";
 import { fnv32, fnv64 } from "@s4tk/hashing";
 import { formatAsHexString } from "@s4tk/hashing/formatting";
+import { saltedUuid } from "@helpers/utils";
 
 export default function registerHashingCommands() {
   vscode.commands.registerCommand("s4tk.hashing.fnv31", async () => {
@@ -23,17 +23,17 @@ export default function registerHashingCommands() {
   });
 
   vscode.commands.registerCommand("s4tk.hashing.random31", () => {
-    const hash = fnv31(uuidv4());
+    const hash = fnv31(saltedUuid());
     _showHashMessage("Click to copy this random 31-bit FNV hash", hash, 8);
   });
 
   vscode.commands.registerCommand("s4tk.hashing.random32", () => {
-    const hash = fnv32(uuidv4());
+    const hash = fnv32(saltedUuid());
     _showHashMessage("Click to copy this random 32-bit FNV hash", hash, 8);
   });
 
   vscode.commands.registerCommand("s4tk.hashing.random64", () => {
-    const hash = fnv64(uuidv4());
+    const hash = fnv64(saltedUuid());
     _showHashMessage("Click to copy this random 64-bit FNV hash", hash, 16);
   });
 }
