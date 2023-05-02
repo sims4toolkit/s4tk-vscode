@@ -1,9 +1,13 @@
 {
   "$schema": "http://json-schema.org/schema",
   "definitions": {
+    "systemPath": {
+      "type": "string",
+      "description": "Absolute or relative path to a location on your filesystem.\n\nBoth Windows and Unix paths are accepted, as they will be converted by the extension when needed.",
+      "minLength": 1
+    },
     "stringTableLocale": {
       "type": "string",
-      "default": "English",
       "enum": [
         "English",
         "ChineseSimplified",
@@ -27,7 +31,28 @@
     }
   },
   "type": "object",
+  "required": [
+    "buildFolders",
+    "sourceFolder"
+  ],
   "properties": {
+    "allowFolderCreation": {
+      "type": "boolean",
+      "description": "Whether or not the S4TK extension is allowed to create missing folders in order to output to buildFolders. Setting this to `true` may result in erraneous behavior if you misconfigure this file.",
+      "default": false
+    },
+    "buildFolders": {
+      "type": "array",
+      "description": "List of absolute and/or relative paths to folders where all built packages should be output to.",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/definitions/systemPath"
+      }
+    },
+    "sourceFolder": {
+      "$ref": "#/definitions/systemPath",
+      "description": "Absolute or relative path to the folder that contains all of the resources for this project, including loose resources and/or packages.\n\nBoth Windows and Unix paths are accepted, as they will be converted by the extension when needed."
+    },
     "stringTables": {
       "type": "object",
       "description": "Data related to the string table(s) in this project.",
@@ -37,11 +62,12 @@
       "properties": {
         "defaultLocale": {
           "$ref": "#/definitions/stringTableLocale",
-          "description": "The locale that the source strings are written in."
+          "description": "The locale that the source strings are written in.",
+          "default": "English"
         },
         "defaultPath": {
-          "type": "string",
-          "description": "Relative path to the string table (binary or JSON) that serves as the default for this project. Strings added via commands will be added to this string table."
+          "$ref": "#/definitions/systemPath",
+          "description": "Absolute or relative path to the string table (binary or JSON) that serves as the default for this project. Strings added via commands will be added to this string table.\n\nBoth Windows and Unix paths are accepted, as they will be converted by the extension when needed."
         },
         "generateMissingLocales": {
           "type": "boolean",

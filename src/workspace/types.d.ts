@@ -1,6 +1,6 @@
 import type { StringTableLocale } from "@s4tk/models/enums";
 
-type StringTableLocaleString =
+export type StringTableLocaleString =
   "English" |
   "ChineseSimplified" |
   "ChineseTraditional" |
@@ -21,6 +21,9 @@ type StringTableLocaleString =
   "Swedish";
 
 export interface RawS4TKConfig {
+  allowFolderCreation?: boolean;
+  buildFolders: string[];
+  sourceFolder: string;
   stringTables?: {
     defaultLocale?: StringTableLocaleString;
     defaultPath: string;
@@ -29,6 +32,9 @@ export interface RawS4TKConfig {
 }
 
 export interface S4TKConfig {
+  allowFolderCreation: boolean;
+  buildFolders: string[];
+  sourceFolder: string;
   stringTables?: {
     defaultLocale: StringTableLocale;
     defaultPath: string;
