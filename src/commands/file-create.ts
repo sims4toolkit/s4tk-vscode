@@ -1,12 +1,16 @@
 import * as vscode from "vscode";
+import { v4 as uuidv4 } from "uuid";
 import { StringTableResource } from "@s4tk/models";
+import { StringTableLocale } from "@s4tk/models/enums";
+import { fnv64 } from "@s4tk/hashing";
+import { formatAsHexString } from "@s4tk/hashing/formatting";
 import StringTableEditorProvider from "@editors/stbl-binary/provider";
 import { fileExists } from "@helpers/utils";
 
 export default function registerFileCreateCommands() {
   vscode.commands.registerCommand('s4tk.fileCreate.stblBinary', () => {
     _createNewFile({
-      promptTitle: "Name of new String Table",
+      promptTitle: "Name of new String Table (Binary)",
       extension: ".stbl",
       contentGenerator: () => (new StringTableResource()).getBuffer(),
       launchFile: (uri) => vscode.commands.executeCommand(
@@ -19,12 +23,29 @@ export default function registerFileCreateCommands() {
 
   vscode.commands.registerCommand('s4tk.fileCreate.stblJson', () => {
     _createNewFile({
-      promptTitle: "Name of new String Table JSON",
+      promptTitle: "Name of new String Table (JSON)",
       extension: ".stbl.json",
-      contentGenerator: () => new Uint8Array([91, 93]),
+      contentGenerator: _getStblJsonContent,
       launchFile: (uri) => vscode.window.showTextDocument(uri),
     });
   });
+}
+
+//#region Helpers
+
+function _getStblJsonContent(): Uint8Array {
+  const json = {
+    group: "0x80000000",
+    instanceBase: formatAsHexString(
+      StringTableLocale.getInstanceBase(fnv64(uuidv4())),
+      14,
+      true
+    ),
+    locale: "English",
+    entries: []
+  };
+
+  return Buffer.from(JSON.stringify(json, null, 2));
 }
 
 async function _createNewFile(options: {
@@ -44,9 +65,11 @@ async function _createNewFile(options: {
   if (!filename.endsWith(options.extension)) filename = filename + options.extension;
   const uri = vscode.Uri.joinPath(workspaceFolders[0].uri, filename);
 
-  if (!fileExists(uri)) {
+  if (!(await fileExists(uri))) {
     await vscode.workspace.fs.writeFile(uri, options.contentGenerator());
   }
 
   options.launchFile(uri);
 }
+
+//#endregion

@@ -49,6 +49,11 @@
 				"category": "FNV Hashing"
 			},
 			{
+				"command": "s4tk.hashing.random31",
+				"title": "Generate random FNV31 hash",
+				"category": "FNV Hashing"
+			},
+			{
 				"command": "s4tk.hashing.random32",
 				"title": "Generate random FNV32 hash",
 				"category": "FNV Hashing"
@@ -60,12 +65,12 @@
 			},
 			{
 				"command": "s4tk.fileCreate.stblBinary",
-				"title": "Create empty STBL",
+				"title": "Create empty STBL (Binary)",
 				"category": "TS4 Files"
 			},
 			{
 				"command": "s4tk.fileCreate.stblJson",
-				"title": "Create empty STBL JSON",
+				"title": "Create empty STBL (JSON)",
 				"category": "TS4 Files"
 			}
 		],
