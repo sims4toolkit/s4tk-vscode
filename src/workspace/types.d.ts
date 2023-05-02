@@ -22,16 +22,16 @@ type StringTableLocaleString =
 
 export interface RawS4TKConfig {
   stringTables?: {
-    default?: string;
+    defaultLocale?: StringTableLocaleString;
+    defaultPath: string;
     generateMissingLocales?: boolean;
-    locale?: StringTableLocaleString;
   };
 }
 
 export interface S4TKConfig {
-  stringTables: {
-    default?: string;
+  stringTables?: {
+    defaultLocale: StringTableLocale;
+    defaultPath: string;
     generateMissingLocales: boolean;
-    locale: StringTableLocale;
   };
 }

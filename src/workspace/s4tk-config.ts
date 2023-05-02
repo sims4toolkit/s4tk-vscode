@@ -1,6 +1,6 @@
 import * as vscode from "vscode";
 import { StringTableLocale } from "@s4tk/models/enums";
-import { S4TKConfig, RawS4TKConfig } from "./types";
+import { S4TKConfig, RawS4TKConfig, StringTableLocaleString } from "./types";
 
 const CONFIG_FILENAME = "s4tk.config.json";
 
@@ -41,28 +41,32 @@ export async function saveConfig(config: S4TKConfig) {
 //#region Helpers
 
 function _processConfig(rawConfig: RawS4TKConfig): S4TKConfig {
-  const config = rawConfig as unknown as S4TKConfig; // just for typing
+  // just for typing / readability
+  const config = rawConfig as unknown as S4TKConfig;
 
-  if (!rawConfig.stringTables) rawConfig.stringTables = {};
+  if (rawConfig.stringTables) {
+    if (rawConfig.stringTables.generateMissingLocales == undefined) {
+      config.stringTables!.generateMissingLocales = true;
+    }
 
-  if (rawConfig.stringTables.generateMissingLocales == undefined) {
-    config.stringTables.generateMissingLocales = true;
-  }
-
-  if (rawConfig.stringTables.locale) {
-    config.stringTables.locale = StringTableLocale[rawConfig.stringTables.locale];
-  } else {
-    config.stringTables.locale = StringTableLocale.English;
+    if (rawConfig.stringTables.defaultLocale == undefined) {
+      config.stringTables!.defaultLocale = StringTableLocale.English;
+    } else {
+      config.stringTables!.defaultLocale = StringTableLocale[rawConfig.stringTables!.defaultLocale!];
+    }
   }
 
   return config;
 }
 
 function _serializeConfig(config: S4TKConfig): RawS4TKConfig {
-  const rawConfig = config as unknown as RawS4TKConfig; // just for typing
+  // just for typing / readability
+  const rawConfig = config as unknown as RawS4TKConfig;
 
-  //@ts-ignore This is safe because rawConfig === config
-  rawConfig.stringTables.locale = StringTableLocale[config.stringTables.locale];
+  if (config.stringTables) {
+    rawConfig.stringTables!.defaultLocale =
+      StringTableLocale[config.stringTables.defaultLocale] as StringTableLocaleString;
+  }
 
   return rawConfig;
 }

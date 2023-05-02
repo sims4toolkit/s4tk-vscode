@@ -1,12 +1,45 @@
 {
   "$schema": "http://json-schema.org/schema",
+  "definitions": {
+    "stringTableLocale": {
+      "type": "string",
+      "default": "English",
+      "enum": [
+        "English",
+        "ChineseSimplified",
+        "ChineseTraditional",
+        "Czech",
+        "Danish",
+        "Dutch",
+        "Finnish",
+        "French",
+        "German",
+        "Italian",
+        "Japanese",
+        "Korean",
+        "Norwegian",
+        "Polish",
+        "Portuguese",
+        "Russian",
+        "Spanish",
+        "Swedish"
+      ]
+    }
+  },
   "type": "object",
   "properties": {
     "stringTables": {
       "type": "object",
       "description": "Data related to the string table(s) in this project.",
+      "required": [
+        "defaultPath"
+      ],
       "properties": {
-        "default": {
+        "defaultLocale": {
+          "$ref": "#/definitions/stringTableLocale",
+          "description": "The locale that the source strings are written in."
+        },
+        "defaultPath": {
           "type": "string",
           "description": "Relative path to the string table (binary or JSON) that serves as the default for this project. Strings added via commands will be added to this string table."
         },
@@ -14,31 +47,6 @@
           "type": "boolean",
           "description": "Whether or not to generate string tables for all missing locales.",
           "default": true
-        },
-        "locale": {
-          "type": "string",
-          "description": "The locale that the source strings are written in.",
-          "default": "English",
-          "enum": [
-            "English",
-            "ChineseSimplified",
-            "ChineseTraditional",
-            "Czech",
-            "Danish",
-            "Dutch",
-            "Finnish",
-            "French",
-            "German",
-            "Italian",
-            "Japanese",
-            "Korean",
-            "Norwegian",
-            "Polish",
-            "Portuguese",
-            "Russian",
-            "Spanish",
-            "Swedish"
-          ]
         }
       }
     }

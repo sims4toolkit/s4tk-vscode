@@ -2,7 +2,7 @@ import { ExtensionContext } from "vscode";
 import registerCommands from "@commands/index";
 import registerCodeLensProviders from "@codelens/index";
 import registerCustomEditors from "@editors/index";
-import { loadConfig } from "@project/s4tk-config";
+import { loadConfig } from "@workspace/s4tk-config";
 
 export function activate(context: ExtensionContext) {
 	registerCommands(context);
