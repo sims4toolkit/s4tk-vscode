@@ -78,6 +78,11 @@
 				"command": "s4tk.workspace.reloadConfig",
 				"title": "Reload S4TK Config",
 				"category": "S4TK Workspace"
+			},
+			{
+				"command": "s4tk.workspace.createWorkspace",
+				"title": "Create S4TK Project",
+				"category": "S4TK Workspace"
 			}
 		],
 		"customEditors": [

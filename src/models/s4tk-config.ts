@@ -31,6 +31,35 @@ export interface S4TKConfig {
 
 //#endregion
 
+//#region Constants
+
+export const CONFIG_FILENAME = "s4tk.config.json";
+
+export const DEFAULT_CONFIG_CONTENT = Buffer.from(`{
+  "projectInfo": {
+    "creatorName": "",
+    "projectName": "",
+    "tuningPrefix": ""
+  },
+  "buildInstructions": {
+    "allowFolderCreation": false,
+    "allowOverwritingFiles": false,
+    "sourceFolder": "./src",
+    "destinations": [
+      "./out"
+    ],
+    "packages": []
+  },
+  "stringTables": {
+    "defaultLocale": "English",
+    "defaultPath": "./default.stbl.json",
+    "generateMissingLocales": true,
+    "onePerPackage": true
+  }
+}`);
+
+//#endregion
+
 //#region Public Functions
 
 /**

@@ -1,10 +1,8 @@
 import * as vscode from "vscode";
 import { StringTableResource } from "@s4tk/models";
-import { StringTableLocale } from "@s4tk/models/enums";
-import { fnv64 } from "@s4tk/hashing";
-import { formatAsHexString } from "@s4tk/hashing/formatting";
 import StringTableEditorProvider from "@editors/stbl-binary/provider";
-import { fileExists, saltedUuid } from "@helpers/utils";
+import { fileExists } from "@helpers/utils";
+import StringTableJson from "@models/stbl-json";
 
 export default function registerFileCreateCommands() {
   vscode.commands.registerCommand('s4tk.ts4Files.createStblBinary', () => {
@@ -24,28 +22,13 @@ export default function registerFileCreateCommands() {
     _createNewFile({
       promptTitle: "Name of new String Table (JSON)",
       extension: ".stbl.json",
-      contentGenerator: _getStblJsonContent,
+      contentGenerator: () => StringTableJson.generateRandomContent(),
       launchFile: (uri) => vscode.window.showTextDocument(uri),
     });
   });
 }
 
 //#region Helpers
-
-function _getStblJsonContent(): Uint8Array {
-  const json = {
-    group: "0x80000000",
-    instanceBase: formatAsHexString(
-      StringTableLocale.getInstanceBase(fnv64(saltedUuid())),
-      14,
-      true
-    ),
-    locale: "English",
-    entries: []
-  };
-
-  return Buffer.from(JSON.stringify(json, null, 2));
-}
 
 async function _createNewFile(options: {
   promptTitle: string;

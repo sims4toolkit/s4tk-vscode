@@ -1,5 +1,5 @@
 import { fnv32, fnv64 } from "@s4tk/hashing";
-import { formatStringKey } from "@s4tk/hashing/formatting";
+import { formatAsHexString, formatStringKey } from "@s4tk/hashing/formatting";
 import { StringTableResource } from "@s4tk/models";
 import { StringTableLocale, BinaryResourceType } from "@s4tk/models/enums";
 import { ResourceKey } from "@s4tk/models/types";
@@ -46,6 +46,25 @@ export default class StringTableJson {
       stblJson.locale = parsed.locale;
       return stblJson;
     }
+  }
+
+  /**
+   * Generates a STBL JSON with a random instance and returns its contents as
+   * a buffer.
+   */
+  static generateRandomContent(): Uint8Array {
+    const json = {
+      group: "0x80000000",
+      instanceBase: formatAsHexString(
+        StringTableLocale.getInstanceBase(fnv64(saltedUuid())),
+        14,
+        true
+      ),
+      locale: "English",
+      entries: []
+    };
+
+    return Buffer.from(JSON.stringify(json, null, 2));
   }
 
   //#endregion
