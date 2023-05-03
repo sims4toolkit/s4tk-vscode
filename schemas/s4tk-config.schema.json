@@ -140,6 +140,18 @@
           "default": true
         }
       }
+    },
+    "settings": {
+      "type": "object",
+      "description": "Optional settings that affect how the S4TK extension works.",
+      "additionalProperties": false,
+      "properties": {
+        "showCopyConfirmation": {
+          "type": "boolean",
+          "description": "Whether or not to show a popup to confirm when something has been copied to your clipboard.",
+          "default": true
+        }
+      }
     }
   }
 }

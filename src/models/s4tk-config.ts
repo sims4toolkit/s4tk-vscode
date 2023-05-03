@@ -27,6 +27,10 @@ export interface S4TKConfig {
     newStringsToTop?: boolean;
     onePerPackage?: boolean;
   };
+
+  settings?: {
+    showCopyConfirmation?: boolean;
+  };
 }
 
 //#endregion
@@ -55,6 +59,9 @@ export const DEFAULT_CONFIG_CONTENT = Buffer.from(`{
     "generateMissingLocales": true,
     "newStringsToTop": false,
     "onePerPackage": true
+  },
+  "settings": {
+    "showCopyConfirmation": true
   }
 }`);
 
