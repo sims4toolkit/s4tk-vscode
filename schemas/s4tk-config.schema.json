@@ -30,6 +30,7 @@
     "projectInfo",
     "buildInstructions"
   ],
+  "additionalProperties": false,
   "properties": {
     "projectInfo": {
       "type": "object",
@@ -38,6 +39,7 @@
         "creatorName",
         "projectName"
       ],
+      "additionalProperties": false,
       "properties": {
         "creatorName": {
           "type": "string",
@@ -58,6 +60,7 @@
       "required": [
         "destinations"
       ],
+      "additionalProperties": false,
       "properties": {
         "allowFolderCreation": {
           "type": "boolean",
@@ -85,6 +88,7 @@
               "filename",
               "include"
             ],
+            "additionalProperties": false,
             "properties": {
               "filename": {
                 "type": "string",
@@ -109,6 +113,7 @@
       "required": [
         "defaultPath"
       ],
+      "additionalProperties": false,
       "properties": {
         "defaultLocale": {
           "$ref": "#/definitions/stringTableLocale",

@@ -31,7 +31,6 @@ class _S4TKWorkspace {
       vscode.window.showInformationMessage('Successfully initialized S4TK workspace.');
       return this._config = config;
     } catch (err: any) {
-
       let errMsg = err;
       if (err instanceof SyntaxError) {
         errMsg = err.message;
@@ -40,12 +39,16 @@ class _S4TKWorkspace {
       }
 
       const getHelp = 'Get Help';
+      const reload = 'Reload Config';
       vscode.window.showErrorMessage(
-        `Could not validate S4TK config (${errMsg})`,
-        getHelp
+        `Could not validate S4TK config. You will not be able to build your project until all errors are resolved and the config has been reloaded. (${errMsg})`,
+        getHelp,
+        reload
       ).then((message) => {
         if (message === getHelp)
           vscode.env.openExternal(vscode.Uri.parse('https://frankkmods.com/#/contact'));
+        else if (message === reload)
+          this.loadConfig();
       });
 
       return undefined;
