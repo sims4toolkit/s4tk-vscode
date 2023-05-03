@@ -12,8 +12,9 @@ export interface S4TKConfig {
 
   buildInstructions: {
     allowFolderCreation?: boolean;
-    destinations: string[];
+    allowOverwritingFiles?: boolean;
     sourceFolder?: string;
+    destinations: string[];
     packages?: {
       filename: string;
       include: string[];
@@ -24,6 +25,7 @@ export interface S4TKConfig {
     defaultLocale?: StringTableLocale;
     defaultPath: string;
     generateMissingLocales?: boolean;
+    onePerPackage?: boolean;
   };
 }
 
