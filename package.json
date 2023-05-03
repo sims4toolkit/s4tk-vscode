@@ -83,6 +83,12 @@
 				"command": "s4tk.workspace.createWorkspace",
 				"title": "Create S4TK Project",
 				"category": "S4TK Workspace"
+			},
+			{
+				"command": "s4tk.workspace.setDefaultStbl",
+				"title": "Set STBL as Default",
+				"category": "S4TK Workspace",
+				"enablement": "resourceFilename =~ /\\.stbl(\\.json)?$/"
 			}
 		],
 		"customEditors": [
@@ -126,6 +132,20 @@
 					"s4tk.config.json"
 				]
 			}
-		]
+		],
+		"menus": {
+			"explorer/context": [
+				{
+					"when": "resourceFilename === 's4tk.config.json'",
+					"command": "s4tk.workspace.reloadConfig",
+					"group": "S4TK"
+				},
+				{
+					"when": "resourceFilename =~ /\\.stbl(\\.json)?$/",
+					"command": "s4tk.workspace.setDefaultStbl",
+					"group": "S4TK"
+				}
+			]
+		}
 	}
 }

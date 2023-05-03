@@ -89,8 +89,9 @@ export function parseConfig(content: string): S4TKConfig {
  * Converts the given config to a writable string.
  * 
  * @param config Config to stringify
+ * @param spaces Number of spaces to use in formatted JSON
  */
-export function stringifyConfig(config: S4TKConfig): string {
+export function stringifyConfig(config: S4TKConfig, spaces = 2): string {
   return JSON.stringify(config, ((key, value) => {
     switch (key) {
       case "defaultLocale":
@@ -98,7 +99,7 @@ export function stringifyConfig(config: S4TKConfig): string {
       default:
         return value;
     }
-  }));
+  }), spaces);
 }
 
 //#endregion
