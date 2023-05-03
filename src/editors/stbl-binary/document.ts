@@ -1,6 +1,8 @@
 import * as vscode from 'vscode';
 import { StringTableResource } from '@s4tk/models';
 import { Disposable } from '@helpers/dispose';
+import StringTableJson from '@models/stbl-json';
+import { fileExists } from '@helpers/utils';
 
 /**
  * Document containing binary STBL data.
@@ -76,10 +78,22 @@ export default class StringTableDocument extends Disposable implements vscode.Cu
   //#region Public Methods
 
   /**
-   * TODO:
+   * Converts this STBL to a JSON and writes it to the same directory that this
+   * one is in. If the STBL JSON already exists, a warning is shown.
    */
   async convertToJson() {
-    // TODO: implement
+    const uri = vscode.Uri.parse(this.uri.fsPath + ".json");
+
+    if (await fileExists(uri)) {
+      vscode.window.showWarningMessage(`STBL JSON already exists at ${uri.path}`);
+      vscode.window.showTextDocument(uri);
+    } else {
+      const json = new StringTableJson(this.stbl.toJsonObject(true));
+      const content = json.stringify();
+      vscode.workspace.fs.writeFile(uri, Buffer.from(content)).then(() => {
+        vscode.window.showTextDocument(uri);
+      });
+    }
   }
 
   //#endregion
