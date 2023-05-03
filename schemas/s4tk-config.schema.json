@@ -1,11 +1,6 @@
 {
   "$schema": "http://json-schema.org/schema",
   "definitions": {
-    "systemPath": {
-      "type": "string",
-      "description": "Absolute or relative path to a location on your filesystem.\n\nBoth Windows and Unix paths are accepted, as they will be converted by the extension when needed.",
-      "minLength": 1
-    },
     "stringTableLocale": {
       "type": "string",
       "enum": [
@@ -32,26 +27,81 @@
   },
   "type": "object",
   "required": [
-    "buildFolders",
-    "sourceFolder"
+    "projectInfo",
+    "buildInstructions"
   ],
   "properties": {
-    "allowFolderCreation": {
-      "type": "boolean",
-      "description": "Whether or not the S4TK extension is allowed to create missing folders in order to output to buildFolders. Setting this to `true` may result in erraneous behavior if you misconfigure this file.",
-      "default": false
-    },
-    "buildFolders": {
-      "type": "array",
-      "description": "List of absolute and/or relative paths to folders where all built packages should be output to.",
-      "minItems": 1,
-      "items": {
-        "$ref": "#/definitions/systemPath"
+    "projectInfo": {
+      "type": "object",
+      "description": "Metadata about this project.",
+      "required": [
+        "creatorName",
+        "projectName"
+      ],
+      "properties": {
+        "creatorName": {
+          "type": "string",
+          "description": "The name of this project's creator."
+        },
+        "projectName": {
+          "type": "string",
+          "description": "The name of this project."
+        },
+        "tuningPrefix": {
+          "type": "string",
+          "description": "Text to prepend to generated tuning file names."
+        }
       }
     },
-    "sourceFolder": {
-      "$ref": "#/definitions/systemPath",
-      "description": "Absolute or relative path to the folder that contains all of the resources for this project, including loose resources and/or packages.\n\nBoth Windows and Unix paths are accepted, as they will be converted by the extension when needed."
+    "buildInstructions": {
+      "type": "object",
+      "required": [
+        "destinations"
+      ],
+      "properties": {
+        "allowFolderCreation": {
+          "type": "boolean",
+          "description": "Whether or not the S4TK extension is allowed to create missing folders in order to output to `destinations`.",
+          "default": false
+        },
+        "destinations": {
+          "type": "array",
+          "description": "List of absolute and/or relative paths to folders where all built packages should be output to.\n\nBoth Windows and Unix paths are accepted; they will be automatically converted as needed.",
+          "minItems": 1,
+          "items": {
+            "type": "string"
+          }
+        },
+        "sourceFolder": {
+          "type": "string",
+          "description": "Absolute or relative path to the folder that contains all of the resources for this project. If omitted, then the root of this project is considered to be the source folder.\n\nBoth Windows and Unix paths are accepted; they will be automatically converted as needed."
+        },
+        "packages": {
+          "type": "array",
+          "description": "List of packages to build. If omitted or empty, then all files will be built to a single package that is named using the values in `projectInfo`.",
+          "items": {
+            "type": "object",
+            "required": [
+              "filename",
+              "include"
+            ],
+            "properties": {
+              "filename": {
+                "type": "string",
+                "description": "What to name the built package file (if the `.package` extension is omitted, it will be inserted)."
+              },
+              "include": {
+                "type": "array",
+                "description": "List of absolute and/or relative (to the source folder) glob patterns that capture all files that should be built into this package.\n\nBoth Windows and Unix paths are accepted; they will be automatically converted as needed.",
+                "minItems": 1,
+                "items": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
     },
     "stringTables": {
       "type": "object",
@@ -66,12 +116,17 @@
           "default": "English"
         },
         "defaultPath": {
-          "$ref": "#/definitions/systemPath",
-          "description": "Absolute or relative path to the string table (binary or JSON) that serves as the default for this project. Strings added via commands will be added to this string table.\n\nBoth Windows and Unix paths are accepted, as they will be converted by the extension when needed."
+          "type": "string",
+          "description": "Absolute or relative path to the string table (binary or JSON) that serves as the default for this project. Strings added via commands will be added to this string table.\n\nBoth Windows and Unix paths are accepted; they will be automatically converted as needed."
         },
         "generateMissingLocales": {
           "type": "boolean",
-          "description": "Whether or not to generate string tables for all missing locales.",
+          "description": "Whether or not to generate string tables for all missing locales (using the text from the default locale).",
+          "default": true
+        },
+        "onePerPackage": {
+          "type": "boolean",
+          "description": "Whether or not all of the string tables being written to the same package should be merged.",
           "default": true
         }
       }
