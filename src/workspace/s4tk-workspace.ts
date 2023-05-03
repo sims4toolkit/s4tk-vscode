@@ -1,4 +1,5 @@
 import * as vscode from "vscode";
+import { ValidationError } from "jsonschema";
 import { S4TKConfig, parseConfig } from "@models/s4tk-config";
 import { fileExists } from "@helpers/utils";
 
@@ -30,9 +31,17 @@ class _S4TKWorkspace {
       vscode.window.showInformationMessage('Successfully initialized S4TK workspace.');
       return this._config = config;
     } catch (err: any) {
+
+      let errMsg = err;
+      if (err instanceof SyntaxError) {
+        errMsg = err.message;
+      } else if (err instanceof ValidationError) {
+        errMsg = err.stack;
+      }
+
       const getHelp = 'Get Help';
       vscode.window.showErrorMessage(
-        `Could not validate S4TK config (Error: ${err.stack ?? err})`,
+        `Could not validate S4TK config (${errMsg})`,
         getHelp
       ).then((message) => {
         if (message === getHelp)
