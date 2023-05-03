@@ -8,6 +8,7 @@ export default function registerFileCreateCommands() {
   vscode.commands.registerCommand('s4tk.ts4Files.createStblBinary', () => {
     _createNewFile({
       promptTitle: "Name of new String Table (Binary)",
+      promptBody: "Enter the name of a STBL to create. You can use slashes to indicate subfolders.",
       extension: ".stbl",
       contentGenerator: () => (new StringTableResource()).getBuffer(),
       launchFile: (uri) => vscode.commands.executeCommand(
@@ -21,6 +22,7 @@ export default function registerFileCreateCommands() {
   vscode.commands.registerCommand('s4tk.ts4Files.createStblJson', () => {
     _createNewFile({
       promptTitle: "Name of new String Table (JSON)",
+      promptBody: "Enter the name of a STBL to create. You can use slashes to indicate subfolders.",
       extension: ".stbl.json",
       contentGenerator: () => StringTableJson.generateRandomContent(),
       launchFile: (uri) => vscode.window.showTextDocument(uri),
@@ -32,6 +34,7 @@ export default function registerFileCreateCommands() {
 
 async function _createNewFile(options: {
   promptTitle: string;
+  promptBody: string;
   extension: string;
   contentGenerator: () => Uint8Array;
   launchFile: (uri: vscode.Uri) => void;
@@ -42,7 +45,11 @@ async function _createNewFile(options: {
     return;
   }
 
-  let filename = await vscode.window.showInputBox({ title: options.promptTitle });
+  let filename = await vscode.window.showInputBox({
+    title: options.promptTitle,
+    prompt: options.promptBody
+  });
+
   if (!filename) return;
   if (!filename.endsWith(options.extension)) filename = filename + options.extension;
   const uri = vscode.Uri.joinPath(workspaceFolders[0].uri, filename);
