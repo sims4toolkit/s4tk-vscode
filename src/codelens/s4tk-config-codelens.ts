@@ -28,7 +28,7 @@ export default class S4TKConfigCodeLensProvider implements vscode.CodeLensProvid
     );
 
     vscode.commands.registerCommand(_RELOAD_CONFIG_COMMAND_NAME, () => {
-      S4TKWorkspace.loadConfig();
+      S4TKWorkspace.loadConfig({ showNoConfigError: true });
     });
   }
 

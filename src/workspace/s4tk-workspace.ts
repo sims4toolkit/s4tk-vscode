@@ -15,15 +15,23 @@ class _S4TKWorkspace {
    * Loads the config (located at `~/s4tk.config.json`), saves it to the
    * workspace, and returns it. If it could not be loaded, and error is
    * displayed and undefined is returned.
+   * 
+   * @param options Options for error handling
    */
-  async loadConfig(): Promise<S4TKConfig | undefined> {
+  async loadConfig(options?: { showNoConfigError?: boolean; }): Promise<S4TKConfig | undefined> {
     delete this._config;
 
     const rootUri = vscode.workspace.workspaceFolders?.[0]?.uri;
     if (!rootUri) return undefined;
 
     const configUri = vscode.Uri.joinPath(rootUri, _CONFIG_FILENAME);
-    if (!(await fileExists(configUri))) return undefined;
+    if (!(await fileExists(configUri))) {
+      if (options?.showNoConfigError) {
+        vscode.window.showWarningMessage("No S4TK config file was found. Note that it must be called 's4tk.config.json', and must be placed in the root directory of your project.");
+      }
+
+      return undefined;
+    }
 
     try {
       const content = await vscode.workspace.fs.readFile(configUri);
@@ -48,7 +56,7 @@ class _S4TKWorkspace {
         if (message === getHelp)
           vscode.env.openExternal(vscode.Uri.parse('https://frankkmods.com/#/contact'));
         else if (message === reload)
-          this.loadConfig();
+          this.loadConfig({ showNoConfigError: true });
       });
 
       return undefined;
