@@ -25,6 +25,7 @@ export interface S4TKConfig {
     defaultLocale?: StringTableLocale;
     defaultPath: string;
     generateMissingLocales?: boolean;
+    newStringsToTop?: boolean;
     onePerPackage?: boolean;
   };
 }
@@ -54,6 +55,7 @@ export const DEFAULT_CONFIG_CONTENT = Buffer.from(`{
     "defaultLocale": "English",
     "defaultPath": "./default.stbl.json",
     "generateMissingLocales": true,
+    "newStringsToTop": false,
     "onePerPackage": true
   }
 }`);

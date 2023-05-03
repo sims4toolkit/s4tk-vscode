@@ -134,6 +134,11 @@
           "description": "Whether or not to generate string tables for all missing locales (using the text from the default locale).",
           "default": true
         },
+        "newStringsToTop": {
+          "type": "boolean",
+          "description": "Whether or not to insert strings generated via commands to the top of the string table, rather than to the end.",
+          "default": false
+        },
         "onePerPackage": {
           "type": "boolean",
           "description": "Whether or not all of the string tables being written to the same package should be merged.",
