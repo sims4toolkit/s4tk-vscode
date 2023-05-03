@@ -35,17 +35,17 @@ export default class StringTableJsonCodeLensProvider implements vscode.CodeLensP
   ): vscode.CodeLens[] | Thenable<vscode.CodeLens[]> {
     this._codeLenses = [
       new vscode.CodeLens(new vscode.Range(0, 0, 0, 0), {
-        title: "New String (Top)",
-        tooltip: "New entry will have a randomly generated hash",
+        title: "Add New String (Start)",
+        tooltip: "Add a new string with a random hash to the start of this STBL.",
         command: _NEW_ENTRY_COMMAND_NAME,
-        arguments: [document, true]
+        arguments: [true]
       }),
       new vscode.CodeLens(new vscode.Range(0, 0, 0, 0), {
-        title: "New String (Bottom)",
-        tooltip: "New entry will have a randomly generated hash",
+        title: "Add New String (End)",
+        tooltip: "Add a new string with a random hash to the end of this STBL.",
         command: _NEW_ENTRY_COMMAND_NAME,
-        arguments: [document, false]
-      }),
+        arguments: [false]
+      })
     ];
 
     let xmls: string[];
@@ -84,15 +84,24 @@ export default class StringTableJsonCodeLensProvider implements vscode.CodeLensP
   }
 }
 
-async function _newEntryCommand(document: vscode.TextDocument, addToStart: boolean) {
+async function _newEntryCommand(addToStart: boolean) {
   try {
-    if (document.isDirty) await document.save();
-    const json = StringTableJson.parse(document.getText());
+    const editor = vscode.window.activeTextEditor;
+    if (!editor) throw new Error("Editor could not be found");
+    const doc = editor.document;
+    if (doc.isDirty) await doc.save();
+
+    const json = StringTableJson.parse(doc.getText());
     json.addEntry(undefined, addToStart);
-    const uri = vscode.Uri.file(document.fileName);
-    vscode.workspace.fs.writeFile(uri, Buffer.from(json.stringify()));
+
+    editor.edit(editBuilder => {
+      editBuilder.replace(
+        new vscode.Range(doc.lineAt(0).range.start, doc.lineAt(doc.lineCount - 1).range.end),
+        json.stringify()
+      );
+    });
   } catch (err) {
-    vscode.window.showErrorMessage(`Exception occured while adding new string to STBL JSON at ${document.fileName}`);
+    vscode.window.showErrorMessage(`Exception occured while adding new string to STBL JSON`);
   }
 }
 
