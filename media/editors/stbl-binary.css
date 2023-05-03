@@ -1,22 +1,7 @@
-/* #stbl-editor {
-
-}
-
-#stbl-metadata {
-
-}
-
-#stbl-wrapper {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-} */
-
 #stbl-wrapper .stbl-entry {
   display: flex;
   gap: 1rem;
   padding: 1rem 0;
-  /* border-top: 1px solid var(--vscode-foreground); */
 }
 
 #stbl-wrapper .stbl-entry .key {
@@ -24,10 +9,16 @@
   opacity: 0.8;
 }
 
-/* #stbl-wrapper .stbl-entry .value {
-  font-family: monospace;
-} */
+#convert-to-json-btn {
+  color: var(--vscode-textLink-foreground);
+  text-decoration: underline;
+}
 
-/* #stbl-wrapper .stbl-entry .value .token {
-  color: rgb(36, 173, 246);
-} */
+#convert-to-json-btn:hover {
+  cursor: pointer;
+  text-decoration: none;
+}
+
+.margin-bottom {
+  margin-bottom: 1rem;
+}

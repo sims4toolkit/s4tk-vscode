@@ -19,10 +19,31 @@
       this.parent.appendChild(this.wrapper);
     }
 
-    async redrawEntries(entries) {
-      this.wrapper.replaceChildren(
-        ...entries.map((entry) => this._addEntry(entry))
-      );
+    async redrawEntries(entries, force = false) {
+      if (entries.length > 1000 && !force) {
+        const warningP = document.createElement("p");
+        warningP.classList.add("margin-bottom");
+        warningP.innerText = `This string table contains ${entries.length} entries; rendering it may cause VSCode to lag or freeze.`;
+
+        const renderAnywaysBtn = document.createElement("button");
+        renderAnywaysBtn.innerText = "I Understand the Risks, Render Anyways";
+        renderAnywaysBtn.onclick = () => {
+          const loadingP = document.createElement("p");
+          loadingP.innerText = "Loading...";
+          this.wrapper.replaceChildren(loadingP);
+          this.redrawEntries(entries, true);
+        };
+
+        this.wrapper.replaceChildren(warningP, renderAnywaysBtn);
+      } else if (entries.length > 0) {
+        this.wrapper.replaceChildren(
+          ...entries.map((entry) => this._addEntry(entry))
+        );
+      } else {
+        const emptyP = document.createElement("p");
+        emptyP.innerText = "This string table is empty.";
+        this.wrapper.replaceChildren(emptyP);
+      }
     }
 
     _addEntry(entry) {

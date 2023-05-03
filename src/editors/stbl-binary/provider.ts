@@ -143,6 +143,7 @@ export default class StringTableEditorProvider implements vscode.CustomEditorPro
 				<title>String Table</title>
 			</head>
 			<body>
+        <p class="margin-bottom">Binary STBLs are view-only. It is recommended to use STBL JSONs with S4TK. <span id="convert-to-json-btn">Convert to JSON</span>.</p>
 				<div id="stbl-editor"></div>
 				<script nonce="${nonce}" src="${scriptUri}"></script>
 			</body>
