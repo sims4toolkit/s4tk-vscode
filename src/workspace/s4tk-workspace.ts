@@ -29,12 +29,14 @@ class _S4TKWorkspace {
       const config = parseConfig(content.toString());
       vscode.window.showInformationMessage('Successfully initialized S4TK workspace.');
       return this._config = config;
-    } catch (err) {
+    } catch (err: any) {
+      const getHelp = 'Get Help';
       vscode.window.showErrorMessage(
-        'Could not validate S4TK config. Please resolve any warnings or errors you see in your s4tk.config.json file.',
-        'Get Help'
-      ).then((_) => {
-        vscode.env.openExternal(vscode.Uri.parse('https://frankkmods.com/#/contact'));
+        `Could not validate S4TK config (Error: ${err.stack ?? err})`,
+        getHelp
+      ).then((message) => {
+        if (message === getHelp)
+          vscode.env.openExternal(vscode.Uri.parse('https://frankkmods.com/#/contact'));
       });
 
       return undefined;
