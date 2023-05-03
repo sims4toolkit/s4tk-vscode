@@ -3,13 +3,14 @@ import { ValidationError } from "jsonschema";
 import { CONFIG_FILENAME, DEFAULT_CONFIG_CONTENT, S4TKConfig, parseConfig, stringifyConfig } from "@models/s4tk-config";
 import { fileExists } from "@helpers/utils";
 import StringTableJson from "@models/stbl-json";
-import { StringTableLocale } from "@s4tk/models/enums";
 
 class _S4TKWorkspace {
   //#region Properties
 
   private _config?: S4TKConfig;
   get config() { return this._config; }
+
+  get active() { return Boolean(this._config); }
 
   //#endregion
 
