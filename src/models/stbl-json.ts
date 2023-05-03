@@ -6,26 +6,29 @@ import { ResourceKey } from "@s4tk/models/types";
 import { KeyStringPair } from "@s4tk/models/lib/resources/stbl/types";
 import { saltedUuid } from "@helpers/utils";
 
+const _DEFAULT_LOCALE = "English";
+const _DEFAULT_GROUP = "0x80000000";
+
 interface StringTableJsonEntry {
   key: number | string;
   value: string;
 }
 
 export default class StringTableJson {
+  public locale?: string;
   public group?: number | string;
   public instanceBase?: string;
-  public locale?: string;
 
   //#region Lifecycle
 
   constructor(public entries: StringTableJsonEntry[], options: {
+    locale?: string;
     group?: number | string;
     instanceBase?: string;
-    locale?: string;
   } = {}) {
+    this.locale = options?.locale;
     this.group = options?.group;
     this.instanceBase = options?.instanceBase;
-    this.locale = options?.locale;
   }
 
   /**
@@ -41,9 +44,9 @@ export default class StringTableJson {
       return new StringTableJson(parsed);
     } else {
       const stblJson = new StringTableJson(parsed.entries);
+      stblJson.locale = parsed.locale;
       stblJson.group = parsed.group;
       stblJson.instanceBase = parsed.instanceBase;
-      stblJson.locale = parsed.locale;
       return stblJson;
     }
   }
@@ -54,13 +57,13 @@ export default class StringTableJson {
    */
   static generateRandomContent(): Uint8Array {
     const json = {
-      group: "0x80000000",
+      locale: _DEFAULT_LOCALE,
+      group: _DEFAULT_GROUP,
       instanceBase: formatAsHexString(
         StringTableLocale.getInstanceBase(fnv64(saltedUuid())),
         14,
         true
       ),
-      locale: "English",
       entries: []
     };
 
@@ -123,6 +126,19 @@ export default class StringTableJson {
   }
 
   /**
+   * Adds any missing metadata to this STBL by filling them in with defaults.
+   */
+  insertDefaultMetadata() {
+    this.locale ??= _DEFAULT_LOCALE;
+    this.group ??= _DEFAULT_GROUP;
+    this.instanceBase ??= formatAsHexString(
+      StringTableLocale.getInstanceBase(fnv64(saltedUuid())),
+      14,
+      true
+    );
+  }
+
+  /**
    * Converts this StringTableJson to a JSON string.
    * 
    * @param spaces Number of spaces to use in produced output
@@ -138,9 +154,9 @@ export default class StringTableJson {
       }
     };
 
+    copyProp('locale');
     copyProp('group');
     copyProp('instanceBase');
-    copyProp('locale');
 
     if (hasCopiedProp) {
       json.entries = this.entries;

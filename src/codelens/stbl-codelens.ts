@@ -6,6 +6,7 @@ import S4TKWorkspace from '@workspace/s4tk-workspace';
 const _KEY_REGEX = /^\s*"key":[^,]*,/;
 const _NEW_ENTRY_COMMAND_NAME = "s4tk.stringTableJson.addNewEntry";
 const _COPY_ENTRY_COMMAND_NAME = "s4tk.stringTableJson.copyAsXml";
+const _ADD_METADATA_COMMAND_NAME = "s4tk.stringTableJson.addMetaData";
 
 export default class StringTableJsonCodeLensProvider implements vscode.CodeLensProvider {
   private _codeLenses: vscode.CodeLens[] = [];
@@ -28,6 +29,7 @@ export default class StringTableJsonCodeLensProvider implements vscode.CodeLensP
 
     vscode.commands.registerCommand(_NEW_ENTRY_COMMAND_NAME, _newEntryCommand);
     vscode.commands.registerCommand(_COPY_ENTRY_COMMAND_NAME, _copyEntryCommand);
+    vscode.commands.registerCommand(_ADD_METADATA_COMMAND_NAME, _addMetadataCommand);
   }
 
   public provideCodeLenses(
@@ -48,6 +50,16 @@ export default class StringTableJsonCodeLensProvider implements vscode.CodeLensP
         arguments: [false]
       })
     ];
+
+    if (document.getText(new vscode.Range(0, 0, 0, 1)) === "[") {
+      this._codeLenses.push(
+        new vscode.CodeLens(new vscode.Range(0, 0, 0, 0), {
+          title: "Insert Metadata",
+          tooltip: "Convert this array-based STBL into an object-based one that tracks file metadata.",
+          command: _ADD_METADATA_COMMAND_NAME
+        })
+      );
+    }
 
     let xmls: string[];
     try {
@@ -85,6 +97,8 @@ export default class StringTableJsonCodeLensProvider implements vscode.CodeLensP
   }
 }
 
+//#region Helpers
+
 async function _newEntryCommand(addToStart: boolean) {
   try {
     const editor = vscode.window.activeTextEditor;
@@ -111,3 +125,26 @@ function _copyEntryCommand(xml: string) {
   if (S4TKWorkspace.config?.settings?.showCopyConfirmation ?? true)
     vscode.window.showInformationMessage(`Copied: ${xml}`);
 }
+
+async function _addMetadataCommand() {
+  try {
+    const editor = vscode.window.activeTextEditor;
+    if (!editor) throw new Error("Editor could not be found");
+    const doc = editor.document;
+    if (doc.isDirty) await doc.save();
+
+    const json = StringTableJson.parse(doc.getText());
+    json.insertDefaultMetadata();
+
+    editor.edit(editBuilder => {
+      editBuilder.replace(
+        new vscode.Range(doc.lineAt(0).range.start, doc.lineAt(doc.lineCount - 1).range.end),
+        json.stringify()
+      );
+    });
+  } catch (err) {
+    vscode.window.showErrorMessage(`Exception occured while adding metadata to STBL JSON`);
+  }
+}
+
+//#endregion
