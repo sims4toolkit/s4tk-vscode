@@ -15,6 +15,7 @@
 	"dependencies": {
 		"@s4tk/hashing": "^0.2.1",
 		"@s4tk/models": "^0.6.6",
+		"jsonschema": "^1.4.1",
 		"uuid": "^9.0.0"
 	},
 	"devDependencies": {
@@ -64,14 +65,19 @@
 				"category": "FNV Hashing"
 			},
 			{
-				"command": "s4tk.fileCreate.stblBinary",
+				"command": "s4tk.ts4Files.createStblBinary",
 				"title": "Create empty STBL (Binary)",
 				"category": "TS4 Files"
 			},
 			{
-				"command": "s4tk.fileCreate.stblJson",
+				"command": "s4tk.ts4Files.createStblJson",
 				"title": "Create empty STBL (JSON)",
 				"category": "TS4 Files"
+			},
+			{
+				"command": "s4tk.workspace.reloadConfig",
+				"title": "Reload S4TK Config",
+				"category": "S4TK Workspace"
 			}
 		],
 		"customEditors": [

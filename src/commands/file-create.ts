@@ -7,7 +7,7 @@ import StringTableEditorProvider from "@editors/stbl-binary/provider";
 import { fileExists, saltedUuid } from "@helpers/utils";
 
 export default function registerFileCreateCommands() {
-  vscode.commands.registerCommand('s4tk.fileCreate.stblBinary', () => {
+  vscode.commands.registerCommand('s4tk.ts4Files.createStblBinary', () => {
     _createNewFile({
       promptTitle: "Name of new String Table (Binary)",
       extension: ".stbl",
@@ -20,7 +20,7 @@ export default function registerFileCreateCommands() {
     });
   });
 
-  vscode.commands.registerCommand('s4tk.fileCreate.stblJson', () => {
+  vscode.commands.registerCommand('s4tk.ts4Files.createStblJson', () => {
     _createNewFile({
       promptTitle: "Name of new String Table (JSON)",
       extension: ".stbl.json",
