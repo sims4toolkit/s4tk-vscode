@@ -37,6 +37,7 @@ export default class StringTableJsonCodeLensProvider implements vscode.CodeLensP
 
     vscode.commands.registerCommand("s4tk.stringTableJson.copyAsXml", (xml: string) => {
       vscode.env.clipboard.writeText(xml);
+      vscode.window.showInformationMessage(`Copied: ${xml}`);
     });
   }
 
