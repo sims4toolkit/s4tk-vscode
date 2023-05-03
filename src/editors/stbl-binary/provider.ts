@@ -1,9 +1,8 @@
 import * as vscode from 'vscode';
-import { disposeAll } from '@helpers/dispose';
 import { getNonce } from '@helpers/utils';
 import WebviewCollection from '@helpers/webview-collection';
 import StringTableDocument from './document';
-import type { StringTableEdit, StringTableInMessage, StringTableJson, StringTableOutMessage } from './types';
+import type { StringTableInMessage, StringTableOutMessage } from './types';
 
 /**
  * Provider for string table editors.
@@ -47,32 +46,7 @@ export default class StringTableEditorProvider implements vscode.CustomEditorPro
     openContext: { backupId?: string },
     _token: vscode.CancellationToken
   ): Promise<StringTableDocument> {
-    const document: StringTableDocument = await StringTableDocument.create(uri, openContext.backupId);
-
-    const listeners: vscode.Disposable[] = [];
-
-    listeners.push(document.onDidChange(e => {
-      // Tell VS Code that the document has been edited by the use.
-      this._onDidChangeCustomDocument.fire({
-        document,
-        ...e,
-      });
-    }));
-
-    listeners.push(document.onDidChangeContent(e => {
-      // Update all webviews when the document changes
-      for (const webviewPanel of this._webviews.get(document.uri)) {
-        webviewPanel.options.enableFindWidget
-        this._postMessage(webviewPanel, {
-          type: "init",
-          body: document.stbl.toJsonObject(true, true) as StringTableJson,
-        });
-      }
-    }));
-
-    document.onDidDispose(() => disposeAll(listeners));
-
-    return document;
+    return await StringTableDocument.create(uri, openContext.backupId);
   }
 
   async resolveCustomEditor(
@@ -83,13 +57,7 @@ export default class StringTableEditorProvider implements vscode.CustomEditorPro
     this._webviews.add(document.uri, webviewPanel);
     webviewPanel.webview.options = { enableScripts: true };
     webviewPanel.webview.html = this._getHtmlForWebview(webviewPanel.webview);
-    webviewPanel.webview.onDidReceiveMessage(e => this._onMessage(document, e));
-    webviewPanel.webview.onDidReceiveMessage(e => {
-      if (e.type === 'ready') {
-        const body = document.stbl.toJsonObject(true, true) as StringTableJson;
-        this._postMessage(webviewPanel, { type: "init", body: body });
-      }
-    });
+    webviewPanel.webview.onDidReceiveMessage(e => this._onMessage(document, webviewPanel, e));
   }
 
   private readonly _onDidChangeCustomDocument = new vscode.EventEmitter<vscode.CustomDocumentEditEvent<StringTableDocument>>();
@@ -100,15 +68,18 @@ export default class StringTableEditorProvider implements vscode.CustomEditorPro
   }
 
   public revertCustomDocument(document: StringTableDocument, cancellation: vscode.CancellationToken): Thenable<void> {
-    return document.revert(cancellation);
+    // intentionally blank
+    return new Promise(() => { });
   }
 
   public saveCustomDocument(document: StringTableDocument, cancellation: vscode.CancellationToken): Thenable<void> {
-    return document.save(cancellation);
+    // intentionally blank
+    return new Promise(() => { });
   }
 
   public saveCustomDocumentAs(document: StringTableDocument, destination: vscode.Uri, cancellation: vscode.CancellationToken): Thenable<void> {
-    return document.saveAs(destination, cancellation);
+    // intentionally blank
+    return new Promise(() => { });
   }
 
   //#endregion
@@ -150,12 +121,18 @@ export default class StringTableEditorProvider implements vscode.CustomEditorPro
 			</html>`;
   }
 
-  private _onMessage(document: StringTableDocument, message: StringTableInMessage) {
-    switch (message.type) {
-      case 'edit': {
-        document.makeEdit(message.body);
-        return;
-      }
+  private _onMessage(
+    document: StringTableDocument,
+    webviewPanel: vscode.WebviewPanel,
+    message: StringTableInMessage
+  ) {
+    if (message.type === 'ready') {
+      this._postMessage(webviewPanel, {
+        type: "init",
+        body: document.stbl.toJsonObject(true)
+      });
+    } else if (message.type === 'convertToJson') {
+      document.convertToJson();
     }
   }
 

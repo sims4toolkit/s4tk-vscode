@@ -1,109 +1,93 @@
 (function () {
   const vscode = acquireVsCodeApi();
 
+  const MAX_STBL_SIZE = 1000;
+
+  function createElement(tag, options) {
+    const element = document.createElement(tag);
+    options?.parent?.appendChild(element);
+    if (options?.id) element.id = options.id;
+    if (options?.innerText) element.innerText = options.innerText;
+    if (options?.onclick) element.onclick = options.onclick;
+    if (options?.cls) element.classList.add(options.cls);
+    options?.children?.forEach((child) => element.appendChild(child));
+    return element;
+  }
+
   class StringTableEditor {
     constructor(parent) {
       this.ready = false;
       this.parent = parent;
-      this._entryMap = new Map();
-      this._initElements();
+      this.entriesWrapper = createElement("div", {
+        id: "entries-wrapper",
+        parent,
+      });
     }
 
-    _initElements() {
-      this.metadata = document.createElement("div");
-      this.metadata.id = "stbl-metadata";
-      this.parent.appendChild(this.metadata);
-
-      this.wrapper = document.createElement("div");
-      this.wrapper.id = "stbl-wrapper";
-      this.parent.appendChild(this.wrapper);
-    }
-
-    async redrawEntries(entries, force = false) {
-      if (entries.length > 1000 && !force) {
-        const warningP = document.createElement("p");
-        warningP.classList.add("margin-bottom");
-        warningP.innerText = `This string table contains ${entries.length} entries; rendering it may cause VSCode to lag or freeze.`;
-
-        const renderAnywaysBtn = document.createElement("button");
-        renderAnywaysBtn.innerText = "I Understand the Risks, Render Anyways";
-        renderAnywaysBtn.onclick = () => {
-          const loadingP = document.createElement("p");
-          loadingP.innerText = "Loading...";
-          this.wrapper.replaceChildren(loadingP);
-          this.redrawEntries(entries, true);
-        };
-
-        this.wrapper.replaceChildren(warningP, renderAnywaysBtn);
+    async redrawEntries(entries) {
+      if (entries.length > MAX_STBL_SIZE) {
+        this._showLargeStblMessage(entries);
       } else if (entries.length > 0) {
-        this.wrapper.replaceChildren(
-          ...entries.map((entry) => this._addEntry(entry))
-        );
+        this._renderEntries(entries);
       } else {
-        const emptyP = document.createElement("p");
-        emptyP.innerText = "This string table is empty.";
-        this.wrapper.replaceChildren(emptyP);
+        this._showEmptyStblMessage();
       }
     }
 
-    _addEntry(entry) {
-      const entryDiv = document.createElement("div");
-      entryDiv.classList.add("stbl-entry");
-      entryDiv.setAttribute("data-id", entry.id);
-      this._entryMap.set(entry.id, entryDiv);
-
-      const keyP = document.createElement("p");
-      keyP.classList.add("key");
-      keyP.innerText = entry.key;
-      entryDiv.appendChild(keyP);
-
-      const valueP = document.createElement("p");
-      valueP.classList.add("value");
-      valueP.innerText = entry.value;
-      entryDiv.appendChild(valueP);
-
-      return entryDiv;
+    _renderEntries(entries) {
+      this.entriesWrapper.replaceChildren(
+        ...entries.map((entry) =>
+          createElement("div", {
+            cls: "stbl-entry",
+            children: [
+              createElement("p", {
+                cls: "key",
+                innerText: entry.key,
+              }),
+              createElement("p", {
+                cls: "value",
+                innerText: entry.value,
+              }),
+            ],
+          })
+        )
+      );
     }
 
-    async applyEdit(edit) {
-      switch (edit.op) {
-        case "create": {
-          const entryDiv = this._addEntry(edit);
-          this.wrapper.appendChild(entryDiv);
-          return;
-        }
-        case "update": {
-          const entryDiv = this._entryMap(edit.id);
-          if (edit.key !== undefined) {
-            const keyP = entryDiv.querySelector(".key");
-            keyP.innerText = edit.key;
-          }
-          if (edit.value !== undefined) {
-            const valueP = entryDiv.querySelector(".value");
-            valueP.innerText = edit.value;
-          }
-          return;
-        }
-        case "delete": {
-          const entryDiv = this._entryMap(edit.id);
-          entryDiv.remove();
-          return;
-        }
-      }
+    _showLargeStblMessage(entries) {
+      this.entriesWrapper.replaceChildren(
+        createElement("p", {
+          cls: "margin-bottom",
+          innerText: `This string table contains ${entries.length} entries; rendering it may cause VSCode to lag or freeze.`,
+        }),
+        createElement("button", {
+          innerText: "I Understand the Risks, Render Anyways",
+          onclick: () => {
+            this._renderEntries(entries);
+          },
+        })
+      );
+    }
+
+    _showEmptyStblMessage() {
+      this.entriesWrapper.replaceChildren(
+        createElement("p", { innerText: "This string table is empty." })
+      );
     }
   }
 
   const editor = new StringTableEditor(document.getElementById("stbl-editor"));
+
+  const convertToJsonBtn = document.getElementById("convert-to-json-btn");
+  convertToJsonBtn.onclick = () => {
+    vscode.postMessage({ type: "convertToJson" });
+  };
 
   window.addEventListener("message", async (e) => {
     const { type, body } = e.data;
     switch (type) {
       case "init": {
         await editor.redrawEntries(body);
-        return;
-      }
-      case "edit": {
-        await editor.applyEdit(body);
         return;
       }
     }

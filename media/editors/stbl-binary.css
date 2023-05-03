@@ -1,10 +1,10 @@
-#stbl-wrapper .stbl-entry {
+#entries-wrapper .stbl-entry {
   display: flex;
   gap: 1rem;
   padding: 1rem 0;
 }
 
-#stbl-wrapper .stbl-entry .key {
+#entries-wrapper .stbl-entry .key {
   font-family: monospace;
   opacity: 0.8;
 }
