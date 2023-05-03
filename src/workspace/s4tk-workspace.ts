@@ -94,9 +94,9 @@ class _S4TKWorkspace {
   }
 
   /**
-   * TODO:
+   * Sets the STBL at the given URI as the default STBL for this project.
    * 
-   * @param stblUri TODO:
+   * @param stblUri URI to the string table file that was clicked on
    */
   async setDefaultStbl(stblUri: vscode.Uri) {
     if (!this._config) {
@@ -107,7 +107,7 @@ class _S4TKWorkspace {
       return;
     }
 
-    // FIXME: make paths relative?
+    // TODO: make paths relative?
     if (!this._config.stringTables) {
       this._config.stringTables = {
         defaultPath: stblUri.fsPath
@@ -117,10 +117,16 @@ class _S4TKWorkspace {
     }
 
     const configUri = (await _findConfig()).uri;
-    // FIXME: check that uri is not null
-    const configContent = stringifyConfig(this._config);
-    // FIXME: what if document is dirty? it will cause issues...
-    vscode.workspace.fs.writeFile(configUri!, Buffer.from(configContent));
+    if (configUri) {
+      const configContent = stringifyConfig(this._config);
+      // FIXME: what if document is dirty? it will cause issues...
+      vscode.workspace.fs.writeFile(configUri!, Buffer.from(configContent));
+    } else {
+      vscode.window.showErrorMessage(
+        'Failed to locate config file while updating default STBL. Please report this problem.',
+        _REPORT_PROBLEM_BUTTON
+      ).then(_handlePopupClick);
+    }
   }
 
   //#endregion
