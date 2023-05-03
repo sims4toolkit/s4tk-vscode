@@ -67,11 +67,6 @@
           "description": "Whether or not the S4TK extension is allowed to create missing folders in order to output to `destinations`.",
           "default": false
         },
-        "allowOverwritingFiles": {
-          "type": "boolean",
-          "description": "Whether or not the S4TK extension is allowed to overwrite files with the same name.",
-          "default": true
-        },
         "sourceFolder": {
           "type": "string",
           "description": "Absolute or relative path to the folder that contains all of the resources for this project. If omitted, then the root of this project is considered to be the source folder.\n\nBoth Windows and Unix paths are accepted; they will be automatically converted as needed."

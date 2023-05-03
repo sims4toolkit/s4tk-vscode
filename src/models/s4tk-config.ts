@@ -12,7 +12,6 @@ export interface S4TKConfig {
 
   buildInstructions: {
     allowFolderCreation?: boolean;
-    allowOverwritingFiles?: boolean;
     sourceFolder?: string;
     destinations: string[];
     packages?: {
@@ -44,7 +43,6 @@ export const DEFAULT_CONFIG_CONTENT = Buffer.from(`{
   },
   "buildInstructions": {
     "allowFolderCreation": false,
-    "allowOverwritingFiles": false,
     "sourceFolder": "./src",
     "destinations": [
       "./out"
