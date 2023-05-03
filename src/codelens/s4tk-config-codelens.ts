@@ -27,7 +27,9 @@ export default class S4TKConfigCodeLensProvider implements vscode.CodeLensProvid
       new S4TKConfigCodeLensProvider()
     );
 
-    vscode.commands.registerCommand(_RELOAD_CONFIG_COMMAND_NAME, () => {
+    vscode.commands.registerCommand(_RELOAD_CONFIG_COMMAND_NAME, async () => {
+      const document = vscode.window.activeTextEditor?.document;
+      if (document?.isDirty) await document.save();
       S4TKWorkspace.loadConfig({ showNoConfigError: true });
     });
   }
