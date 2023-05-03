@@ -3,6 +3,8 @@ import { formatStringKey } from '@s4tk/hashing/formatting';
 import StringTableJson from 'models/stbl-json';
 
 const _KEY_REGEX = /^\s*"key":[^,]*,/;
+const _NEW_ENTRY_COMMAND_NAME = "s4tk.stringTableJson.addNewEntry";
+const _COPY_ENTRY_COMMAND_NAME = "s4tk.stringTableJson.copyAsXml";
 
 export default class StringTableJsonCodeLensProvider implements vscode.CodeLensProvider {
   private _codeLenses: vscode.CodeLens[] = [];
@@ -23,22 +25,8 @@ export default class StringTableJsonCodeLensProvider implements vscode.CodeLensP
       new StringTableJsonCodeLensProvider()
     );
 
-    vscode.commands.registerCommand("s4tk.stringTableJson.addNewEntry", async (document: vscode.TextDocument, addToStart: boolean) => {
-      try {
-        if (document.isDirty) await document.save();
-        const json = StringTableJson.parse(document.getText());
-        json.addEntry(undefined, addToStart);
-        const uri = vscode.Uri.file(document.fileName);
-        vscode.workspace.fs.writeFile(uri, Buffer.from(json.stringify()));
-      } catch (err) {
-        vscode.window.showErrorMessage(`Exception occured while adding new string to STBL JSON at ${document.fileName}`);
-      }
-    });
-
-    vscode.commands.registerCommand("s4tk.stringTableJson.copyAsXml", (xml: string) => {
-      vscode.env.clipboard.writeText(xml);
-      vscode.window.showInformationMessage(`Copied: ${xml}`);
-    });
+    vscode.commands.registerCommand(_NEW_ENTRY_COMMAND_NAME, _newEntryCommand);
+    vscode.commands.registerCommand(_COPY_ENTRY_COMMAND_NAME, _copyEntryCommand);
   }
 
   public provideCodeLenses(
@@ -49,13 +37,13 @@ export default class StringTableJsonCodeLensProvider implements vscode.CodeLensP
       new vscode.CodeLens(new vscode.Range(0, 0, 0, 0), {
         title: "New String (Top)",
         tooltip: "New entry will have a randomly generated hash",
-        command: "s4tk.stringTableJson.addNewEntry",
+        command: _NEW_ENTRY_COMMAND_NAME,
         arguments: [document, true]
       }),
       new vscode.CodeLens(new vscode.Range(0, 0, 0, 0), {
         title: "New String (Bottom)",
         tooltip: "New entry will have a randomly generated hash",
-        command: "s4tk.stringTableJson.addNewEntry",
+        command: _NEW_ENTRY_COMMAND_NAME,
         arguments: [document, false]
       }),
     ];
@@ -80,7 +68,7 @@ export default class StringTableJsonCodeLensProvider implements vscode.CodeLensP
         const command: vscode.Command = {
           title: "Copy as XML",
           tooltip: xmls[stblEntryIndex],
-          command: "s4tk.stringTableJson.copyAsXml",
+          command: _COPY_ENTRY_COMMAND_NAME,
           arguments: [xmls[stblEntryIndex]]
         };
         this._codeLenses.push(new vscode.CodeLens(range, command));
@@ -94,4 +82,21 @@ export default class StringTableJsonCodeLensProvider implements vscode.CodeLensP
   public resolveCodeLens(codeLens: vscode.CodeLens, token: vscode.CancellationToken) {
     return codeLens;
   }
+}
+
+async function _newEntryCommand(document: vscode.TextDocument, addToStart: boolean) {
+  try {
+    if (document.isDirty) await document.save();
+    const json = StringTableJson.parse(document.getText());
+    json.addEntry(undefined, addToStart);
+    const uri = vscode.Uri.file(document.fileName);
+    vscode.workspace.fs.writeFile(uri, Buffer.from(json.stringify()));
+  } catch (err) {
+    vscode.window.showErrorMessage(`Exception occured while adding new string to STBL JSON at ${document.fileName}`);
+  }
+}
+
+function _copyEntryCommand(xml: string) {
+  vscode.env.clipboard.writeText(xml);
+  vscode.window.showInformationMessage(`Copied: ${xml}`);
 }
