@@ -30,7 +30,13 @@ class _S4TKWorkspace {
       vscode.window.showInformationMessage('Successfully initialized S4TK workspace.');
       return this._config = config;
     } catch (err) {
-      vscode.window.showErrorMessage(`Could not load S4TK config (${err})`);
+      vscode.window.showErrorMessage(
+        'Could not validate S4TK config. Please resolve any warnings or errors you see in your s4tk.config.json file.',
+        'Get Help'
+      ).then((_) => {
+        vscode.env.openExternal(vscode.Uri.parse('https://frankkmods.com/#/contact'));
+      });
+
       return undefined;
     }
   }
