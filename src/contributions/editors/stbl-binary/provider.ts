@@ -1,34 +1,23 @@
 import * as vscode from 'vscode';
 import { getNonce } from '@helpers/utils';
-import WebviewCollection from '@helpers/webview-collection';
 import StringTableDocument from './document';
 import type { StringTableInMessage, StringTableOutMessage } from './types';
+import ViewOnlyEditorProvider from '../view-only/provider';
+
+const _VIEW_TYPE = 's4tk.editor.stblBinary';
 
 /**
  * Provider for string table editors.
  */
-export default class StringTableEditorProvider implements vscode.CustomEditorProvider<StringTableDocument> {
-  //#region Properties
-
-  public static readonly viewType = 's4tk.editor.stblBinary';
-
-  private readonly _webviews = new WebviewCollection();
-
-  //#endregion
-
-  //#region Initialization
-
-  constructor(
-    private readonly _context: vscode.ExtensionContext
-  ) { }
-
-  //#endregion
-
-  //#region VSC
+export default class StringTableEditorProvider
+  extends ViewOnlyEditorProvider<StringTableDocument, StringTableInMessage, StringTableOutMessage> {
+  constructor(private readonly _context: vscode.ExtensionContext) {
+    super();
+  }
 
   public static register(context: vscode.ExtensionContext): vscode.Disposable {
     return vscode.window.registerCustomEditorProvider(
-      StringTableEditorProvider.viewType,
+      _VIEW_TYPE,
       new StringTableEditorProvider(context), {
       supportsMultipleEditorsPerDocument: true,
       webviewOptions: {
@@ -36,10 +25,6 @@ export default class StringTableEditorProvider implements vscode.CustomEditorPro
       }
     });
   }
-
-  //#endregion
-
-  //#region CustomEditorProvider
 
   async openCustomDocument(
     uri: vscode.Uri,
@@ -49,44 +34,8 @@ export default class StringTableEditorProvider implements vscode.CustomEditorPro
     return await StringTableDocument.create(uri, openContext.backupId);
   }
 
-  async resolveCustomEditor(
-    document: StringTableDocument,
-    webviewPanel: vscode.WebviewPanel,
-    _token: vscode.CancellationToken
-  ): Promise<void> {
-    this._webviews.add(document.uri, webviewPanel);
-    webviewPanel.webview.options = { enableScripts: true };
-    webviewPanel.webview.html = this._getHtmlForWebview(webviewPanel.webview);
-    webviewPanel.webview.onDidReceiveMessage(e => this._onMessage(document, webviewPanel, e));
-  }
-
-  private readonly _onDidChangeCustomDocument = new vscode.EventEmitter<vscode.CustomDocumentEditEvent<StringTableDocument>>();
-  public readonly onDidChangeCustomDocument = this._onDidChangeCustomDocument.event;
-
-  public backupCustomDocument(document: StringTableDocument, context: vscode.CustomDocumentBackupContext, cancellation: vscode.CancellationToken): Thenable<vscode.CustomDocumentBackup> {
-    return document.backup(context.destination, cancellation);
-  }
-
-  public revertCustomDocument(document: StringTableDocument, cancellation: vscode.CancellationToken): Thenable<void> {
-    // intentionally blank
-    return new Promise(() => { });
-  }
-
-  public saveCustomDocument(document: StringTableDocument, cancellation: vscode.CancellationToken): Thenable<void> {
-    // intentionally blank
-    return new Promise(() => { });
-  }
-
-  public saveCustomDocumentAs(document: StringTableDocument, destination: vscode.Uri, cancellation: vscode.CancellationToken): Thenable<void> {
-    // intentionally blank
-    return new Promise(() => { });
-  }
-
-  //#endregion
-
-  //#region Private Methods
-
-  private _getHtmlForWebview(webview: vscode.Webview): string {
+  protected _getHtmlForWebview(webview: vscode.Webview): string {
+    // TODO: move this somewhere else
     const styleResetUri = webview.asWebviewUri(vscode.Uri.joinPath(
       this._context.extensionUri, 'media', 'reset.css'));
 
@@ -101,6 +50,7 @@ export default class StringTableEditorProvider implements vscode.CustomEditorPro
 
     const nonce = getNonce();
 
+    // TODO: make this cleaner
     return `
 			<!DOCTYPE html>
 			<html lang="en">
@@ -121,7 +71,7 @@ export default class StringTableEditorProvider implements vscode.CustomEditorPro
 			</html>`;
   }
 
-  private _onMessage(
+  protected _onMessage(
     document: StringTableDocument,
     webviewPanel: vscode.WebviewPanel,
     message: StringTableInMessage
@@ -129,16 +79,10 @@ export default class StringTableEditorProvider implements vscode.CustomEditorPro
     if (message.type === 'ready') {
       this._postMessage(webviewPanel, {
         type: "init",
-        body: document.stbl.toJsonObject(true)
+        body: document.stbl.toJsonObject(true) as { key: string; value: string }[]
       });
     } else if (message.type === 'convertToJson') {
       document.convertToJson();
     }
   }
-
-  private _postMessage(panel: vscode.WebviewPanel, message: StringTableOutMessage) {
-    panel.webview.postMessage(message);
-  }
-
-  //#endregion
 }

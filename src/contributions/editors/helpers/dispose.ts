@@ -1,14 +1,5 @@
 import * as vscode from "vscode";
 
-export function disposeAll(disposables: vscode.Disposable[]): void {
-	while (disposables.length) {
-		const item = disposables.pop();
-		if (item) {
-			item.dispose();
-		}
-	}
-}
-
 export abstract class Disposable {
 	private _isDisposed = false;
 
@@ -33,5 +24,11 @@ export abstract class Disposable {
 
 	protected get isDisposed(): boolean {
 		return this._isDisposed;
+	}
+}
+
+function disposeAll(disposables: vscode.Disposable[]): void {
+	while (disposables.length) {
+		disposables.pop()?.dispose();
 	}
 }

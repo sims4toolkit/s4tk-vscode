@@ -6,6 +6,7 @@
 	"private": true,
 	"license": "MIT",
 	"author": "frankkulak",
+	"publisher": "sims4toolkit",
 	"main": "./out/extension.js",
 	"scripts": {
 		"vscode:prepublish": "npm run compile",

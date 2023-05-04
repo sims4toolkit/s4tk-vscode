@@ -1,8 +1,8 @@
 import * as vscode from "vscode";
 import { StringTableResource } from "@s4tk/models";
-import StringTableEditorProvider from "../editors/stbl-binary/provider";
 import { fileExists } from "@helpers/utils";
 import StringTableJson from "@models/stbl-json";
+import { EDITOR } from "@contributes";
 
 export default function registerFileCreateCommands() {
   vscode.commands.registerCommand('s4tk.ts4Files.createStblBinary', () => {
@@ -14,7 +14,7 @@ export default function registerFileCreateCommands() {
       launchFile: (uri) => vscode.commands.executeCommand(
         'vscode.openWith',
         uri,
-        StringTableEditorProvider.viewType
+        EDITOR.stblBinary,
       ),
     });
   });
