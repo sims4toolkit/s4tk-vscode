@@ -17,8 +17,6 @@ class _S4TKWorkspace {
   //#region Public Methods
 
   activate() {
-    this.loadConfig();
-
     vscode.workspace.onDidSaveTextDocument((document) => {
       if (document.fileName.endsWith(CONFIG_FILENAME)) {
         this.loadConfig();
@@ -28,8 +26,11 @@ class _S4TKWorkspace {
     vscode.workspace.onDidDeleteFiles((e) => {
       if (e.files.some(uri => uri.path.endsWith(CONFIG_FILENAME))) {
         delete this._config;
+        vscode.window.showWarningMessage("S4TK config unloaded.");
       }
     });
+
+    this.loadConfig();
   }
 
   /**

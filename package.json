@@ -31,7 +31,10 @@
 	"categories": [
 		"Other"
 	],
-	"activationEvents": [],
+	"activationEvents": [
+		"workspaceContains:**/s4tk.config.json",
+		"workspaceContains:**/*.stbl.json"
+	],
 	"contributes": {
 		"commands": [
 			{

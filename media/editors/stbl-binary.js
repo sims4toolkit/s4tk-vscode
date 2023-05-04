@@ -58,7 +58,7 @@
       this.entriesWrapper.replaceChildren(
         createElement("p", {
           cls: "margin-bottom",
-          innerText: `This string table contains ${entries.length} entries; rendering it may cause VSCode to lag or freeze.`,
+          innerText: `This string table contains ${entries.length} entries; rendering it may cause VS Code to lag or freeze. It is recommended that you separate this STBL into several smaller JSONs, and let the build process merge them.`,
         }),
         createElement("button", {
           innerText: "I Understand the Risks, Render Anyways",
