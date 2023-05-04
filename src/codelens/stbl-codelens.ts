@@ -116,7 +116,7 @@ async function _newEntryCommand(addToStart: boolean) {
       );
     });
   } catch (err) {
-    vscode.window.showErrorMessage(`Exception occured while adding new string to STBL JSON`);
+    vscode.window.showErrorMessage(`Exception occured while adding new string to STBL JSON.`);
   }
 }
 
@@ -143,7 +143,7 @@ async function _addMetadataCommand() {
       );
     });
   } catch (err) {
-    vscode.window.showErrorMessage(`Exception occured while adding metadata to STBL JSON`);
+    vscode.window.showErrorMessage(`Exception occured while adding metadata to STBL JSON.`);
   }
 }
 

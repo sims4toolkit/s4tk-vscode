@@ -7,6 +7,7 @@ import StringTableJson from "@models/stbl-json";
 class _S4TKWorkspace {
   //#region Properties
 
+  // TODO: add event for S4TK config being reloaded?
   private _config?: S4TKConfig;
   get config() { return this._config; }
   private set config(config: S4TKConfig | undefined) {
