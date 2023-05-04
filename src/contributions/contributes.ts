@@ -2,6 +2,11 @@
 // This is just so that identifiers for contributions can be type-safe
 
 export const COMMAND = {
+  config: {
+    addPackage: "s4tk.config.addPackage",
+    build: "s4tk.config.build",
+    dryRun: "s4tk.config.dryRun",
+  },
   hashing: {
     fnv31: "s4tk.hashing.fnv31",
     fnv32: "s4tk.hashing.fnv32",
