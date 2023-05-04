@@ -16,7 +16,7 @@ const _OVERRIDE_GROUP_CODELENS = new vscode.CodeLens(new vscode.Range(0, 0, 0, 0
 });
 
 export default class TuningCodeLensProvider implements vscode.CodeLensProvider {
-  private _codeLens: vscode.CodeLens[] = [];
+  private _codeLenses: vscode.CodeLens[] = [];
   private _onDidChangeCodeLenses: vscode.EventEmitter<void> = new vscode.EventEmitter<void>();
   public readonly onDidChangeCodeLenses: vscode.Event<void> = this._onDidChangeCodeLenses.event;
 
@@ -48,17 +48,19 @@ export default class TuningCodeLensProvider implements vscode.CodeLensProvider {
     token: vscode.CancellationToken
   ): vscode.CodeLens[] | Thenable<vscode.CodeLens[]> {
     if (!S4TKWorkspace.active) return [];
-    this._codeLens = [];
+    this._codeLenses = [];
 
     if (!_linesContain(document, "Type:", 0, 1)) {
-      this._codeLens.push(_OVERRIDE_TYPE_CODELENS);
+      this._codeLenses.push(_OVERRIDE_TYPE_CODELENS);
     }
 
     if (!_linesContain(document, "Group:", 0, 1)) {
-      this._codeLens.push(_OVERRIDE_GROUP_CODELENS);
+      this._codeLenses.push(_OVERRIDE_GROUP_CODELENS);
     }
 
-    return this._codeLens;
+    // TODO: add codelens to hash filename
+
+    return this._codeLenses;
   }
 
   public resolveCodeLens(

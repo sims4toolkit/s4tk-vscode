@@ -1,8 +1,8 @@
 {
 	"name": "s4tk-vscode",
+	"version": "0.1.0-alpha.1",
 	"displayName": "Sims 4 Toolkit",
 	"description": "Sims 4 Toolkit support for VS Code.",
-	"version": "0.1.0",
 	"private": true,
 	"license": "MIT",
 	"author": "frankkulak",
