@@ -16,6 +16,23 @@ class _S4TKWorkspace {
 
   //#region Public Methods
 
+  activate() {
+    this.loadConfig();
+
+    vscode.workspace.onDidChangeTextDocument((e) => {
+      if (e.document.isDirty) return;
+      if (e.document.fileName.endsWith(CONFIG_FILENAME)) {
+        this.loadConfig();
+      }
+    });
+
+    vscode.workspace.onDidDeleteFiles((e) => {
+      if (e.files.some(uri => uri.path.endsWith(CONFIG_FILENAME))) {
+        delete this._config;
+      }
+    });
+  }
+
   /**
    * Creates a default workspace setup, if possible.
    */
@@ -74,7 +91,7 @@ class _S4TKWorkspace {
     try {
       const content = await vscode.workspace.fs.readFile(configUriInfo.uri!);
       const config = parseConfig(content.toString());
-      vscode.window.showInformationMessage('Successfully initialized S4TK workspace.');
+      vscode.window.showInformationMessage('Successfully loaded S4TK config.');
       return this._config = config;
     } catch (err: any) {
       let errMsg = err;
