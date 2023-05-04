@@ -19,9 +19,8 @@ class _S4TKWorkspace {
   activate() {
     this.loadConfig();
 
-    vscode.workspace.onDidChangeTextDocument((e) => {
-      if (e.document.isDirty) return;
-      if (e.document.fileName.endsWith(CONFIG_FILENAME)) {
+    vscode.workspace.onDidSaveTextDocument((document) => {
+      if (document.fileName.endsWith(CONFIG_FILENAME)) {
         this.loadConfig();
       }
     });
