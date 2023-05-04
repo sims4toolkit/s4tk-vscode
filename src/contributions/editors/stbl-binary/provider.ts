@@ -1,5 +1,5 @@
 import * as vscode from 'vscode';
-import { getNonce } from '@helpers/utils';
+import { getNonce } from '#helpers/utils';
 import StringTableDocument from './document';
 import type { StringTableInMessage, StringTableOutMessage } from './types';
 import ViewOnlyEditorProvider from '../view-only/provider';

@@ -1,7 +1,7 @@
 import * as vscode from 'vscode';
 import { formatStringKey } from '@s4tk/hashing/formatting';
-import StringTableJson from '@models/stbl-json';
-import S4TKWorkspace from '@workspace/s4tk-workspace';
+import StringTableJson from '#models/stbl-json';
+import S4TKWorkspace from '#workspace/s4tk-workspace';
 
 const _KEY_REGEX = /^\s*"key":[^,]*,/;
 const _NEW_ENTRY_COMMAND_NAME = "s4tk.stringTableJson.addNewEntry";

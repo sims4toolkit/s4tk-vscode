@@ -1,5 +1,5 @@
 import * as vscode from 'vscode';
-import S4TKWorkspace from '@workspace/s4tk-workspace';
+import S4TKWorkspace from '#workspace/s4tk-workspace';
 
 const _OVERRIDE_TYPE_COMMAND_NAME = "s4tk.tuning.overrideTypeComment";
 const _OVERRIDE_TYPE_CODELENS = new vscode.CodeLens(new vscode.Range(0, 0, 0, 0), {

@@ -1,6 +1,6 @@
 import * as vscode from 'vscode';
-import S4TKWorkspace from '@workspace/s4tk-workspace';
-import { stringifyConfig } from '@models/s4tk-config';
+import S4TKWorkspace from '#workspace/s4tk-workspace';
+import { stringifyConfig } from '#models/s4tk-config';
 
 const _BUILD_COMMAND_NAME = "s4tk.s4tkConfig.build";
 const _ADD_PACKAGE_COMMAND_NAME = "s4tk.s4tkConfig.addBuildPackage";

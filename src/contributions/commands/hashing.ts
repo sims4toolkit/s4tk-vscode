@@ -1,7 +1,7 @@
 import * as vscode from "vscode";
 import { fnv32, fnv64 } from "@s4tk/hashing";
 import { formatAsHexString } from "@s4tk/hashing/formatting";
-import { saltedUuid } from "@helpers/utils";
+import { saltedUuid } from "#helpers/utils";
 
 export default function registerHashingCommands() {
   vscode.commands.registerCommand("s4tk.hashing.fnv31", async () => {

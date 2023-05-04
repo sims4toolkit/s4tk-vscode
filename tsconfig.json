@@ -10,10 +10,10 @@
     "baseUrl": "./src",
     "moduleResolution": "node",
     "paths": {
-      "@contributes": ["contributions/contributes.ts"],
-      "@helpers/*": ["core/helpers/*"],
-      "@models/*": ["core/models/*"],
-      "@workspace/*": ["core/workspace/*"],
+      "#contributes": ["contributions/contributes.ts"],
+      "#helpers/*": ["core/helpers/*"],
+      "#models/*": ["core/models/*"],
+      "#workspace/*": ["core/workspace/*"],
     }
   },
   "include": ["src/**/*.ts"],

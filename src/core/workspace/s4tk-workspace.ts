@@ -1,8 +1,8 @@
 import * as vscode from "vscode";
 import { ValidationError } from "jsonschema";
-import { CONFIG_FILENAME, DEFAULT_CONFIG_CONTENT, S4TKConfig, parseConfig, stringifyConfig } from "@models/s4tk-config";
-import { fileExists } from "@helpers/utils";
-import StringTableJson from "@models/stbl-json";
+import { CONFIG_FILENAME, DEFAULT_CONFIG_CONTENT, S4TKConfig, parseConfig, stringifyConfig } from "#models/s4tk-config";
+import { fileExists } from "#helpers/utils";
+import StringTableJson from "#models/stbl-json";
 
 class _S4TKWorkspace {
   //#region Properties

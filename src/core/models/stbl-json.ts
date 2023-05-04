@@ -4,7 +4,7 @@ import { StringTableResource } from "@s4tk/models";
 import { StringTableLocale, BinaryResourceType } from "@s4tk/models/enums";
 import { ResourceKey } from "@s4tk/models/types";
 import { KeyStringPair } from "@s4tk/models/lib/resources/stbl/types";
-import { saltedUuid } from "@helpers/utils";
+import { saltedUuid } from "#helpers/utils";
 
 const _DEFAULT_LOCALE = "English";
 const _DEFAULT_GROUP = "0x80000000";
