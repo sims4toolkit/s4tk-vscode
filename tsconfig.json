@@ -10,12 +10,9 @@
     "baseUrl": "./src",
     "moduleResolution": "node",
     "paths": {
-      "@codelens/*": ["codelens/*"],
-      "@commands/*": ["commands/*"],
-      "@editors/*": ["editors/*"],
-      "@helpers/*": ["helpers/*"],
-      "@models/*": ["models/*"],
-      "@workspace/*": ["workspace/*"],
+      "@helpers/*": ["core/helpers/*"],
+      "@models/*": ["core/models/*"],
+      "@workspace/*": ["core/workspace/*"],
     }
   },
   "include": ["src/**/*.ts"],

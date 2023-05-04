@@ -126,7 +126,7 @@ export function stringifyConfig(config: S4TKConfig, spaces = 2): string {
  * @throws If it fails to validate aginst the schema
  */
 function _validateConfig(config: object) {
-  const configSchema = require("../../schemas/s4tk-config.schema.json");
+  const configSchema = require("../../../schemas/s4tk-config.schema.json");
   const validator = new Validator();
   validator.validate(config, configSchema, {
     throwError: true,

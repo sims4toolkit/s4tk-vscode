@@ -1,6 +1,6 @@
 import * as vscode from "vscode";
 import { StringTableResource } from "@s4tk/models";
-import StringTableEditorProvider from "@editors/stbl-binary/provider";
+import StringTableEditorProvider from "../editors/stbl-binary/provider";
 import { fileExists } from "@helpers/utils";
 import StringTableJson from "@models/stbl-json";
 
