@@ -139,6 +139,11 @@
 		"menus": {
 			"explorer/context": [
 				{
+					"when": "explorerResourceIsFolder && !s4tk.workspace.active",
+					"command": "s4tk.workspace.createWorkspace",
+					"group": "S4TK"
+				},
+				{
 					"when": "resourceFilename === 's4tk.config.json'",
 					"command": "s4tk.workspace.reloadConfig",
 					"group": "S4TK"

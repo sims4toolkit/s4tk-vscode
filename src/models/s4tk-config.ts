@@ -55,7 +55,7 @@ export const DEFAULT_CONFIG_CONTENT = Buffer.from(`{
   },
   "stringTables": {
     "defaultLocale": "English",
-    "defaultPath": "./default.stbl.json",
+    "defaultPath": "./strings/default.stbl.json",
     "generateMissingLocales": true,
     "newStringsToTop": false,
     "onePerPackage": true

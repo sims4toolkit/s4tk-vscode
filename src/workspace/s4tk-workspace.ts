@@ -9,6 +9,14 @@ class _S4TKWorkspace {
 
   private _config?: S4TKConfig;
   get config() { return this._config; }
+  private set config(config: S4TKConfig | undefined) {
+    this._config = config;
+    vscode.commands.executeCommand(
+      'setContext',
+      's4tk.workspace.active',
+      Boolean(config)
+    );
+  }
 
   get active() { return Boolean(this._config); }
 
@@ -25,7 +33,7 @@ class _S4TKWorkspace {
 
     vscode.workspace.onDidDeleteFiles((e) => {
       if (e.files.some(uri => uri.path.endsWith(CONFIG_FILENAME))) {
-        delete this._config;
+        this.config = undefined;
         vscode.window.showWarningMessage("S4TK config unloaded.");
       }
     });
@@ -55,15 +63,18 @@ class _S4TKWorkspace {
       this.loadConfig();
     });
 
-    // rootUri is guaranteed to be a URI because configUriInfo.uri is truthy
     const rootUri = vscode.workspace.workspaceFolders?.[0]?.uri as vscode.Uri;
-    vscode.workspace.fs.createDirectory(vscode.Uri.joinPath(rootUri, "src"));
     vscode.workspace.fs.createDirectory(vscode.Uri.joinPath(rootUri, "out"));
+    vscode.workspace.fs.createDirectory(vscode.Uri.joinPath(rootUri, "src"));
+    vscode.workspace.fs.createDirectory(vscode.Uri.joinPath(rootUri, "strings"));
 
-    vscode.workspace.fs.writeFile(
-      vscode.Uri.joinPath(rootUri, "src", "default.stbl.json"),
-      StringTableJson.generateRandomContent()
-    );
+    const stblUri = vscode.Uri.joinPath(rootUri, "strings", "default.stbl.json");
+    if (!(await fileExists(stblUri))) {
+      vscode.workspace.fs.writeFile(
+        stblUri,
+        StringTableJson.generateRandomContent()
+      );
+    }
   }
 
   /**
@@ -76,7 +87,7 @@ class _S4TKWorkspace {
   async loadConfig(options?: {
     showNoConfigError?: boolean;
   }): Promise<S4TKConfig | undefined> {
-    delete this._config;
+    this.config = undefined;
 
     const configUriInfo = await _findConfig();
     if (!(configUriInfo.uri && configUriInfo.exists)) {
@@ -92,7 +103,7 @@ class _S4TKWorkspace {
       const content = await vscode.workspace.fs.readFile(configUriInfo.uri!);
       const config = parseConfig(content.toString());
       vscode.window.showInformationMessage('Successfully loaded S4TK config.');
-      return this._config = config;
+      return this.config = config;
     } catch (err: any) {
       let errMsg = err;
       if (err instanceof SyntaxError) {
