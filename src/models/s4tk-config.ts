@@ -3,6 +3,8 @@ import { StringTableLocale } from "@s4tk/models/enums";
 
 //#region Types
 
+// TODO: create proxy so that every value can be read as a non-optional, unless
+// it really can be optional
 export interface S4TKConfig {
   projectInfo: {
     creatorName: string;
@@ -30,6 +32,8 @@ export interface S4TKConfig {
 
   settings?: {
     showCopyConfirmation?: boolean;
+    spacesPerIndent?: number;
+    useTabForIndent?: boolean;
   };
 }
 
@@ -61,7 +65,9 @@ export const DEFAULT_CONFIG_CONTENT = Buffer.from(`{
     "onePerPackage": true
   },
   "settings": {
-    "showCopyConfirmation": true
+    "showCopyConfirmation": true,
+    "spacesPerIndent": 2,
+    "useTabForIndent": false
   }
 }`);
 

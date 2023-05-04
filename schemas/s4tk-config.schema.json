@@ -150,6 +150,16 @@
           "type": "boolean",
           "description": "Whether or not to show a popup to confirm when something has been copied to your clipboard.",
           "default": true
+        },
+        "spacesPerIndent": {
+          "type": "integer",
+          "description": "Number of spaces to use per indent level while formatting documents. Ignored if `useTabForIndent` is true.",
+          "default": 2
+        },
+        "useTabForIndent": {
+          "type": "boolean",
+          "description": "Whether or not to use tabs instead of spaces while formatting documents. If true, then `spacesPerIndent` is ignored.",
+          "default": false
         }
       }
     }
