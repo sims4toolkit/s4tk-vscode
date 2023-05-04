@@ -10,7 +10,7 @@
     "baseUrl": "./src",
     "moduleResolution": "node",
     "paths": {
-      "@contributes": ["contributions/constants.ts"],
+      "@contributes": ["contributions/contributes.ts"],
       "@helpers/*": ["core/helpers/*"],
       "@models/*": ["core/models/*"],
       "@workspace/*": ["core/workspace/*"],
