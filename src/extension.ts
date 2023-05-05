@@ -1,13 +1,12 @@
 import * as vscode from "vscode";
 import S4TKWorkspace from "#workspace/s4tk-workspace";
-import { registerContributions } from "./contributions/_index";
+import registerContributions from "./contributions/_index";
 
-/**
- * Activates the S4TK extension and performs needed setup work.
- * 
- * @param context Extension context
- */
+let _extensionContext: vscode.ExtensionContext;
+export const getExtensionContext = () => _extensionContext;
+
 export function activate(context: vscode.ExtensionContext) {
-	registerContributions(context);
+	_extensionContext = context;
+	registerContributions();
 	S4TKWorkspace.activate();
 }
