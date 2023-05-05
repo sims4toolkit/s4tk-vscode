@@ -1,15 +1,29 @@
 import * as vscode from "vscode";
 import { randomBytes } from "crypto";
 
+//#region Types
+
 type UriSegments = string[];
 
-export const STYLES = {
-  stblBinary: ["editor", "stbl-binary.css"],
-};
+interface WebviewMediaUris {
+  scripts?: UriSegments[];
+  styles?: UriSegments[];
+}
 
-export const SCRIPTS = {
-  stblBinary: ["editor", "stbl-binary.js"],
-};
+export enum WebviewMediaGroup {
+  StringTableBinary,
+}
+
+const _WEBVIEW_MEDIA = new Map<WebviewMediaGroup, WebviewMediaUris>([
+  [WebviewMediaGroup.StringTableBinary, {
+    styles: [["editor", "stbl-binary.css"]],
+    scripts: [["editor", "stbl-binary.js"]],
+  }],
+]);
+
+//#endregion
+
+//#region Exported Functions
 
 /**
  * Returns an HTML string for use in the given webview.
@@ -24,11 +38,13 @@ export function getHtmlForWebview(
   htmlContent: {
     title: string;
     body: string;
-    styles?: UriSegments[];
-    scripts?: UriSegments[];
+    media: WebviewMediaGroup;
   },
 ): string {
   const nonce = randomBytes(32).toString("hex");
+  const media = _WEBVIEW_MEDIA.get(htmlContent.media);
+  const styles = media?.styles;
+  const scripts = media?.scripts;
 
   const toUri = (segments: UriSegments) => webview.asWebviewUri(
     vscode.Uri.joinPath(context.extensionUri, 'media', ...segments)
@@ -48,12 +64,14 @@ export function getHtmlForWebview(
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   ${toStyleLink(['reset.css'])}
   ${toStyleLink(['vscode.css'])}
-  ${htmlContent.styles?.map(toStyleLink).join('\n')}
+  ${styles?.map(toStyleLink).join('\n')}
   <title>${htmlContent.title}</title>
 </head>
 <body>
-  ${htmlContent.body}
-  ${htmlContent.scripts?.map(toScriptTag).join('\n')}
+  ${htmlContent.body ?? ''}
+  ${scripts?.map(toScriptTag).join('\n')}
 </body>
 </html>`;
 }
+
+//#endregion
