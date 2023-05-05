@@ -2,10 +2,16 @@ import * as fs from "fs";
 import * as vscode from "vscode";
 import { ValidationError, Validator } from "jsonschema";
 
+//#region Types
+
 interface JsonParseResult<T> {
   parsed?: T;
   error?: string;
 }
+
+//#endregion
+
+//#region Exported Functions
 
 /**
  * Parses the given string as a JSON object and validates it against the schema
@@ -16,6 +22,9 @@ interface JsonParseResult<T> {
  * 
  * If it either has a syntax error or does not pass the schema, a human-readable
  * error message is returned as `error` in the JsonParseResult.
+ * 
+ * @param content String content to parse as JSON
+ * @param schemaUri URI of schema
  */
 export function parseAndValidateJson<T = object>(
   content: string,
@@ -53,6 +62,8 @@ export function validateJson(
     throwError: true,
   });
 }
+
+//#endregion
 
 //#region Helpers
 

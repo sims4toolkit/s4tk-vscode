@@ -1,10 +1,9 @@
-import { Validator } from "jsonschema";
 import { StringTableLocale } from "@s4tk/models/enums";
+import { parseAndValidateJson } from "#helpers/schemas";
+import { SCHEMAS } from "#assets";
 
-//#region Types
+//#region Exported Members
 
-// TODO: create proxy so that every value can be read as a non-optional, unless
-// it really can be optional
 export interface S4TKConfig {
   projectInfo: {
     creatorName: string;
@@ -13,7 +12,7 @@ export interface S4TKConfig {
   };
 
   buildInstructions: {
-    allowFolderCreation?: boolean;
+    allowFolderCreation: boolean;
     sourceFolder?: string;
     destinations: string[];
     packages?: {
@@ -23,114 +22,131 @@ export interface S4TKConfig {
   };
 
   stringTables?: {
-    defaultLocale?: StringTableLocale;
+    defaultLocale: StringTableLocale;
     defaultPath: string;
-    generateMissingLocales?: boolean;
-    newStringsToTop?: boolean;
-    onePerPackage?: boolean;
+    generateMissingLocales: boolean;
+    newStringsToTop: boolean;
+    onePerPackage: boolean;
   };
 
-  settings?: {
-    showCopyConfirmation?: boolean;
-    spacesPerIndent?: number;
-    useTabForIndent?: boolean;
+  settings: {
+    showCopyConfirmation: boolean;
   };
 }
 
-//#endregion
+export namespace S4TKConfig {
+  /**
+   * Parses a JSON string as an S4TKConfig object. If there are syntax or
+   * validation errors, an exception is thrown.
+   * 
+   * @param content JSON content to parse
+   */
+  export function parse(content: string): S4TKConfig {
+    const result = parseAndValidateJson<S4TKConfig>(content, SCHEMAS.config);
 
-//#region Constants
-
-export const CONFIG_FILENAME = "s4tk.config.json";
-
-export const DEFAULT_CONFIG_CONTENT = Buffer.from(`{
-  "projectInfo": {
-    "creatorName": "",
-    "projectName": "",
-    "tuningPrefix": ""
-  },
-  "buildInstructions": {
-    "allowFolderCreation": false,
-    "sourceFolder": "./src",
-    "destinations": [
-      "./out"
-    ],
-    "packages": []
-  },
-  "stringTables": {
-    "defaultLocale": "English",
-    "defaultPath": "./strings/default.stbl.json",
-    "generateMissingLocales": true,
-    "newStringsToTop": false,
-    "onePerPackage": true
-  },
-  "settings": {
-    "showCopyConfirmation": true,
-    "spacesPerIndent": 2,
-    "useTabForIndent": false
-  }
-}`);
-
-//#endregion
-
-//#region Public Functions
-
-/**
- * Parses the given JSON content as an S4TK config, and validates that it
- * matches the expected format. If there are syntax or validation errors, an
- * exception is thrown.
- * 
- * @param content JSON content to parse and validate as an S4TK config
- */
-export function parseConfig(content: string): S4TKConfig {
-  const config = JSON.parse(content) as S4TKConfig;
-
-  _validateConfig(config);
-
-  const localeString = config.stringTables?.defaultLocale;
-  if (localeString != undefined) {
-    //@ts-expect-error Typing doesn't match up, but this is fine
-    config.stringTables.defaultLocale = (localeString in StringTableLocale)
-      ? StringTableLocale[localeString]
-      : StringTableLocale.English;
-  }
-
-  return config;
-}
-
-/**
- * Converts the given config to a writable string.
- * 
- * @param config Config to stringify
- * @param spaces Number of spaces to use in formatted JSON
- */
-export function stringifyConfig(config: S4TKConfig, spaces = 2): string {
-  return JSON.stringify(config, ((key, value) => {
-    switch (key) {
-      case "defaultLocale":
-        return StringTableLocale[value];
-      default:
-        return value;
+    if (result.parsed) {
+      return _getConfigProxy(result.parsed);
+    } else {
+      throw new Error(result.error);
     }
-  }), spaces);
+  }
+
+  /**
+   * Converts an S4TKConfig object to a JSON string.
+   * 
+   * @param config Config to stringify
+   */
+  export function stringify(config: S4TKConfig): string {
+    return JSON.stringify(config, ((key, value) => {
+      if (key === "defaultLocale" && typeof value === "number") {
+        return StringTableLocale[value];
+      }
+
+      return value;
+    }), 2); // FIXME: get number of spaces from somewhere
+  }
 }
 
 //#endregion
 
-//#region Helper Functions
+//#region Transformer / Default Values
 
-/**
- * Validates the given object against the S4TK config schema.
- * 
- * @param config Object to validate against config schema
- * @throws If it fails to validate aginst the schema
- */
-function _validateConfig(config: object) {
-  const configSchema = require("../../../schemas/s4tk-config.schema.json");
-  const validator = new Validator();
-  validator.validate(config, configSchema, {
-    throwError: true,
+const _CONFIG_TRANSFORMER: ConfigTransformer = {
+  stringTables: {
+    nullable: true,
+    defaults: {
+      defaultLocale: StringTableLocale.English,
+      generateMissingLocales: true,
+      newStringsToTop: false,
+      onePerPackage: true,
+    },
+    converter(prop, value) {
+      if (prop === "defaultLocale" && typeof value === "string") {
+        //@ts-ignore This is safe because value passed the schema
+        return StringTableLocale[value];
+      }
+
+      return value;
+    }
+  },
+  settings: {
+    defaults: {
+      showCopyConfirmation: true,
+    },
+  },
+};
+
+//#endregion
+
+//#region Config Proxy
+
+interface ConfigPropertyTransformer<T> {
+  /**
+   * Whether or not this property can be null at runtime.
+   */
+  nullable?: boolean;
+
+  /**
+   * Default values to use for undefined or null properties.
+   */
+  defaults?: Partial<T>;
+
+  /**
+   * Converts a property from its schema type to its runtime type.
+   * 
+   * @param prop Name of property being converted
+   * @param value Value of property being converted
+   */
+  converter?: (prop: keyof T, value: any) => any;
+}
+
+type ConfigTransformer = Partial<{
+  [key in keyof S4TKConfig]: ConfigPropertyTransformer<S4TKConfig[key]>;
+}>;
+
+function _getConfigProxy(config: S4TKConfig): S4TKConfig {
+  return new Proxy<S4TKConfig>(config, {
+    get(config, prop: keyof S4TKConfig) {
+      return (prop in _CONFIG_TRANSFORMER)
+        ? _getObjectProxy(config[prop], _CONFIG_TRANSFORMER[prop]!)
+        : config[prop];
+    },
   });
+}
+
+function _getObjectProxy<T extends object>(target: T | undefined, {
+  nullable = false,
+  defaults = {},
+  converter = (value) => value
+}: ConfigPropertyTransformer<T>): T {
+  // Just using ! to silence TS even though these are known to be undefined
+  if (nullable && !target) return target!;
+  return new Proxy<T>(target!, {
+    get(target, prop: string) {
+      //@ts-ignore This is safe because we're in a proxy
+      return converter(prop, target[prop] ?? defaults[prop]);
+    },
+  }) as T;
 }
 
 //#endregion

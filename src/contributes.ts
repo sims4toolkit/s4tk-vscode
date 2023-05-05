@@ -29,3 +29,7 @@ export const COMMAND = {
 export const EDITOR = {
   stblBinary: "s4tk.editor.stblBinary",
 };
+
+export const FILES = {
+  config: "s4tk.config.json",
+};
