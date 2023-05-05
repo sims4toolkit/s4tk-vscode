@@ -1,5 +1,6 @@
-// These should match everything listed in "contributes"
-// This is just so that identifiers for contributions can be type-safe
+// All VS Code identifiers should be defined in this file so that the strings
+// are only ever written once, and then referred to in a type-safe way and can
+// be easily changed if needed.
 
 export const COMMAND = {
   config: {
