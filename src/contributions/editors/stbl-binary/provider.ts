@@ -1,6 +1,7 @@
 import * as vscode from 'vscode';
+import { MEDIA } from '#assets';
 import { EDITOR } from '#contributes';
-import { WebviewMediaGroup, getHtmlForWebview } from '#helpers/media';
+import { getHtmlForWebview } from '#helpers/media';
 import type { StringTableInMessage, StringTableOutMessage } from './types';
 import ViewOnlyEditorProvider from '../view-only/provider';
 import StringTableDocument from './document';
@@ -10,14 +11,14 @@ import StringTableDocument from './document';
  */
 export default class StringTableEditorProvider
   extends ViewOnlyEditorProvider<StringTableDocument, StringTableInMessage, StringTableOutMessage> {
-  constructor(private readonly _context: vscode.ExtensionContext) {
+  constructor() {
     super();
   }
 
-  public static register(context: vscode.ExtensionContext): vscode.Disposable {
+  public static register(): vscode.Disposable {
     return vscode.window.registerCustomEditorProvider(
       EDITOR.stblBinary,
-      new StringTableEditorProvider(context), {
+      new StringTableEditorProvider(), {
       supportsMultipleEditorsPerDocument: true,
       webviewOptions: {
         enableFindWidget: true
@@ -34,11 +35,12 @@ export default class StringTableEditorProvider
   }
 
   protected _getHtmlForWebview(webview: vscode.Webview): string {
-    return getHtmlForWebview(this._context, webview, {
+    return getHtmlForWebview(webview, {
       title: "Binary String Table",
       body: `<p class="margin-bottom">Binary STBLs are view-only. It is recommended to use STBL JSONs with S4TK. <span id="convert-to-json-btn">Convert to JSON</span>.</p>
       <div id="stbl-editor"></div>`,
-      media: WebviewMediaGroup.StringTableBinary,
+      styles: [MEDIA.editors.stblBinaryStyle],
+      scripts: [MEDIA.editors.stblBinaryScript],
     });
   }
 

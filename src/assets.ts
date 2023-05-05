@@ -14,8 +14,8 @@ function _uriResolver<T>(obj: T): {
 
 export const MEDIA = {
   root: _uriResolver({
-    reset: ["reset.css"],
-    vscode: ["vscode.css"],
+    resetStyle: ["reset.css"],
+    vscodeStyle: ["vscode.css"],
   }),
   editors: _uriResolver({
     stblBinaryStyle: ["editors", "stbl-binary.css"],
