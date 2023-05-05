@@ -3,6 +3,8 @@ import { StringTableResource } from "@s4tk/models";
 import { StringTableLocale, BinaryResourceType } from "@s4tk/models/enums";
 import { formatAsHexString, formatStringKey } from "@s4tk/hashing/formatting";
 import { randomFnv32, randomFnv64 } from "#helpers/hashing";
+import { parseAndValidateJson } from "#helpers/schemas";
+import { SCHEMAS } from "#assets";
 
 type StringTableJsonFormat = "array" | "object";
 
@@ -45,14 +47,23 @@ export default class StringTableJson {
    * Parses the given JSON content into a StringTableJson object.
    * 
    * @param content JSON content from which to parse a StringTableJson
-   * @throws If JSON is malformed
+   * @throws If JSON is malformed or violates schema
    */
   static parse(content: string): StringTableJson {
-    const parsed = JSON.parse(content);
-    // TODO: validate against schema
-    return Array.isArray(parsed)
-      ? new StringTableJson("array", parsed)
-      : new StringTableJson("object", parsed.entries, parsed);
+    const result = parseAndValidateJson<{
+      entries: StringTableJsonEntry[];
+      locale?: string;
+      group?: string;
+      instanceBase?: string;
+    } | StringTableJsonEntry[]>(content, SCHEMAS.stbl);
+
+    if (result.parsed) {
+      return Array.isArray(result.parsed)
+        ? new StringTableJson("array", result.parsed)
+        : new StringTableJson("object", result.parsed.entries, result.parsed);
+    } else {
+      throw new Error(result.error);
+    }
   }
 
   /**

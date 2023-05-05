@@ -1,18 +1,55 @@
 import * as fs from "fs";
 import * as vscode from "vscode";
-import { Validator } from "jsonschema";
+import { ValidationError, Validator } from "jsonschema";
+
+interface JsonParseResult<T> {
+  parsed?: T;
+  error?: string;
+}
 
 /**
- * Validates the given object against the schema at the given URI. If the object
- * is valid, nothing happens. If there is an error, an exception is thrown.
+ * Parses the given string as a JSON object and validates it against the schema
+ * at the given URI.
  * 
- * @param obj Object to validate against the schema
- * @param schemaUri URI of schema to validate against
- * @throws If object fails to validate against the schema
+ * If the JSON is syntactically valid and passes the schema, it is returned as
+ * `parsed` in the JsonParseResult.
+ * 
+ * If it either has a syntax error or does not pass the schema, a human-readable
+ * error message is returned as `error` in the JsonParseResult.
  */
-export function validateSchema(obj: object, schemaUri: vscode.Uri) {
+export function parseAndValidateJson<T = object>(
+  content: string,
+  schemaUri: vscode.Uri
+): JsonParseResult<T> {
+  try {
+    const json = JSON.parse(content);
+    validateJson(json, schemaUri);
+    return { parsed: json };
+  } catch (e) {
+    if (e instanceof SyntaxError) {
+      return { error: e.message };
+    } else if (e instanceof ValidationError) {
+      return { error: e.stack };
+    } else {
+      return { error: 'Unknown error occurred' };
+    }
+  }
+}
+
+/**
+ * Validates the given JSON object against the schema at the given URI. If the
+ * JSON is valid, nothing happens. If not, an exception is thrown.
+ * 
+ * @param json JSON to validate
+ * @param schemaUri URI of schema
+ * @throws If JSON is not valid
+ */
+export function validateJson(
+  json: object,
+  schemaUri: vscode.Uri
+) {
   const validator = new Validator();
-  validator.validate(obj, _getSchema(schemaUri), {
+  validator.validate(json, _getSchema(schemaUri), {
     throwError: true,
   });
 }
