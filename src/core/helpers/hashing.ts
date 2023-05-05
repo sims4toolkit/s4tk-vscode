@@ -29,9 +29,9 @@ export function randomFnv64(maxBits?: number): bigint {
  */
 export function reduceBits<T>(value: T, maxBits: number): T {
   //@ts-ignore
-  if (typeof value === "number") return value & ((2 ** bits) - 1);
+  if (typeof value === "number") return value & ((2 ** maxBits) - 1);
   //@ts-ignore
-  return value & ((2n ** BigInt(bits)) - 1n);
+  return value & ((2n ** BigInt(maxBits)) - 1n);
 }
 
 function _saltedUuid(): string {
