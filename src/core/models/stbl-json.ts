@@ -1,69 +1,74 @@
-// import { fnv32, fnv64 } from "@s4tk/hashing";
-import { formatAsHexString, formatStringKey } from "@s4tk/hashing/formatting";
+import { ResourceKey } from "@s4tk/models/types";
 import { StringTableResource } from "@s4tk/models";
 import { StringTableLocale, BinaryResourceType } from "@s4tk/models/enums";
-import { ResourceKey } from "@s4tk/models/types";
-import { KeyStringPair } from "@s4tk/models/lib/resources/stbl/types";
+import { formatAsHexString, formatStringKey } from "@s4tk/hashing/formatting";
 import { randomFnv32, randomFnv64 } from "#helpers/hashing";
 
-const _DEFAULT_LOCALE = "English";
-const _DEFAULT_GROUP = "0x80000000";
+type StringTableJsonFormat = "array" | "object";
 
 interface StringTableJsonEntry {
-  key: number | string;
+  key: string;
   value: string;
 }
 
+/**
+ * A string table JSON that follows the `stbl.schema.json` schema.
+ */
 export default class StringTableJson {
-  public locale?: string;
-  public group?: number | string;
-  public instanceBase?: string;
+  //#region Properties
+
+  private static _DEFAULT_LOCALE = "English";
+  private static _DEFAULT_GROUP = "0x80000000";
+
+  private _locale?: string;
+  private _group?: string;
+  private _instanceBase?: string;
+
+  //#endregion
 
   //#region Lifecycle
 
-  constructor(public entries: StringTableJsonEntry[], options: {
-    locale?: string;
-    group?: number | string;
-    instanceBase?: string;
-  } = {}) {
-    this.locale = options?.locale;
-    this.group = options?.group;
-    this.instanceBase = options?.instanceBase;
+  private constructor(
+    private _format: StringTableJsonFormat,
+    private _entries: StringTableJsonEntry[],
+    metadata?: {
+      locale?: string;
+      group?: string;
+      instanceBase?: string;
+    }) {
+    this._locale = metadata?.locale;
+    this._group = metadata?.group;
+    this._instanceBase = metadata?.instanceBase;
   }
 
   /**
    * Parses the given JSON content into a StringTableJson object.
    * 
    * @param content JSON content from which to parse a StringTableJson
-   * @throws If JSON is malformed 
+   * @throws If JSON is malformed
    */
   static parse(content: string): StringTableJson {
     const parsed = JSON.parse(content);
-
-    if (Array.isArray(parsed)) {
-      return new StringTableJson(parsed);
-    } else {
-      const stblJson = new StringTableJson(parsed.entries);
-      stblJson.locale = parsed.locale;
-      stblJson.group = parsed.group;
-      stblJson.instanceBase = parsed.instanceBase;
-      return stblJson;
-    }
+    // TODO: validate against schema
+    return Array.isArray(parsed)
+      ? new StringTableJson("array", parsed)
+      : new StringTableJson("object", parsed.entries, parsed);
   }
 
   /**
-   * Generates a STBL JSON with a random instance and returns its contents as
-   * a buffer.
+   * Generates a new StringTableJson. If using the "object" format, all metadata
+   * will be filled in with defaults (instanceBase will use random FNV56).
+   * 
+   * @param format Format to use for JSON
    */
-  static generateRandomContent(): Uint8Array {
-    const json = {
-      locale: _DEFAULT_LOCALE,
-      group: _DEFAULT_GROUP,
-      instanceBase: formatAsHexString(randomFnv64(56), 14, true),
-      entries: []
-    };
-
-    return Buffer.from(JSON.stringify(json, null, 2));
+  static generate(format: StringTableJsonFormat): StringTableJson {
+    return format === "array"
+      ? new StringTableJson(format, [])
+      : new StringTableJson(format, [], {
+        locale: StringTableJson._DEFAULT_LOCALE,
+        group: StringTableJson._DEFAULT_GROUP,
+        instanceBase: formatAsHexString(randomFnv64(56), 14, true),
+      });
   }
 
   //#endregion
@@ -71,98 +76,80 @@ export default class StringTableJson {
   //#region Public Methods
 
   /**
-   * Adds an entry with an optional value to this string table. The key will be
-   * a random FNV32 hash.
+   * Adds an entry to this string table with a random FNV32 hash.
    */
-  addEntry(value = '', addToStart = false) {
-    const entry = {
-      key: formatStringKey(randomFnv32()),
-      value
-    };
-
-    if (addToStart) {
-      this.entries.unshift(entry);
+  addEntry({ value = "", position = "end" }: {
+    value?: string;
+    position?: "start" | "end";
+  } = {}) {
+    if (position === "start") {
+      this._entries.unshift({
+        key: formatStringKey(randomFnv32()),
+        value: value
+      });
     } else {
-      this.entries.push(entry);
+      this._entries.push({
+        key: formatStringKey(randomFnv32()),
+        value: value
+      });
     }
   }
 
   /**
-   * Returns a copy of `this.entries` where every key is a number.
-   * 
-   * @returns List of entries where every key is a number
-   */
-  getNormalizedEntries(): KeyStringPair[] {
-    return this.entries.map(({ key, value }) => ({
-      key: typeof key === "string"
-        ? parseInt(key, 16)
-        : key,
-      value: value,
-    }));
-  }
-
-  /**
-   * Returns a resource key to use for this STBL JSON. If `group`,
-   * `instanceBase`, and `locale` are defined, they will be used. Otherwise,
-   * they will default to `0x80000000`, a random FNV64 hash, and
-   * `StringTableLocale.English`.
+   * Returns a resource key to use for a binary STBL created from this JSON. If
+   * any metadata is missing, it will be filled in with default values (or a
+   * random FNV56 in the case of the instance base).
    */
   getResourceKey(): ResourceKey {
     return {
       type: BinaryResourceType.StringTable,
-      group: (typeof this.group === "string"
-        ? parseInt(this.group, 16)
-        : this.group) ?? 0x80000000,
+      group: parseInt(this._group ?? StringTableJson._DEFAULT_GROUP, 16),
       instance: StringTableLocale.setHighByte(
-        //@ts-ignore
-        StringTableLocale[this.locale] ?? StringTableLocale.English,
-        this.instanceBase ? BigInt(this.instanceBase) : randomFnv64()
+        //@ts-ignore If locale isn't valid, English is returned
+        StringTableLocale[this._locale] ?? StringTableLocale.English,
+        this._instanceBase ? BigInt(this._instanceBase) : randomFnv64()
       )
     }
   }
 
   /**
-   * Adds any missing metadata to this STBL by filling them in with defaults.
+   * Adds any missing metadata to this STBL by filling them in with defaults,
+   * and also changes the format to "object" if needed.
    */
   insertDefaultMetadata() {
-    this.locale ??= _DEFAULT_LOCALE;
-    this.group ??= _DEFAULT_GROUP;
-    this.instanceBase ??= formatAsHexString(randomFnv64(56), 14, true);
+    this._locale ??= StringTableJson._DEFAULT_LOCALE;
+    this._group ??= StringTableJson._DEFAULT_GROUP;
+    this._instanceBase ??= formatAsHexString(randomFnv64(56), 14, true);
+    this._format = "object";
   }
 
   /**
-   * Converts this StringTableJson to a JSON string.
-   * 
-   * @param spaces Number of spaces to use in produced output
+   * Writes this STBL JSON to a string.
    */
-  stringify(spaces = 2): string {
-    const json: any = {};
+  stringify(): string {
+    // TODO: get spacing from config / user settings
+    const spacing = 2;
 
-    let hasCopiedProp = false;
-    const copyProp = (propName: string) => {
-      if ((this as any)[propName] != undefined) {
-        json[propName] = (this as any)[propName];
-        hasCopiedProp = true;
-      }
-    };
-
-    copyProp('locale');
-    copyProp('group');
-    copyProp('instanceBase');
-
-    if (hasCopiedProp) {
-      json.entries = this.entries;
-      return JSON.stringify(json, null, spaces);
+    if (this._format === "array") {
+      return JSON.stringify(this._entries, null, spacing);
     } else {
-      return JSON.stringify(this.entries, null, spaces);
+      return JSON.stringify({
+        locale: this._locale,
+        group: this._group,
+        instanceBase: this._instanceBase,
+        entries: this._entries,
+      }, null, spacing);
     }
   }
 
   /**
-   * Converts this STBL JSON to a regular STBL.
+   * Converts this STBL JSON to a binary STBL resource.
    */
-  toStringTableResource(): StringTableResource {
-    return new StringTableResource(this.getNormalizedEntries());
+  toBinaryResource(): StringTableResource {
+    return new StringTableResource(this._entries.map(({ key, value }) => ({
+      key: parseInt(key, 16),
+      value: value
+    })));
   }
 
   //#endregion

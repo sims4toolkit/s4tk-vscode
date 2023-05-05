@@ -2,17 +2,12 @@
   "$schema": "http://json-schema.org/schema",
   "definitions": {
     "32bitNumber": {
-      "oneOf": [
-        {
-          "type": "integer",
-          "minimum": 0,
-          "maximum": 4294967295
-        },
-        {
-          "type": "string",
-          "pattern": "^0[xX][0-9a-fA-F]{8}$"
-        }
-      ]
+      "type": "string",
+      "pattern": "^0[xX][0-9a-fA-F]{8}$"
+    },
+    "56bitNumber": {
+      "type": "string",
+      "pattern": "^0[xX][0-9a-fA-F]{14}$"
     },
     "entries": {
       "description": "The list of key/value pairs in this string table.",
@@ -26,11 +21,10 @@
         "properties": {
           "key": {
             "$ref": "#/definitions/32bitNumber",
-            "description": "The 32-bit key for this string entry. It can either be an integer or a hex string."
+            "description": "The 32-bit key for this string entry as an 8-digit hex number."
           },
           "value": {
             "type": "string",
-            "minLength": 1,
             "description": "The text value for this string entry."
           }
         }
@@ -72,12 +66,11 @@
       "properties": {
         "group": {
           "$ref": "#/definitions/32bitNumber",
-          "description": "The 32-bit number to use for this string table's group.\n\nIf omitted, it is assumed to be 0x80000000."
+          "description": "The 8-digit hex number to use for this string table's group.\n\nIf omitted, it is assumed to be 0x80000000."
         },
         "instanceBase": {
-          "description": "The 14-digit hex number to use as the base for this string table's instance.\n\nIf omitted, a random FNV64 hash will be generated every time this string table is built into a package.",
-          "type": "string",
-          "pattern": "^0[xX][0-9a-fA-F]{14}$"
+          "$ref": "#/definitions/56bitNumber",
+          "description": "The 14-digit hex number to use as the base for this string table's instance.\n\nIf omitted, a random FNV56 hash will be generated every time this string table is built into a package."
         },
         "locale": {
           "$ref": "#/definitions/stringTableLocale",
