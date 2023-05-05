@@ -1,7 +1,7 @@
 import * as vscode from 'vscode';
 import { StringTableResource } from '@s4tk/models';
 import StringTableJson from '#models/stbl-json';
-import { fileExists } from '#helpers/utils';
+import { fileExists } from '#helpers/fs';
 import ViewOnlyDocument from '../view-only/document';
 
 /**

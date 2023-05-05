@@ -1,10 +1,9 @@
 import * as vscode from 'vscode';
-import { getNonce } from '#helpers/utils';
-import StringTableDocument from './document';
+import { EDITOR } from '#contributes';
+import { SCRIPTS, STYLES, getHtmlForWebview } from '#helpers/media';
 import type { StringTableInMessage, StringTableOutMessage } from './types';
 import ViewOnlyEditorProvider from '../view-only/provider';
-
-const _VIEW_TYPE = 's4tk.editor.stblBinary';
+import StringTableDocument from './document';
 
 /**
  * Provider for string table editors.
@@ -17,7 +16,7 @@ export default class StringTableEditorProvider
 
   public static register(context: vscode.ExtensionContext): vscode.Disposable {
     return vscode.window.registerCustomEditorProvider(
-      _VIEW_TYPE,
+      EDITOR.stblBinary,
       new StringTableEditorProvider(context), {
       supportsMultipleEditorsPerDocument: true,
       webviewOptions: {
@@ -35,40 +34,13 @@ export default class StringTableEditorProvider
   }
 
   protected _getHtmlForWebview(webview: vscode.Webview): string {
-    // TODO: move this somewhere else
-    const styleResetUri = webview.asWebviewUri(vscode.Uri.joinPath(
-      this._context.extensionUri, 'media', 'reset.css'));
-
-    const styleVSCodeUri = webview.asWebviewUri(vscode.Uri.joinPath(
-      this._context.extensionUri, 'media', 'vscode.css'));
-
-    const styleMainUri = webview.asWebviewUri(vscode.Uri.joinPath(
-      this._context.extensionUri, 'media', 'editors', 'stbl-binary.css'));
-
-    const scriptUri = webview.asWebviewUri(vscode.Uri.joinPath(
-      this._context.extensionUri, 'media', 'editors', 'stbl-binary.js'));
-
-    const nonce = getNonce();
-
-    // TODO: make this cleaner
-    return `
-			<!DOCTYPE html>
-			<html lang="en">
-			<head>
-				<meta charset="UTF-8">
-				<meta http-equiv="Content-Security-Policy" content="default-src 'none'; img-src ${webview.cspSource} blob:; style-src ${webview.cspSource}; script-src 'nonce-${nonce}';">
-				<meta name="viewport" content="width=device-width, initial-scale=1.0">
-				<link href="${styleResetUri}" rel="stylesheet" />
-				<link href="${styleVSCodeUri}" rel="stylesheet" />
-				<link href="${styleMainUri}" rel="stylesheet" />
-				<title>String Table</title>
-			</head>
-			<body>
-        <p class="margin-bottom">Binary STBLs are view-only. It is recommended to use STBL JSONs with S4TK. <span id="convert-to-json-btn">Convert to JSON</span>.</p>
-				<div id="stbl-editor"></div>
-				<script nonce="${nonce}" src="${scriptUri}"></script>
-			</body>
-			</html>`;
+    return getHtmlForWebview(this._context, webview, {
+      title: "Binary String Table",
+      body: `<p class="margin-bottom">Binary STBLs are view-only. It is recommended to use STBL JSONs with S4TK. <span id="convert-to-json-btn">Convert to JSON</span>.</p>
+      <div id="stbl-editor"></div>`,
+      styles: [STYLES.stblBinary],
+      scripts: [SCRIPTS.stblBinary],
+    });
   }
 
   protected _onMessage(

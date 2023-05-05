@@ -1,10 +1,10 @@
-import { fnv32, fnv64 } from "@s4tk/hashing";
+// import { fnv32, fnv64 } from "@s4tk/hashing";
 import { formatAsHexString, formatStringKey } from "@s4tk/hashing/formatting";
 import { StringTableResource } from "@s4tk/models";
 import { StringTableLocale, BinaryResourceType } from "@s4tk/models/enums";
 import { ResourceKey } from "@s4tk/models/types";
 import { KeyStringPair } from "@s4tk/models/lib/resources/stbl/types";
-import { saltedUuid } from "#helpers/utils";
+import { randomFnv32, randomFnv64 } from "#helpers/hashing";
 
 const _DEFAULT_LOCALE = "English";
 const _DEFAULT_GROUP = "0x80000000";
@@ -59,11 +59,7 @@ export default class StringTableJson {
     const json = {
       locale: _DEFAULT_LOCALE,
       group: _DEFAULT_GROUP,
-      instanceBase: formatAsHexString(
-        StringTableLocale.getInstanceBase(fnv64(saltedUuid())),
-        14,
-        true
-      ),
+      instanceBase: formatAsHexString(randomFnv64(56), 14, true),
       entries: []
     };
 
@@ -80,7 +76,7 @@ export default class StringTableJson {
    */
   addEntry(value = '', addToStart = false) {
     const entry = {
-      key: formatStringKey(fnv32(saltedUuid())),
+      key: formatStringKey(randomFnv32()),
       value
     };
 
@@ -120,7 +116,7 @@ export default class StringTableJson {
       instance: StringTableLocale.setHighByte(
         //@ts-ignore
         StringTableLocale[this.locale] ?? StringTableLocale.English,
-        this.instanceBase ? BigInt(this.instanceBase) : fnv64(saltedUuid())
+        this.instanceBase ? BigInt(this.instanceBase) : randomFnv64()
       )
     }
   }
@@ -131,11 +127,7 @@ export default class StringTableJson {
   insertDefaultMetadata() {
     this.locale ??= _DEFAULT_LOCALE;
     this.group ??= _DEFAULT_GROUP;
-    this.instanceBase ??= formatAsHexString(
-      StringTableLocale.getInstanceBase(fnv64(saltedUuid())),
-      14,
-      true
-    );
+    this.instanceBase ??= formatAsHexString(randomFnv64(56), 14, true);
   }
 
   /**
