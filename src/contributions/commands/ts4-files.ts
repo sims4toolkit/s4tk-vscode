@@ -4,7 +4,7 @@ import StringTableJson from "#models/stbl-json";
 import { EDITOR } from "#contributes";
 import { fileExists } from "#helpers/fs";
 
-export default function registerFileCreateCommands() {
+export default function registerTS4FilesCommands() {
   vscode.commands.registerCommand('s4tk.ts4Files.createStblBinary', () => {
     _createNewFile({
       promptTitle: "Name of new String Table (Binary)",

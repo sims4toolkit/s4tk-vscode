@@ -1,11 +1,9 @@
-import registerFileCreateCommands from "./file-create";
 import registerHashingCommands from "./hashing";
-import registerReferencesCommands from "./references";
+import registerTS4FilesCommands from "./ts4-files";
 import registerWorkspaceCommands from "./workspace";
 
 export default function registerCommands() {
-  registerFileCreateCommands();
   registerHashingCommands();
-  registerReferencesCommands();
+  registerTS4FilesCommands();
   registerWorkspaceCommands();
 }
