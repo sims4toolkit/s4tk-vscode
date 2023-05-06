@@ -1,6 +1,9 @@
+import * as vscode from "vscode";
 import { StringTableLocale } from "@s4tk/models/enums";
-import { parseAndValidateJson } from "#helpers/schemas";
 import { SCHEMAS } from "#assets";
+import { FILENAME } from "#constants";
+import { fileExists } from "#helpers/fs";
+import { parseAndValidateJson } from "#helpers/schemas";
 
 //#region Exported Members
 
@@ -21,9 +24,9 @@ export interface S4TKConfig {
     }[];
   };
 
-  stringTables?: {
+  stringTables: {
     defaultLocale: StringTableLocale;
-    defaultPath: string;
+    defaultPath?: string;
     generateMissingLocales: boolean;
     newStringsToTop: boolean;
     onePerPackage: boolean;
@@ -35,6 +38,36 @@ export interface S4TKConfig {
 }
 
 export namespace S4TKConfig {
+  type ConfigInfo = {
+    uri?: vscode.Uri;
+    exists: boolean;
+  };
+
+  /**
+   * Finds the expected URI of the config file, if the current workspace were to
+   * have one, and returns it alongside a boolean that says whether it actually
+   * exists or not.
+   */
+  export async function find(): Promise<ConfigInfo> {
+    const rootUri = vscode.workspace.workspaceFolders?.[0]?.uri;
+    if (!rootUri) return { exists: false };
+    const uri = vscode.Uri.joinPath(rootUri, FILENAME.config);
+    const exists = await fileExists(uri);
+    return { uri, exists };
+  }
+
+  /**
+   * Allows the original config object to be edited.
+   * 
+   * @param config S4TK config proxy object
+   * @param fn Function to run on the original object
+   */
+  export function modify(config: S4TKConfig, fn: (original: S4TKConfig) => void): S4TKConfig {
+    //@ts-ignore "_original" is a special case on the proxy
+    fn(config._original ?? config);
+    return config;
+  }
+
   /**
    * Parses a JSON string as an S4TKConfig object. If there are syntax or
    * validation errors, an exception is thrown.
@@ -73,14 +106,13 @@ export namespace S4TKConfig {
 
 const _CONFIG_TRANSFORMER: ConfigTransformer = {
   stringTables: {
-    nullable: true,
     defaults: {
       defaultLocale: StringTableLocale.English,
       generateMissingLocales: true,
       newStringsToTop: false,
       onePerPackage: true,
     },
-    converter(prop, value) {
+    getConverter(prop, value) {
       if (prop === "defaultLocale" && typeof value === "string") {
         //@ts-ignore This is safe because value passed the schema
         return StringTableLocale[value];
@@ -117,7 +149,7 @@ interface ConfigPropertyTransformer<T> {
    * @param prop Name of property being converted
    * @param value Value of property being converted
    */
-  converter?: (prop: keyof T, value: any) => any;
+  getConverter?: (prop: keyof T, value: any) => any;
 }
 
 type ConfigTransformer = Partial<{
@@ -126,10 +158,12 @@ type ConfigTransformer = Partial<{
 
 function _getConfigProxy(config: S4TKConfig): S4TKConfig {
   return new Proxy<S4TKConfig>(config, {
-    get(config, prop: keyof S4TKConfig) {
+    get(target, prop: keyof S4TKConfig) {
+      //@ts-ignore "_original" is a special case to preserve the non-proxied obj
+      if (prop === "_original") return config;
       return (prop in _CONFIG_TRANSFORMER)
-        ? _getObjectProxy(config[prop], _CONFIG_TRANSFORMER[prop]!)
-        : config[prop];
+        ? _getObjectProxy(target[prop], _CONFIG_TRANSFORMER[prop]!)
+        : target[prop];
     },
   });
 }
@@ -137,14 +171,14 @@ function _getConfigProxy(config: S4TKConfig): S4TKConfig {
 function _getObjectProxy<T extends object>(target: T | undefined, {
   nullable = false,
   defaults = {},
-  converter = (value) => value
+  getConverter = (value) => value
 }: ConfigPropertyTransformer<T>): T {
   // Just using ! to silence TS even though these are known to be undefined
   if (nullable && !target) return target!;
   return new Proxy<T>(target!, {
     get(target, prop: string) {
       //@ts-ignore This is safe because we're in a proxy
-      return converter(prop, target[prop] ?? defaults[prop]);
+      return getConverter(prop, target[prop] ?? defaults[prop]);
     },
   }) as T;
 }

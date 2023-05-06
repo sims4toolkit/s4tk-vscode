@@ -1,0 +1,21 @@
+{
+  "projectInfo": {
+    "creatorName": "",
+    "projectName": "",
+    "tuningPrefix": ""
+  },
+  "buildInstructions": {
+    "allowFolderCreation": false,
+    "sourceFolder": "./src",
+    "destinations": [
+      "./out"
+    ],
+    "packages": []
+  },
+  "stringTables": {
+    "defaultLocale": "English",
+    "defaultPath": "./strings/default.stbl.json",
+    "generateMissingLocales": true,
+    "onePerPackage": true
+  }
+}

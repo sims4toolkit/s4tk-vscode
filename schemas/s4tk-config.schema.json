@@ -110,9 +110,6 @@
     "stringTables": {
       "type": "object",
       "description": "Data related to the string table(s) in this project.",
-      "required": [
-        "defaultPath"
-      ],
       "additionalProperties": false,
       "properties": {
         "defaultLocale": {
