@@ -1,30 +1,16 @@
 import * as vscode from 'vscode';
+import { COMMAND } from '#constants';
 import S4TKWorkspace from '#workspace/s4tk-workspace';
+import BaseCodeLensProvider from './base-codelens';
 
-const _OVERRIDE_TYPE_COMMAND_NAME = "s4tk.tuning.overrideTypeComment";
-const _OVERRIDE_TYPE_CODELENS = new vscode.CodeLens(new vscode.Range(0, 0, 0, 0), {
-  title: "Override Type",
-  tooltip: "Add a comment to the top of this file that will tell S4TK which Type to use. The Type must be provided as an 8-digit hex number without a 0x prefix.",
-  command: _OVERRIDE_TYPE_COMMAND_NAME,
-});
-
-const _OVERRIDE_GROUP_COMMAND_NAME = "s4tk.tuning.overrideGroupComment";
-const _OVERRIDE_GROUP_CODELENS = new vscode.CodeLens(new vscode.Range(0, 0, 0, 0), {
-  title: "Override Group",
-  tooltip: "Add a comment to the top of this file that will tell S4TK which Group to use. The Group must be provided as an 8-digit hex number without a 0x prefix.",
-  command: _OVERRIDE_GROUP_COMMAND_NAME,
-});
-
-export default class TuningCodeLensProvider implements vscode.CodeLensProvider {
-  private _codeLenses: vscode.CodeLens[] = [];
-  private _onDidChangeCodeLenses: vscode.EventEmitter<void> = new vscode.EventEmitter<void>();
-  public readonly onDidChangeCodeLenses: vscode.Event<void> = this._onDidChangeCodeLenses.event;
-
-  private constructor() {
-    vscode.workspace.onDidChangeConfiguration((_) => {
-      this._onDidChangeCodeLenses.fire();
-    });
-  }
+/**
+ * Provides CodeLenses for XML files, including:
+ * - Override Type
+ * - Override Group
+ * - Override Instance
+ */
+export default class TuningCodeLensProvider extends BaseCodeLensProvider {
+  constructor() { super(); }
 
   public static register() {
     vscode.languages.registerCodeLensProvider(
@@ -33,14 +19,6 @@ export default class TuningCodeLensProvider implements vscode.CodeLensProvider {
       },
       new TuningCodeLensProvider()
     );
-
-    vscode.commands.registerCommand(_OVERRIDE_TYPE_COMMAND_NAME, () => {
-      _addFirstLineToDocument("<!-- Type: 00000000 -->");
-    });
-
-    vscode.commands.registerCommand(_OVERRIDE_GROUP_COMMAND_NAME, () => {
-      _addFirstLineToDocument("<!-- Group: 00000000 -->");
-    });
   }
 
   public provideCodeLenses(
@@ -50,37 +28,35 @@ export default class TuningCodeLensProvider implements vscode.CodeLensProvider {
     if (!S4TKWorkspace.active) return [];
     this._codeLenses = [];
 
-    if (!_linesContain(document, "Type:", 0, 1)) {
-      this._codeLenses.push(_OVERRIDE_TYPE_CODELENS);
-    }
+    if (!_linesContain(document, "Type:", 0, 2)) this._codeLenses.push(
+      new vscode.CodeLens(new vscode.Range(0, 0, 0, 0), {
+        title: "Override Type",
+        tooltip: "Add a comment that tells S4TK which Type to use instead of the one it infers from 'i'. It must be an 8-digit hex number.",
+        command: COMMAND.tuning.overrideType,
+      })
+    );
 
-    if (!_linesContain(document, "Group:", 0, 1)) {
-      this._codeLenses.push(_OVERRIDE_GROUP_CODELENS);
-    }
+    if (!_linesContain(document, "Group:", 0, 2)) this._codeLenses.push(
+      new vscode.CodeLens(new vscode.Range(0, 0, 0, 0), {
+        title: "Override Group",
+        tooltip: "Add a comment that tells S4TK which Group to use instead of 00000000. It must be an 8-digit hex number.",
+        command: COMMAND.tuning.overrideGroup,
+      })
+    );
 
-    // TODO: add codelens to hash filename
+    if (!_linesContain(document, "Instance:", 0, 2)) this._codeLenses.push(
+      new vscode.CodeLens(new vscode.Range(0, 0, 0, 0), {
+        title: "Override Instance",
+        tooltip: "Add a comment that tells S4TK which Instance to use instead of the one it infers from 's'. It must be an 8-digit hex number.",
+        command: COMMAND.tuning.overrideInstance,
+      })
+    );
 
     return this._codeLenses;
   }
-
-  public resolveCodeLens(
-    codeLens: vscode.CodeLens,
-    token: vscode.CancellationToken
-  ) {
-    return codeLens;
-  }
 }
 
-async function _addFirstLineToDocument(line: string) {
-  const editor = vscode.window.activeTextEditor;
-  editor?.edit(editBuilder => {
-    const eol = editor?.document.eol === vscode.EndOfLine.CRLF ? '\r\n' : '\n';
-    const start = new vscode.Position(0, 0);
-    editBuilder.insert(start, line);
-    editBuilder.insert(start, eol);
-  });
-}
-
+// FIXME: this is dumb, it'll have to change when tuning intellisense is added
 function _linesContain(
   document: vscode.TextDocument,
   text: string,

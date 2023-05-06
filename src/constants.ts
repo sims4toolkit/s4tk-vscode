@@ -32,6 +32,7 @@ export const COMMAND = {
   },
   tuning: {
     overrideGroup: "s4tk.tuning.overrideGroup",
+    overrideInstance: "s4tk.tuning.overrideInstance",
     overrideType: "s4tk.tuning.overrideType",
   },
   workspace: {
