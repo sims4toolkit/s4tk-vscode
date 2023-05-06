@@ -1,7 +1,7 @@
 (function () {
   const vscode = acquireVsCodeApi();
 
-  const MAX_STBL_SIZE = 1000;
+  const MAX_SAFE_SIZE = 10000;
 
   function createElement(tag, options) {
     const element = document.createElement(tag);
@@ -25,7 +25,7 @@
     }
 
     async redrawEntries(entries) {
-      if (entries.length > MAX_STBL_SIZE) {
+      if (entries.length > MAX_SAFE_SIZE) {
         this._showLargeStblMessage(entries);
       } else if (entries.length > 0) {
         this._renderEntries(entries);
