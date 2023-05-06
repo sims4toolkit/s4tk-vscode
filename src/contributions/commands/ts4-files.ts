@@ -1,13 +1,13 @@
 import * as vscode from "vscode";
 import { StringTableResource } from "@s4tk/models";
-import { EDITOR } from "#constants";
+import { COMMAND, EDITOR } from "#constants";
 import StringTableJson from "#models/stbl-json";
 import { fileExists } from "#helpers/fs";
 
 export default function registerTS4FilesCommands() {
-  vscode.commands.registerCommand('s4tk.ts4Files.createStblBinary', () => {
+  vscode.commands.registerCommand(COMMAND.ts4Files.createStblBinary, () => {
     _createNewFile({
-      promptTitle: "Name of new String Table (Binary)",
+      promptTitle: "Name of New String Table (Binary)",
       promptBody: "Enter the name of a STBL to create. You can use slashes to indicate subfolders.",
       extension: ".stbl",
       contentGenerator: () => (new StringTableResource()).getBuffer(),
@@ -19,12 +19,12 @@ export default function registerTS4FilesCommands() {
     });
   });
 
-  vscode.commands.registerCommand('s4tk.ts4Files.createStblJson', () => {
+  vscode.commands.registerCommand(COMMAND.ts4Files.createStblJson, () => {
     _createNewFile({
-      promptTitle: "Name of new String Table (JSON)",
+      promptTitle: "Name of New String Table (JSON)",
       promptBody: "Enter the name of a STBL to create. You can use slashes to indicate subfolders.",
       extension: ".stbl.json",
-      contentGenerator: () => StringTableJson.generateRandomContent(),
+      contentGenerator: () => StringTableJson.generateBuffer("object"),
       launchFile: (uri) => vscode.window.showTextDocument(uri),
     });
   });

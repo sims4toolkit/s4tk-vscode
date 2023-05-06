@@ -82,6 +82,17 @@ export default class StringTableJson {
       });
   }
 
+  /**
+   * Generates a Buffer containing StringTableJson data.If using the "object"
+   * format, all metadata will be filled in with defaults (instanceBase will use
+   * random FNV56).
+   * 
+   * @param format Format to use for JSON
+   */
+  static generateBuffer(format: StringTableJsonFormat): Buffer {
+    return Buffer.from(StringTableJson.generate(format).stringify());
+  }
+
   //#endregion
 
   //#region Public Methods
