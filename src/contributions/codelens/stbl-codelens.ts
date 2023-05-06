@@ -29,40 +29,24 @@ export default class StringTableJsonCodeLensProvider extends BaseCodeLensProvide
     // uncaught exception is fine, it just disables the codelens
     const stblJson = StringTableJson.parse(document.getText());
     const editor = vscode.window.activeTextEditor;
-    this._codeLenses = [];
 
-    const newStringCommand: vscode.Command = {
-      title: "New String",
-      tooltip: "Add a new string with a random hash to this STBL.",
-      command: COMMAND.stblJson.addEntry,
-      arguments: [editor, stblJson],
-    };
+    this._codeLenses = [
+      new vscode.CodeLens(new vscode.Range(0, 0, 0, 0), {
+        title: "New String",
+        tooltip: "Add a new string with a random hash to this STBL.",
+        command: COMMAND.stblJson.addEntry,
+        arguments: [editor, stblJson],
+      })
+    ];
 
-    if (stblJson.format === "array") {
-      const range = new vscode.Range(0, 0, 0, 0);
-      this._codeLenses.push(
-        new vscode.CodeLens(range, {
-          title: "Insert Metadata",
-          tooltip: "Convert this array-based STBL into an object-based one that tracks file metadata.",
-          command: COMMAND.stblJson.addMetaData,
-          arguments: [editor, stblJson],
-        }),
-        new vscode.CodeLens(range, newStringCommand)
-      );
-    } else {
-      for (let i = 0; i < document.lineCount; ++i) {
-        const line = document.lineAt(i);
-
-        if (/^\s*"entries"/.test(line.text)) {
-          this._codeLenses.push(new vscode.CodeLens(
-            new vscode.Range(i, 0, i, 0),
-            newStringCommand
-          ));
-
-          break;
-        }
-      }
-    }
+    if (stblJson.format === "array") this._codeLenses.push(
+      new vscode.CodeLens(new vscode.Range(0, 0, 0, 0), {
+        title: "Insert Metadata",
+        tooltip: "Convert this array-based STBL into an object-based one that tracks file metadata.",
+        command: COMMAND.stblJson.addMetaData,
+        arguments: [editor, stblJson],
+      })
+    );
 
     let stblEntryIndex = 0;
     const keyRegex = /^\s*"key"/;

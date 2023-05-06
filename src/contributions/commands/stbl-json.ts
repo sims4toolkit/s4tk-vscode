@@ -24,7 +24,7 @@ export default function registerStblJsonCommands() {
 
   vscode.commands.registerCommand(COMMAND.stblJson.addMetaData,
     async (editor: vscode.TextEditor | undefined, stblJson: StringTableJson) => {
-      if (stblJson.format === "array") return;
+      if (stblJson.format === "object") return;
 
       if (editor) {
         stblJson.insertDefaultMetadata();
