@@ -19,12 +19,20 @@ interface StringTableJsonEntry {
 export default class StringTableJson {
   //#region Properties
 
+  // FIXME: use defaults from config, if available
   private static _DEFAULT_LOCALE = "English";
   private static _DEFAULT_GROUP = "0x80000000";
 
+  public get format() { return this._format; }
+
   private _locale?: string;
+  public get locale() { return this._locale; }
+
   private _group?: string;
+  public get group() { return this._group; }
+
   private _instanceBase?: string;
+  public get instanceBase() { return this._instanceBase; }
 
   //#endregion
 
@@ -115,6 +123,16 @@ export default class StringTableJson {
         value: value
       });
     }
+  }
+
+  /**
+   * Returns the XML string to use for the entry at the given index.
+   * 
+   * @param index Index of entry to get XML for
+   */
+  getEntryXml(index: number): string {
+    const entry = this._entries[index];
+    return entry ? `${entry.key}<!--${entry.value}-->` : '';
   }
 
   /**

@@ -21,7 +21,8 @@ export const COMMAND = {
     random64: "s4tk.hashing.randomFnv64",
   },
   stblJson: {
-    addEntry: "s4tk.stblJson.addEntry",
+    addEntryTop: "s4tk.stblJson.addEntryTop",
+    addEntryBottom: "s4tk.stblJson.addEntryBottom",
     addMetaData: "s4tk.stblJson.addMetaData",
     copyEntry: "s4tk.stblJson.copyEntry",
   },
