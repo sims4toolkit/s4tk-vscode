@@ -1,20 +1,15 @@
 import * as vscode from 'vscode';
-import S4TKWorkspace from '#workspace/s4tk-workspace';
-import { stringifyConfig } from '#models/s4tk-config';
+import { COMMAND } from '#constants';
+import BaseCodeLensProvider from './base-codelens';
 
-const _BUILD_COMMAND_NAME = "s4tk.s4tkConfig.build";
-const _ADD_PACKAGE_COMMAND_NAME = "s4tk.s4tkConfig.addBuildPackage";
-
-export default class S4TKConfigCodeLensProvider implements vscode.CodeLensProvider {
-  private _codeLenses: vscode.CodeLens[] = [];
-  private _onDidChangeCodeLenses: vscode.EventEmitter<void> = new vscode.EventEmitter<void>();
-  public readonly onDidChangeCodeLenses: vscode.Event<void> = this._onDidChangeCodeLenses.event;
-
-  private constructor() {
-    vscode.workspace.onDidChangeConfiguration((_) => {
-      this._onDidChangeCodeLenses.fire();
-    });
-  }
+/**
+ * Provides CodeLenses for S4TK Config files, including:
+ * - Build S4TK Project
+ * - Build S4TK Project (Dry Run)
+ * - Add Package Instructions
+ */
+export default class S4TKConfigCodeLensProvider extends BaseCodeLensProvider {
+  private constructor() { super(); }
 
   public static register() {
     vscode.languages.registerCodeLensProvider(
@@ -23,13 +18,6 @@ export default class S4TKConfigCodeLensProvider implements vscode.CodeLensProvid
       },
       new S4TKConfigCodeLensProvider()
     );
-
-    vscode.commands.registerCommand(_BUILD_COMMAND_NAME, async (dryRun: boolean) => {
-      // TODO: implement
-      vscode.window.showInformationMessage(dryRun ? "Dry run" : "Real build");
-    });
-
-    vscode.commands.registerCommand(_ADD_PACKAGE_COMMAND_NAME, _addNewBuildPackage);
   }
 
   public provideCodeLenses(
@@ -54,26 +42,17 @@ export default class S4TKConfigCodeLensProvider implements vscode.CodeLensProvid
     return this._codeLenses;
   }
 
-  public resolveCodeLens(
-    codeLens: vscode.CodeLens,
-    token: vscode.CancellationToken
-  ) {
-    return codeLens;
-  }
-
   private _pushBuildInstructionsCodeLenses(line: vscode.TextLine) {
     this._codeLenses.push(
       new vscode.CodeLens(line.range, {
         title: "Build",
         tooltip: "Build your project and output its files.",
-        command: _BUILD_COMMAND_NAME,
-        arguments: [false]
+        command: COMMAND.workspace.build,
       }),
       new vscode.CodeLens(line.range, {
         title: "Dry Run",
         tooltip: "Run the build process, check for issues, and show where the files *would* have been output to, but do not actually write them.",
-        command: _BUILD_COMMAND_NAME,
-        arguments: [true]
+        command: COMMAND.workspace.buildDryRun,
       })
     );
   }
@@ -83,37 +62,8 @@ export default class S4TKConfigCodeLensProvider implements vscode.CodeLensProvid
       new vscode.CodeLens(line.range, {
         title: "New Package",
         tooltip: "Add instructions for building a new package.",
-        command: _ADD_PACKAGE_COMMAND_NAME
+        command: COMMAND.config.addPackage,
       })
     );
-  }
-}
-
-async function _addNewBuildPackage() {
-  try {
-    const editor = vscode.window.activeTextEditor;
-    if (!editor) throw new Error("Editor could not be found");
-    const doc = editor.document;
-    if (doc.isDirty) await doc.save();
-
-    // FIXME: this never works when the document is saving because the config
-    // is being unloaded and reloaded every time
-
-    if (!S4TKWorkspace.config) {
-      // TODO: throw error
-    } else {
-      S4TKWorkspace.config?.buildInstructions.packages?.push(
-        { filename: "", include: [""] }
-      );
-
-      editor.edit(editBuilder => {
-        editBuilder.replace(
-          new vscode.Range(doc.lineAt(0).range.start, doc.lineAt(doc.lineCount - 1).range.end),
-          stringifyConfig(S4TKWorkspace.config!)
-        );
-      });
-    }
-  } catch (err) {
-    vscode.window.showErrorMessage(`Exception occured while adding new package build instructions.`);
   }
 }
