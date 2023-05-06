@@ -108,8 +108,9 @@ const _CONFIG_TRANSFORMER: ConfigTransformer = {
   stringTables: {
     defaults: {
       defaultLocale: StringTableLocale.English,
+      defaultPath: "",
       generateMissingLocales: true,
-      newStringsToStart: false,
+      newStringsToStart: true,
       onePerPackage: true,
     },
     getConverter(prop, value) {

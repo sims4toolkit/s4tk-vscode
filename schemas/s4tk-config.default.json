@@ -22,7 +22,7 @@
   "stringTables": {
     "defaultLocale": "English",
     "defaultPath": "./strings/default.stbl.json",
-    "newStringsToStart": false,
+    "newStringsToStart": true,
     "generateMissingLocales": true,
     "onePerPackage": true
   },
