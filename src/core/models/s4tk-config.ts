@@ -34,6 +34,7 @@ export interface S4TKConfig {
 
   settings: {
     showCopyConfirmation: boolean;
+    spacesPerIndent: number;
   };
 }
 
@@ -125,6 +126,7 @@ const _CONFIG_TRANSFORMER: ConfigTransformer = {
   settings: {
     defaults: {
       showCopyConfirmation: true,
+      spacesPerIndent: 2,
     },
   },
 };
@@ -172,7 +174,7 @@ function _getConfigProxy(config: S4TKConfig): S4TKConfig {
 function _getObjectProxy<T extends object>(target: T | undefined, {
   nullable = false,
   defaults = {},
-  getConverter = (value) => value
+  getConverter = (_, value) => value
 }: ConfigPropertyTransformer<T>): T {
   // Just using ! to silence TS even though these are known to be undefined
   if (nullable && !target) return target!;

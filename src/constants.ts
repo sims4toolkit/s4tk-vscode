@@ -30,6 +30,7 @@ export const COMMAND = {
     createStblJson: "s4tk.ts4Files.createStblJson",
   },
   tuning: {
+    format: "s4tk.tuning.format",
     overrideGroup: "s4tk.tuning.overrideGroup",
     overrideInstance: "s4tk.tuning.overrideInstance",
     overrideType: "s4tk.tuning.overrideType",

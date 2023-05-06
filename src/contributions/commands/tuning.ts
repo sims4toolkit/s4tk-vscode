@@ -1,11 +1,33 @@
 import * as vscode from "vscode";
+import { XmlDocumentNode } from "@s4tk/xml-dom";
 import { ResourceKey } from "@s4tk/models/types";
 import { TuningResourceType } from "@s4tk/models/enums";
 import { formatAsHexString } from "@s4tk/hashing/formatting";
-import { MessageButton, handleMessageButtonClick } from "#workspace/messaging";
 import { COMMAND } from "#constants";
+import { MessageButton, handleMessageButtonClick } from "#workspace/messaging";
+import S4TKWorkspace from "#workspace/s4tk-workspace";
+import { replaceEntireDocument } from "#helpers/fs";
 
 export default function registerTuningCommands() {
+  vscode.commands.registerCommand(COMMAND.tuning.format,
+    (editor: vscode.TextEditor | undefined) => {
+      if (!editor?.document) return;
+      try {
+        const doc = XmlDocumentNode.from(editor.document.getText());
+        // FIXME: config should have proxy that always makes fields available
+        const spacesPerIndent = S4TKWorkspace.config?.settings.spacesPerIndent ?? 2;
+        // FIXME: issue where comments get put between xml declaration and I
+        const formatted = doc.toXml({
+          spacesPerIndent: spacesPerIndent,
+          writeXmlDeclaration: false, // check if it has it first
+        });
+        replaceEntireDocument(editor, formatted);
+      } catch (_) {
+        vscode.window.showWarningMessage('Could not format this XML document. There is probably a syntax error.');
+      }
+    }
+  );
+
   vscode.commands.registerCommand(COMMAND.tuning.overrideGroup,
     (editor: vscode.TextEditor | undefined) => {
       _insertCommentAtTopOfDocument(editor, 'Group: 00000000');
@@ -74,7 +96,7 @@ async function _insertCommentAtTopOfDocument(
 ) {
   if (editor) {
     const editSuccess = await editor.edit(editBuilder => {
-      const eol = editor?.document.eol === vscode.EndOfLine.CRLF ? '\r\n' : '\n';
+      const eol = editor.document.eol === vscode.EndOfLine.CRLF ? '\r\n' : '\n';
       const start = new vscode.Position(0, 0);
       editBuilder.insert(start, `<!-- ${comment} -->`);
       editBuilder.insert(start, eol);
