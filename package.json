@@ -93,6 +93,16 @@
 				"title": "Set STBL as Default",
 				"category": "S4TK Workspace",
 				"enablement": "resourceFilename =~ /\\.stbl(\\.json)?$/"
+			},
+			{
+				"command": "s4tk.workspace.build",
+				"title": "Build S4TK Project",
+				"category": "S4TK Workspace"
+			},
+			{
+				"command": "s4tk.workspace.buildDryRun",
+				"title": "Build S4TK Project (Dry Run)",
+				"category": "S4TK Workspace"
 			}
 		],
 		"customEditors": [
@@ -142,6 +152,16 @@
 				{
 					"when": "explorerResourceIsFolder && !s4tk.workspace.active",
 					"command": "s4tk.workspace.createWorkspace",
+					"group": "S4TK"
+				},
+				{
+					"when": "resourceFilename === 's4tk.config.json'",
+					"command": "s4tk.workspace.build",
+					"group": "S4TK"
+				},
+				{
+					"when": "resourceFilename === 's4tk.config.json'",
+					"command": "s4tk.workspace.buildDryRun",
 					"group": "S4TK"
 				},
 				{

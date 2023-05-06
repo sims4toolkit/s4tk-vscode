@@ -11,8 +11,6 @@ export const CONTEXT = {
 export const COMMAND = {
   config: {
     addPackage: "s4tk.config.addPackage",
-    build: "s4tk.config.build",
-    dryRun: "s4tk.config.dryRun",
   },
   hashing: {
     text: "s4tk.hashing.text",
@@ -22,11 +20,22 @@ export const COMMAND = {
     random32: "s4tk.hashing.randomFnv32",
     random64: "s4tk.hashing.randomFnv64",
   },
+  stblJson: {
+    addEntry: "s4tk.stblJson.addEntry",
+    addMetaData: "s4tk.stblJson.addMetaData",
+    copyEntry: "s4tk.stblJson.copyEntry",
+  },
   ts4Files: {
     createStblBinary: "s4tk.ts4Files.createStblBinary",
     createStblJson: "s4tk.ts4Files.createStblJson",
   },
+  tuning: {
+    overrideGroup: "s4tk.tuning.overrideGroup",
+    overrideType: "s4tk.tuning.overrideType",
+  },
   workspace: {
+    build: "s4tk.workspace.build",
+    buildDryRun: "s4tk.workspace.buildDryRun",
     createWorkspace: "s4tk.workspace.createWorkspace",
     reloadConfig: "s4tk.workspace.reloadConfig",
     setDefaultStbl: "s4tk.workspace.setDefaultStbl",

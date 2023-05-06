@@ -3,6 +3,14 @@ import { COMMAND } from "#constants";
 import S4TKWorkspace from "#workspace/s4tk-workspace";
 
 export default function registerWorkspaceCommands() {
+  vscode.commands.registerCommand(COMMAND.workspace.build, () => {
+    // TODO:
+  });
+
+  vscode.commands.registerCommand(COMMAND.workspace.buildDryRun, () => {
+    // TODO:
+  });
+
   vscode.commands.registerCommand(COMMAND.workspace.createWorkspace, () => {
     S4TKWorkspace.createDefaultWorkspace();
   });
