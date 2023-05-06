@@ -30,7 +30,7 @@ export default class StringTableJson {
 
   //#region Lifecycle
 
-  private constructor(
+  constructor(
     private _format: StringTableJsonFormat,
     private _entries: StringTableJsonEntry[],
     metadata?: {

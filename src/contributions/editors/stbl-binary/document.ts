@@ -25,8 +25,7 @@ export default class StringTableDocument extends ViewOnlyDocument {
     backupId: string | undefined
   ): Promise<StringTableDocument | PromiseLike<StringTableDocument>> {
     const dataUri = backupId ? vscode.Uri.parse(backupId) : uri;
-    const fileData = await StringTableDocument._readFile(dataUri);
-    // FIXME: try/catch
+    const fileData = await vscode.workspace.fs.readFile(dataUri);
     const stbl = StringTableResource.from(Buffer.from(fileData));
     return new StringTableDocument(uri, stbl);
   }
@@ -46,22 +45,12 @@ export default class StringTableDocument extends ViewOnlyDocument {
       vscode.window.showWarningMessage(`STBL JSON already exists at ${uri.path}`);
       vscode.window.showTextDocument(uri);
     } else {
-      const json = new StringTableJson(this.stbl.toJsonObject(true));
-      const content = json.stringify();
+      // FIXME: get number of spaces from somewhere
+      const content = JSON.stringify(this._stbl.toJsonObject(true), null, 2);
       vscode.workspace.fs.writeFile(uri, Buffer.from(content)).then(() => {
         vscode.window.showTextDocument(uri);
       });
     }
-  }
-
-  //#endregion
-
-  //#region Private Methods
-
-  // TODO: move to general helpers
-  private static async _readFile(uri: vscode.Uri): Promise<Uint8Array> {
-    if (uri.scheme === 'untitled') return new Uint8Array();
-    return await vscode.workspace.fs.readFile(uri);
   }
 
   //#endregion
