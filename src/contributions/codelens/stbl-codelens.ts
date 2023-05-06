@@ -28,36 +28,44 @@ export default class StringTableJsonCodeLensProvider extends BaseCodeLensProvide
   ): vscode.CodeLens[] | Thenable<vscode.CodeLens[]> {
     // uncaught exception is fine, it just disables the codelens
     const stblJson = StringTableJson.parse(document.getText());
-
     const editor = vscode.window.activeTextEditor;
+    this._codeLenses = [];
 
-    this._codeLenses = [
-      new vscode.CodeLens(new vscode.Range(0, 0, 0, 0), {
-        title: "Add New String (Top)",
-        tooltip: "Add a new string with a random hash to the start of this STBL.",
-        command: COMMAND.stblJson.addEntryTop,
-        arguments: [editor, stblJson],
-      }),
-      new vscode.CodeLens(new vscode.Range(0, 0, 0, 0), {
-        title: "Add New String (Bottom)",
-        tooltip: "Add a new string with a random hash to the end of this STBL.",
-        command: COMMAND.stblJson.addEntryBottom,
-        arguments: [editor, stblJson],
+    const newStringCommand: vscode.Command = {
+      title: "New String",
+      tooltip: "Add a new string with a random hash to this STBL.",
+      command: COMMAND.stblJson.addEntry,
+      arguments: [editor, stblJson],
+    };
 
-      }),
-    ];
+    if (stblJson.format === "array") {
+      const range = new vscode.Range(0, 0, 0, 0);
+      this._codeLenses.push(
+        new vscode.CodeLens(range, {
+          title: "Insert Metadata",
+          tooltip: "Convert this array-based STBL into an object-based one that tracks file metadata.",
+          command: COMMAND.stblJson.addMetaData,
+          arguments: [editor, stblJson],
+        }),
+        new vscode.CodeLens(range, newStringCommand)
+      );
+    } else {
+      for (let i = 0; i < document.lineCount; ++i) {
+        const line = document.lineAt(i);
 
-    if (stblJson.format === "array") this._codeLenses.push(
-      new vscode.CodeLens(new vscode.Range(0, 0, 0, 0), {
-        title: "Insert Metadata",
-        tooltip: "Convert this array-based STBL into an object-based one that tracks file metadata.",
-        command: COMMAND.stblJson.addMetaData,
-        arguments: [editor, stblJson],
-      })
-    );
+        if (/^\s*"entries"/.test(line.text)) {
+          this._codeLenses.push(new vscode.CodeLens(
+            new vscode.Range(i, 0, i, 0),
+            newStringCommand
+          ));
+
+          break;
+        }
+      }
+    }
 
     let stblEntryIndex = 0;
-    const keyRegex = /^\s*"key":/;
+    const keyRegex = /^\s*"key"/;
     for (let lineIndex = 0; lineIndex < document.lineCount; ++lineIndex) {
       const line = document.lineAt(lineIndex);
 

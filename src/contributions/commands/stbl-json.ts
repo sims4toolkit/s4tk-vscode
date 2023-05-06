@@ -6,15 +6,19 @@ import S4TKWorkspace from "#workspace/s4tk-workspace";
 import { MessageButton, handleMessageButtonClick } from "#workspace/messaging";
 
 export default function registerStblJsonCommands() {
-  vscode.commands.registerCommand(COMMAND.stblJson.addEntryTop,
-    (editor: vscode.TextEditor | undefined, stblJson: StringTableJson) => {
-      _tryAddNewEntry(editor, stblJson, "start");
-    }
-  );
+  vscode.commands.registerCommand(COMMAND.stblJson.addEntry,
+    async (editor: vscode.TextEditor | undefined, stblJson: StringTableJson) => {
+      if (editor) {
+        const start = S4TKWorkspace.config?.stringTables.newStringsToStart;
+        stblJson.addEntry({ position: start ? "start" : "end" });
+        const content = stblJson.stringify();
+        if (await replaceEntireDocument(editor, content)) return;
+      }
 
-  vscode.commands.registerCommand(COMMAND.stblJson.addEntryBottom,
-    (editor: vscode.TextEditor | undefined, stblJson: StringTableJson) => {
-      _tryAddNewEntry(editor, stblJson, "end");
+      vscode.window.showWarningMessage(
+        'Something unexpected went wrong while adding an entry to this STBL JSON.',
+        MessageButton.ReportProblem,
+      ).then(handleMessageButtonClick);
     }
   );
 
@@ -23,7 +27,6 @@ export default function registerStblJsonCommands() {
       if (stblJson.format === "array") return;
 
       if (editor) {
-
         stblJson.insertDefaultMetadata();
         const content = stblJson.stringify();
         if (await replaceEntireDocument(editor, content)) return;
@@ -45,25 +48,3 @@ export default function registerStblJsonCommands() {
     }
   );
 }
-
-
-//#region Helpers
-
-async function _tryAddNewEntry(
-  editor: vscode.TextEditor | undefined,
-  stblJson: StringTableJson,
-  position: 'start' | 'end'
-) {
-  if (editor) {
-    stblJson.addEntry({ position });
-    const content = stblJson.stringify();
-    if (await replaceEntireDocument(editor, content)) return;
-  }
-
-  vscode.window.showWarningMessage(
-    'Something unexpected went wrong while adding an entry to this STBL JSON.',
-    MessageButton.ReportProblem,
-  ).then(handleMessageButtonClick);
-}
-
-//#endregion
