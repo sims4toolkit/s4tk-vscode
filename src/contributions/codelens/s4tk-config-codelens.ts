@@ -63,6 +63,7 @@ export default class S4TKConfigCodeLensProvider extends BaseCodeLensProvider {
         title: "New Package",
         tooltip: "Add instructions for building a new package.",
         command: COMMAND.config.addPackage,
+        arguments: [vscode.window.activeTextEditor]
       })
     );
   }

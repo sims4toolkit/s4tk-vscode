@@ -1,7 +1,7 @@
 import * as vscode from "vscode";
 import { CONTEXT, FILENAME } from "#constants";
 import { S4TKConfig } from "#models/s4tk-config";
-import { fileExists, findOpenDocument } from "#helpers/fs";
+import { fileExists, findOpenDocument, replaceEntireDocument } from "#helpers/fs";
 import { MessageButton, handleMessageButtonClick } from "./messaging";
 import StringTableJson from "#models/stbl-json";
 import { SCHEMA_DEFAULTS } from "#assets";
@@ -51,6 +51,21 @@ class _S4TKWorkspace {
   //#endregion
 
   //#region Public Methods
+
+  /**
+   * Inserts a new package instructions object to the build instructions of the
+   * config, if it is loaded. If an editor is provided, then the editor will be
+   * used to make the edit. If not, then it will be written straight to disk.
+   */
+  async addPackageInstructions(editor?: vscode.TextEditor) {
+    await this._tryEditAndSaveConfig("Add Package Instructions", editor, (config) => {
+      config.buildInstructions.packages ??= [];
+      config.buildInstructions.packages.push({
+        filename: "",
+        include: [],
+      });
+    });
+  }
 
   /**
    * Generates the files needed for an S4TK project and loads the config.
@@ -139,24 +154,22 @@ class _S4TKWorkspace {
    * @param stblUri URI of the string table to set as default
    */
   async setDefaultStbl(stblUri: vscode.Uri) {
-    const configUri = await this._ensureConfigIsEditable('Set Default STBL');
-    if (!(this.config && configUri)) return;
-
-    S4TKConfig.modify(this.config, (original) => {
+    await this._tryEditAndSaveConfig("Set Default STBL", null, (config) => {
       //@ts-ignore Ok to leave blank, proxy takes care of defaults
-      original.stringTables ??= {};
-      original.stringTables.defaultPath = stblUri.fsPath;
+      config.stringTables ??= {};
+      config.stringTables.defaultPath = stblUri.fsPath;
     });
-
-    const buffer = Buffer.from(S4TKConfig.stringify(this.config))
-    vscode.workspace.fs.writeFile(configUri, buffer);
   }
 
   //#endregion
 
   //#region Private Methods
 
-  private async _ensureConfigIsEditable(action: string): Promise<vscode.Uri | undefined> {
+  private async _tryEditAndSaveConfig(
+    action: string,
+    editor: vscode.TextEditor | undefined | null,
+    fn: (config: S4TKConfig) => void
+  ) {
     if (!this._config) {
       vscode.window.showErrorMessage(
         `Cannot perform '${action}' because no S4TK config is currently loaded.`,
@@ -174,7 +187,7 @@ class _S4TKWorkspace {
       return undefined;
     }
 
-    const openConfigDocument = findOpenDocument(configUri);
+    const openConfigDocument = editor?.document ?? findOpenDocument(configUri);
     if (openConfigDocument)
       await this.trySaveDocumentAndReload(openConfigDocument);
 
@@ -186,7 +199,11 @@ class _S4TKWorkspace {
       return undefined;
     }
 
-    return configUri;
+    S4TKConfig.modify(this._config, fn);
+    const newContent = S4TKConfig.stringify(this._config);
+
+    if (!(editor && await replaceEntireDocument(editor, newContent)))
+      vscode.workspace.fs.writeFile(configUri, Buffer.from(newContent));
   }
 
   //#endregion

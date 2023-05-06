@@ -59,4 +59,35 @@ export function findOpenDocument(uri: vscode.Uri): vscode.TextDocument | undefin
   return vscode.workspace.textDocuments.find(document => {
     return document.uri.toString() === expectedUriString;
   });
-} 
+}
+
+/**
+ * Replaces an entire document's contents using its editor, and returns whether
+ * the edits could be made or not.
+ * 
+ * @param editor Editor of the document to change
+ * @param content New content to insert into document
+ * @param save Whether or not to save the file after applying edits
+ */
+export async function replaceEntireDocument(
+  editor: vscode.TextEditor,
+  content: string,
+  save: boolean = false
+): Promise<boolean> {
+  if (!editor.document) return false;
+
+  const editSuccess = await editor.edit((editBuilder) => {
+    editBuilder.replace(
+      new vscode.Range(
+        editor.document.lineAt(0).range.start,
+        editor.document.lineAt(editor.document.lineCount - 1).range.end
+      ),
+      content,
+    );
+  });
+
+  if (save && editSuccess)
+    await editor.document.save();
+
+  return editSuccess;
+}
