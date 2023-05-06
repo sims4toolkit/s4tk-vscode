@@ -175,6 +175,28 @@
 					"command": "s4tk.workspace.setDefaultStbl",
 					"group": "S4TK"
 				}
+			],
+			"editor/title/context": [
+				{
+					"when": "resourceFilename === 's4tk.config.json'",
+					"command": "s4tk.workspace.build",
+					"group": "S4TK"
+				},
+				{
+					"when": "resourceFilename === 's4tk.config.json'",
+					"command": "s4tk.workspace.buildDryRun",
+					"group": "S4TK"
+				},
+				{
+					"when": "resourceFilename === 's4tk.config.json'",
+					"command": "s4tk.workspace.reloadConfig",
+					"group": "S4TK"
+				},
+				{
+					"when": "resourceFilename =~ /\\.stbl(\\.json)?$/",
+					"command": "s4tk.workspace.setDefaultStbl",
+					"group": "S4TK"
+				}
 			]
 		}
 	}
