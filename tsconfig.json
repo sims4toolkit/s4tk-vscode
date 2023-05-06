@@ -11,7 +11,7 @@
     "moduleResolution": "node",
     "paths": {
       "#assets": ["assets.ts"],
-      "#contributes": ["contributes.ts"],
+      "#constants": ["constants.ts"],
       "#extension": ["extension.ts"],
       "#helpers/*": ["core/helpers/*"],
       "#models/*": ["core/models/*"],

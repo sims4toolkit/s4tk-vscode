@@ -2,6 +2,12 @@
 // are only ever written once, and then referred to in a type-safe way and can
 // be easily changed if needed.
 
+export const CONTEXT = {
+  workspace: {
+    active: "s4tk.workspace.active",
+  },
+};
+
 export const COMMAND = {
   config: {
     addPackage: "s4tk.config.addPackage",
@@ -22,6 +28,7 @@ export const COMMAND = {
   },
   workspace: {
     createWorkspace: "s4tk.workspace.createWorkspace",
+    reloadConfig: "s4tk.workspace.reloadConfig",
     setDefaultStbl: "s4tk.workspace.setDefaultStbl",
   },
 };
@@ -30,6 +37,10 @@ export const EDITOR = {
   stblBinary: "s4tk.editor.stblBinary",
 };
 
-export const FILES = {
+export const FILENAME = {
   config: "s4tk.config.json",
+};
+
+export const LINK = {
+  help: "https://frankkmods.com/#/contact",
 };

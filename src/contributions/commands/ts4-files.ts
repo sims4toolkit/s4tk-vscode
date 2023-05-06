@@ -1,7 +1,7 @@
 import * as vscode from "vscode";
 import { StringTableResource } from "@s4tk/models";
+import { EDITOR } from "#constants";
 import StringTableJson from "#models/stbl-json";
-import { EDITOR } from "#contributes";
 import { fileExists } from "#helpers/fs";
 
 export default function registerTS4FilesCommands() {
