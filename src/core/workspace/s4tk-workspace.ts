@@ -1,8 +1,10 @@
 import * as vscode from "vscode";
 import { CONTEXT, FILENAME } from "#constants";
 import { S4TKConfig } from "#models/s4tk-config";
-import { findOpenDocument } from "#helpers/fs";
+import { fileExists, findOpenDocument } from "#helpers/fs";
 import { MessageButton, handleMessageButtonClick } from "./messaging";
+import StringTableJson from "#models/stbl-json";
+import { SCHEMA_DEFAULTS } from "#assets";
 
 class _S4TKWorkspace {
   //#region Properties
@@ -24,7 +26,7 @@ class _S4TKWorkspace {
 
   //#endregion
 
-  //#region Public Methods
+  //#region Activation
 
   /**
    * Does setup work for the S4TK workspace.
@@ -44,6 +46,44 @@ class _S4TKWorkspace {
     });
 
     this.loadConfig();
+  }
+
+  //#endregion
+
+  //#region Public Methods
+
+  /**
+   * Generates the files needed for an S4TK project and loads the config.
+   */
+  async createDefaultWorkspace() {
+    // confirm workspace doesn't already exist
+    const configInfo = await S4TKConfig.find();
+    if (configInfo.exists) {
+      vscode.window.showWarningMessage("S4TK config file already exists.");
+      return;
+    } else if (!configInfo.uri) {
+      vscode.window.showErrorMessage("Failed to locate URI for config file.");
+      return;
+    }
+
+    const configData = await vscode.workspace.fs.readFile(SCHEMA_DEFAULTS.config);
+
+    vscode.workspace.fs.writeFile(configInfo.uri, configData).then(() => {
+      vscode.window.showTextDocument(configInfo.uri!);
+      this.loadConfig();
+    });
+
+    const rootUri = vscode.workspace.workspaceFolders?.[0]?.uri as vscode.Uri;
+    vscode.workspace.fs.createDirectory(vscode.Uri.joinPath(rootUri, "out"));
+    vscode.workspace.fs.createDirectory(vscode.Uri.joinPath(rootUri, "src"));
+    vscode.workspace.fs.createDirectory(vscode.Uri.joinPath(rootUri, "strings"));
+
+    const stblUri = vscode.Uri.joinPath(rootUri, "strings", "default.stbl.json");
+    if (!(await fileExists(stblUri))) {
+      const stblJson = StringTableJson.generate("object");
+      const stblBuffer = Buffer.from(stblJson.stringify());
+      vscode.workspace.fs.writeFile(stblUri, stblBuffer);
+    }
   }
 
   /**
