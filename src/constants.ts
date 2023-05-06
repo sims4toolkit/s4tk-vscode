@@ -15,12 +15,12 @@ export const COMMAND = {
     dryRun: "s4tk.config.dryRun",
   },
   hashing: {
-    fnv31: "s4tk.hashing.fnv31",
-    fnv32: "s4tk.hashing.fnv32",
-    fnv64: "s4tk.hashing.fnv64",
-    random31: "s4tk.hashing.random31",
-    random32: "s4tk.hashing.random32",
-    random64: "s4tk.hashing.random64",
+    text: "s4tk.hashing.text",
+    text32: "s4tk.hashing.text32",
+    text64: "s4tk.hashing.text64",
+    random: "s4tk.hashing.randomFnv",
+    random32: "s4tk.hashing.randomFnv32",
+    random64: "s4tk.hashing.randomFnv64",
   },
   ts4Files: {
     createStblBinary: "s4tk.ts4Files.createStblBinary",

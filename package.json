@@ -39,23 +39,23 @@
 	"contributes": {
 		"commands": [
 			{
-				"command": "s4tk.hashing.fnv31",
-				"title": "Hash text with FNV31",
+				"command": "s4tk.hashing.text",
+				"title": "Hash text with FNV (custom bits)",
 				"category": "FNV Hashing"
 			},
 			{
-				"command": "s4tk.hashing.fnv32",
+				"command": "s4tk.hashing.text32",
 				"title": "Hash text with FNV32",
 				"category": "FNV Hashing"
 			},
 			{
-				"command": "s4tk.hashing.fnv64",
+				"command": "s4tk.hashing.text64",
 				"title": "Hash text with FNV64",
 				"category": "FNV Hashing"
 			},
 			{
-				"command": "s4tk.hashing.random31",
-				"title": "Generate random FNV31 hash",
+				"command": "s4tk.hashing.random",
+				"title": "Generate random FNV hash (custom bits)",
 				"category": "FNV Hashing"
 			},
 			{
