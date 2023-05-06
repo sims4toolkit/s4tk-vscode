@@ -1,7 +1,7 @@
 {
   "projectInfo": {
-    "creatorName": "",
-    "projectName": "",
+    "creatorName": "YourName",
+    "projectName": "YourProjectName",
     "tuningPrefix": ""
   },
   "buildInstructions": {
@@ -10,12 +10,23 @@
     "destinations": [
       "./out"
     ],
-    "packages": []
+    "packages": [
+      {
+        "filename": "YourFirstPackageName",
+        "include": [
+          "**/*"
+        ]
+      }
+    ]
   },
   "stringTables": {
     "defaultLocale": "English",
     "defaultPath": "./strings/default.stbl.json",
+    "newStringsToStart": false,
     "generateMissingLocales": true,
     "onePerPackage": true
+  },
+  "settings": {
+    "showCopyConfirmation": true
   }
 }

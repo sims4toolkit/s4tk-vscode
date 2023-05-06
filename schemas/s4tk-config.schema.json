@@ -74,7 +74,6 @@
         "destinations": {
           "type": "array",
           "description": "List of absolute and/or relative paths to folders where all built packages should be output to.\n\nBoth Windows and Unix paths are accepted; they will be automatically converted as needed.",
-          "minItems": 1,
           "items": {
             "type": "string"
           }
@@ -97,7 +96,6 @@
               "include": {
                 "type": "array",
                 "description": "List of absolute and/or relative (to the source folder) glob patterns that capture all files that should be built into this package.\n\nBoth Windows and Unix paths are accepted; they will be automatically converted as needed.",
-                "minItems": 1,
                 "items": {
                   "type": "string"
                 }
@@ -126,7 +124,7 @@
           "description": "Whether or not to generate string tables for all missing locales (using the text from the default locale).",
           "default": true
         },
-        "newStringsToTop": {
+        "newStringsToStart": {
           "type": "boolean",
           "description": "Whether or not to insert strings generated via commands to the top of the string table, rather than to the end.",
           "default": false

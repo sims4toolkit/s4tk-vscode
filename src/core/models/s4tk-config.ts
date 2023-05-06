@@ -28,7 +28,7 @@ export interface S4TKConfig {
     defaultLocale: StringTableLocale;
     defaultPath?: string;
     generateMissingLocales: boolean;
-    newStringsToTop: boolean;
+    newStringsToStart: boolean;
     onePerPackage: boolean;
   };
 
@@ -109,7 +109,7 @@ const _CONFIG_TRANSFORMER: ConfigTransformer = {
     defaults: {
       defaultLocale: StringTableLocale.English,
       generateMissingLocales: true,
-      newStringsToTop: false,
+      newStringsToStart: false,
       onePerPackage: true,
     },
     getConverter(prop, value) {
@@ -175,7 +175,7 @@ function _getObjectProxy<T extends object>(target: T | undefined, {
 }: ConfigPropertyTransformer<T>): T {
   // Just using ! to silence TS even though these are known to be undefined
   if (nullable && !target) return target!;
-  return new Proxy<T>(target!, {
+  return new Proxy<T>(target ?? {} as T, {
     get(target, prop: string) {
       //@ts-ignore This is safe because we're in a proxy
       return getConverter(prop, target[prop] ?? defaults[prop]);
