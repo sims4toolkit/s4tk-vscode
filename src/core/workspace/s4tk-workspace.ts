@@ -202,7 +202,9 @@ class _S4TKWorkspace {
     S4TKConfig.modify(this._config, fn);
     const newContent = S4TKConfig.stringify(this._config);
 
-    if (!(editor && await replaceEntireDocument(editor, newContent)))
+    // important to save because if user undoes changes before saving then the
+    // config will fall out of sync
+    if (!(editor && await replaceEntireDocument(editor, newContent, true)))
       vscode.workspace.fs.writeFile(configUri, Buffer.from(newContent));
   }
 
