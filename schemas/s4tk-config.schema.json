@@ -27,60 +27,35 @@
   },
   "type": "object",
   "required": [
-    "projectInfo",
     "buildInstructions"
   ],
   "additionalProperties": false,
   "properties": {
-    "projectInfo": {
-      "type": "object",
-      "description": "Metadata about this project.",
-      "required": [
-        "creatorName",
-        "projectName"
-      ],
-      "additionalProperties": false,
-      "properties": {
-        "creatorName": {
-          "type": "string",
-          "description": "The name of this project's creator."
-        },
-        "projectName": {
-          "type": "string",
-          "description": "The name of this project."
-        },
-        "tuningPrefix": {
-          "type": "string",
-          "description": "Text to prepend to generated tuning file names."
-        }
-      }
-    },
     "buildInstructions": {
       "type": "object",
       "required": [
-        "destinations"
+        "source",
+        "destinations",
+        "packages"
       ],
       "additionalProperties": false,
       "properties": {
-        "allowFolderCreation": {
-          "type": "boolean",
-          "description": "Whether or not the S4TK extension is allowed to create missing folders in order to output to `destinations`.",
-          "default": false
-        },
-        "sourceFolder": {
+        "source": {
           "type": "string",
-          "description": "Absolute or relative path to the folder that contains all of the resources for this project. If omitted, then the root of this project is considered to be the source folder.\n\nBoth Windows and Unix paths are accepted; they will be automatically converted as needed."
+          "description": "Absolute or relative path to the folder that contains all of the resources for this project.\n\nBoth Windows and Unix paths are accepted; they will be automatically converted as needed."
         },
         "destinations": {
           "type": "array",
           "description": "List of absolute and/or relative paths to folders where all built packages should be output to.\n\nBoth Windows and Unix paths are accepted; they will be automatically converted as needed.",
+          "minItems": 1,
           "items": {
             "type": "string"
           }
         },
         "packages": {
           "type": "array",
-          "description": "List of packages to build. If omitted or empty, then all files will be built to a single package that is named using the values in `projectInfo`.",
+          "description": "List of packages to build to each folder within `destinations`.",
+          "minItems": 1,
           "items": {
             "type": "object",
             "required": [
@@ -91,11 +66,18 @@
             "properties": {
               "filename": {
                 "type": "string",
-                "description": "What to name the built package file (if the `.package` extension is omitted, it will be inserted)."
+                "description": "What to name the built package file."
               },
               "include": {
                 "type": "array",
-                "description": "List of absolute and/or relative (to the source folder) glob patterns that capture all files that should be built into this package.\n\nBoth Windows and Unix paths are accepted; they will be automatically converted as needed.",
+                "description": "List of glob patterns (relative to the source folder) that capture all files that should be built into this package.\n\nBoth Windows and Unix paths are accepted; they will be automatically converted as needed.",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "exclude": {
+                "type": "array",
+                "description": "List of glob patterns (relative to the source folder) of files that should be excluded, even if they pass one of the `include` patterns.\n\nBoth Windows and Unix paths are accepted; they will be automatically converted as needed.",
                 "items": {
                   "type": "string"
                 }
@@ -105,43 +87,77 @@
         }
       }
     },
-    "stringTables": {
+    "buildSettings": {
       "type": "object",
-      "description": "Data related to the string table(s) in this project.",
+      "description": "Settings that affect the build process.",
       "additionalProperties": false,
       "properties": {
-        "defaultLocale": {
-          "$ref": "#/definitions/stringTableLocale",
-          "description": "The locale that the source strings are written in.",
-          "default": "English"
-        },
-        "defaultPath": {
-          "type": "string",
-          "description": "Absolute or relative path to the string table (binary or JSON) that serves as the default for this project. Strings added via commands will be added to this string table.\n\nBoth Windows and Unix paths are accepted; they will be automatically converted as needed."
+        "allowFolderCreation": {
+          "type": "boolean",
+          "description": "Whether or not the S4TK extension is allowed to create missing folders in order to output to `destinations` while building.",
+          "default": false
         },
         "generateMissingLocales": {
           "type": "boolean",
           "description": "Whether or not to generate string tables for all missing locales (using the text from the default locale).",
           "default": true
         },
-        "newStringsToStart": {
+        "minifyTuning": {
           "type": "boolean",
-          "description": "Whether or not to insert strings generated via commands to the top of the string table, rather than to the end.",
+          "description": "Whether or not to minify tuning (i.e. remove all whitespace, comments, and processing instructions).",
           "default": false
         },
-        "onePerPackage": {
+        "mergeStringTablesInSamePackage": {
           "type": "boolean",
-          "description": "Whether or not all of the string tables being written to the same package should be merged.",
+          "description": "Whether or not all of the string tables of the same locale being written to the same package should be merged.",
+          "default": true
+        },
+        "outputBuildSummaryFile": {
+          "type": "boolean",
+          "description": "Whether or not the `BuildSummary.txt` file should be generated after each build.",
           "default": true
         }
       }
     },
-    "settings": {
+    "workspaceSettings": {
       "type": "object",
-      "description": "Optional settings that affect how the S4TK extension works.",
+      "description": "Settings that affect how the S4TK works while you're using it.",
       "additionalProperties": false,
       "properties": {
-        "showCopyConfirmation": {
+        "defaultLocale": {
+          "$ref": "#/definitions/stringTableLocale",
+          "description": "The language that you write your strings in.",
+          "default": "English"
+        },
+        "defaultStringTable": {
+          "type": "string",
+          "description": "Absolute or relative path to the string table (binary or JSON) that serves as the default for this project. Any strings generated via commands will be added to this string table.\n\nBoth Windows and Unix paths are accepted; they will be automatically converted as needed."
+        },
+        "showXmlKeyOverrideButtons": {
+          "type": "boolean",
+          "description": "Whether or not to show the Type/Group/Instance override buttons within XML files. If the buttons are hidden, you can still add the comments to override them manually.",
+          "default": true
+        },
+        "showStblJsonMetaDataButton": {
+          "type": "boolean",
+          "description": "Whether or not to show the button in array-based STBL JSONs that adds meta data, converting it to an object-based STBL JSON.",
+          "default": true
+        },
+        "newStringsToStartOfTable": {
+          "type": "boolean",
+          "description": "Whether or not to insert strings generated via commands to the beginning of the string table, rather than to the end (very convenient for STBL JSONs).",
+          "default": true
+        },
+        "newStringTableJsonType": {
+          "type": "string",
+          "description": "Which kind of STBL JSON should be generated by the command.",
+          "enum": [
+            "array",
+            "object"
+          ],
+          "default": "object"
+        },
+        "showCopyConfirmationPopup": {
           "type": "boolean",
           "description": "Whether or not to show a popup to confirm when something has been copied to your clipboard.",
           "default": true

@@ -1,32 +1,33 @@
 {
-  "projectInfo": {
-    "creatorName": "YourName",
-    "projectName": "YourProjectName",
-    "tuningPrefix": ""
-  },
   "buildInstructions": {
-    "allowFolderCreation": false,
-    "sourceFolder": "./src",
+    "source": "./src",
     "destinations": [
       "./out"
     ],
     "packages": [
       {
-        "filename": "YourFirstPackageName",
+        "filename": "MyPackage",
         "include": [
           "**/*"
         ]
       }
     ]
   },
-  "stringTables": {
-    "defaultLocale": "English",
-    "defaultPath": "./strings/default.stbl.json",
-    "newStringsToStart": true,
+  "buildSettings": {
+    "allowFolderCreation": false,
     "generateMissingLocales": true,
-    "onePerPackage": true
+    "minifyTuning": false,
+    "mergeStringTablesInSamePackage": true,
+    "outputBuildSummaryFile": true
   },
-  "settings": {
-    "showCopyConfirmation": true
+  "workspaceSettings": {
+    "defaultLocale": "English",
+    "defaultStringTable": "./strings/default.stbl.json",
+    "showXmlKeyOverrideButtons": true,
+    "showStblJsonMetaDataButton": true,
+    "newStringsToStartOfTable": true,
+    "newStringTableJsonType": "object",
+    "showCopyConfirmationPopup": true,
+    "spacesPerIndent": 2
   }
 }
