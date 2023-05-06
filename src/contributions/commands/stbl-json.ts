@@ -6,22 +6,19 @@ import S4TKWorkspace from "#workspace/s4tk-workspace";
 import { MessageButton, handleMessageButtonClick } from "#workspace/messaging";
 
 export default function registerStblJsonCommands() {
-  vscode.commands.registerCommand(
-    COMMAND.stblJson.addEntryTop,
+  vscode.commands.registerCommand(COMMAND.stblJson.addEntryTop,
     (editor: vscode.TextEditor | undefined, stblJson: StringTableJson) => {
       _tryAddNewEntry(editor, stblJson, "start");
     }
   );
 
-  vscode.commands.registerCommand(
-    COMMAND.stblJson.addEntryBottom,
+  vscode.commands.registerCommand(COMMAND.stblJson.addEntryBottom,
     (editor: vscode.TextEditor | undefined, stblJson: StringTableJson) => {
       _tryAddNewEntry(editor, stblJson, "end");
     }
   );
 
-  vscode.commands.registerCommand(
-    COMMAND.stblJson.addMetaData,
+  vscode.commands.registerCommand(COMMAND.stblJson.addMetaData,
     async (editor: vscode.TextEditor | undefined, stblJson: StringTableJson) => {
       if (stblJson.format === "array") return;
 
@@ -39,8 +36,7 @@ export default function registerStblJsonCommands() {
     }
   );
 
-  vscode.commands.registerCommand(
-    COMMAND.stblJson.copyEntry,
+  vscode.commands.registerCommand(COMMAND.stblJson.copyEntry,
     (stblJson: StringTableJson, entryIndex: number) => {
       const xml = stblJson.getEntryXml(entryIndex);
       vscode.env.clipboard.writeText(xml);
