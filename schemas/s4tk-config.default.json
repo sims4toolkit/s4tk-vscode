@@ -16,18 +16,23 @@
   "buildSettings": {
     "allowFolderCreation": false,
     "generateMissingLocales": true,
-    "minifyTuning": false,
     "mergeStringTablesInSamePackage": true,
+    "minifyTuning": false,
     "outputBuildSummaryFile": true
+  },
+  "releaseSettings": {
+    "filename": "MyZippedModFiles",
+    "otherFilesToInclude": [],
+    "overrideDestinations": []
   },
   "workspaceSettings": {
     "defaultLocale": "English",
     "defaultStringTable": "./strings/default.stbl.json",
-    "showXmlKeyOverrideButtons": true,
-    "showStblJsonMetaDataButton": true,
     "newStringsToStartOfTable": true,
     "newStringTableJsonType": "object",
     "showCopyConfirmationPopup": true,
+    "showStblJsonMetaDataButton": true,
+    "showXmlKeyOverrideButtons": true,
     "spacesPerIndent": 2
   }
 }

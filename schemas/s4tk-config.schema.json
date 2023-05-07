@@ -102,20 +102,46 @@
           "description": "Whether or not to generate string tables for all missing locales (using the text from the default locale).",
           "default": true
         },
-        "minifyTuning": {
-          "type": "boolean",
-          "description": "Whether or not to minify tuning (i.e. remove all whitespace, comments, and processing instructions).",
-          "default": false
-        },
         "mergeStringTablesInSamePackage": {
           "type": "boolean",
           "description": "Whether or not all of the string tables of the same locale being written to the same package should be merged.",
           "default": true
         },
+        "minifyTuning": {
+          "type": "boolean",
+          "description": "Whether or not to minify tuning (i.e. remove all whitespace, comments, and processing instructions).",
+          "default": false
+        },
         "outputBuildSummaryFile": {
           "type": "boolean",
-          "description": "Whether or not the `BuildSummary.txt` file should be generated after each build.",
+          "description": "Whether or not the `BuildSummary.txt` file should be generated after each build. Useful for debugging issues with your config.",
           "default": true
+        }
+      }
+    },
+    "releaseSettings": {
+      "type": "object",
+      "description": "Settings that affect builds made for release (i.e. a zipped version of all of your packages).",
+      "additionalProperties": false,
+      "properties": {
+        "filename": {
+          "type": "string",
+          "description": "Name of the ZIP file that contains all of your mod files.",
+          "default": ""
+        },
+        "otherFilesToInclude": {
+          "type": "array",
+          "description": "List of absolute and/or relative glob patterns that capture all additional files that should be zipped with your packages.\n\nBoth Windows and Unix paths are accepted; they will be automatically converted as needed.",
+          "items": {
+            "type": "string"
+          }
+        },
+        "overrideDestinations": {
+          "type": "array",
+          "description": "List of absolute and/or relative paths to folders where the ZIP file should be output to. If omitted or empty, then `buildInstructions.destinations` will be used.\n\nBoth Windows and Unix paths are accepted; they will be automatically converted as needed.",
+          "items": {
+            "type": "string"
+          }
         }
       }
     },
@@ -132,16 +158,6 @@
         "defaultStringTable": {
           "type": "string",
           "description": "Absolute or relative path to the string table (binary or JSON) that serves as the default for this project. Any strings generated via commands will be added to this string table.\n\nBoth Windows and Unix paths are accepted; they will be automatically converted as needed."
-        },
-        "showXmlKeyOverrideButtons": {
-          "type": "boolean",
-          "description": "Whether or not to show the Type/Group/Instance override buttons within XML files. If the buttons are hidden, you can still add the comments to override them manually.",
-          "default": true
-        },
-        "showStblJsonMetaDataButton": {
-          "type": "boolean",
-          "description": "Whether or not to show the button in array-based STBL JSONs that adds meta data, converting it to an object-based STBL JSON.",
-          "default": true
         },
         "newStringsToStartOfTable": {
           "type": "boolean",
@@ -160,6 +176,16 @@
         "showCopyConfirmationPopup": {
           "type": "boolean",
           "description": "Whether or not to show a popup to confirm when something has been copied to your clipboard.",
+          "default": true
+        },
+        "showStblJsonMetaDataButton": {
+          "type": "boolean",
+          "description": "Whether or not to show the button in array-based STBL JSONs that adds meta data, converting it to an object-based STBL JSON.",
+          "default": true
+        },
+        "showXmlKeyOverrideButtons": {
+          "type": "boolean",
+          "description": "Whether or not to show the Type/Group/Instance override buttons within XML files. If the buttons are hidden, you can still add the comments to override them manually.",
           "default": true
         },
         "spacesPerIndent": {

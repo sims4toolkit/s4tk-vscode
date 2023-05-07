@@ -25,6 +25,12 @@ export interface S4TKConfig {
     outputBuildSummaryFile: boolean;
   };
 
+  releaseSettings: {
+    filename: string;
+    otherFilesToInclude: string[];
+    overrideDestinations: string[];
+  };
+
   workspaceSettings: {
     defaultLocale: StringTableLocaleName;
     defaultStringTable: string;
@@ -52,6 +58,13 @@ const _CONFIG_TRANSFORMER: ConfigTransformer = {
       mergeStringTablesInSamePackage: true,
       minifyTuning: false,
       outputBuildSummaryFile: true,
+    },
+  },
+  releaseSettings: {
+    defaults: {
+      filename: "",
+      otherFilesToInclude: [],
+      overrideDestinations: [],
     },
   },
   workspaceSettings: {
