@@ -10,47 +10,47 @@ If you need more information, read the docs: https://vscode.sims4toolkit.com/
 
 # The Generated Files/Folders
 
-.gitignore
+__.gitignore__
   Only needed if you plan on using Git. Feel free to delete.
 
-HowToUseS4TK.md
+__HowToUseS4TK.md__
   What you're reading right now. Feel free to delete when you are done.
 
-s4tk.config.json
+__s4tk.config.json__
   The S4TK configuration file. This is what makes your folder an S4TK project.
   Do not delete, or you no longer have a project.
 
-out/
+__out/__
   Where your built packages will be written to by default. You can add, edit,
   and remove build folders in your s4tk.config.json file.
 
-src/
+__src/__
   The folder that contains all of your mods' source files. These can be tuning,
   SimData (as XML), string tables (as binary or JSON), and packages. If you want
   to include any other resources, they either must be in a package, or must be
   using the S4S file naming convention (T!G!I).
 
-src/strings/
+__src/strings/__
   A folder where you can keep all of your string tables. If you want to put them
   somewhere else, feel free to rename or delete this folder.
 
-src/strings/default.stbl.json
+__src/strings/default.stbl.json__
   A sample JSON string table that is set as the default string table in your
   config file. JSON is the recommended format for string tables in S4TK.
 
-src/strings/sample.stbl
+__src/strings/sample.stbl__
   A sample binary string table file, which is view-only. This is just here to
   demonstrate what the binary STBL viewer looks like; feel free to delete.
 
-src/tuning/
+__src/tuning/__
   A folder of example tuning/SimData. You can use any folder structure you want
   in your mod; feel free to delete this one, and organize your files in whatever
   way makes sense to you and works with your build instructions.
 
-src/tuning/buff_Example.SimData.xml
+__src/tuning/buff_Example.SimData.xml__
   A sample buff SimData, with comments explaining how S4TK processes SimData.
 
-src/tuning/buff_Example.xml
+__src/tuning/buff_Example.xml__
   A sample buff tuning, with comments explaining how S4TK processes tuning.
 
 --------------------------------------------------------------------------------
@@ -59,7 +59,7 @@ src/tuning/buff_Example.xml
 
 The S4TK config is what turns your folder into an S4TK project. It contains all
 of the info needed for building your files into packages, as well as optional
-settings that can be configured. It must be placed in the **root** of the folder
+settings that can be configured. It must be placed in the __root__ of the folder
 that you have open with VS Code, otherwise, it will fail to load.
 
 ### Loading and Validation
