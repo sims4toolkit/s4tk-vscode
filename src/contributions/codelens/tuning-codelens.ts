@@ -54,7 +54,7 @@ export default class TuningCodeLensProvider extends BaseCodeLensProvider {
 
     if (overrides?.type == undefined) this._codeLenses.push(
       new vscode.CodeLens(rangeZero, {
-        title: "Override Type",
+        title: "Type",
         tooltip: this._getTypeOverrideTooltip(metadata),
         command: COMMAND.tuning.overrideType,
         arguments: [editor],
@@ -63,7 +63,7 @@ export default class TuningCodeLensProvider extends BaseCodeLensProvider {
 
     if (overrides?.group == undefined) this._codeLenses.push(
       new vscode.CodeLens(new vscode.Range(0, 0, 0, 0), {
-        title: "Override Group",
+        title: "Group",
         tooltip: this._getGroupOverrideTooltip(metadata),
         command: COMMAND.tuning.overrideGroup,
         arguments: [editor],
@@ -72,7 +72,7 @@ export default class TuningCodeLensProvider extends BaseCodeLensProvider {
 
     if (overrides?.instance == undefined) this._codeLenses.push(
       new vscode.CodeLens(new vscode.Range(0, 0, 0, 0), {
-        title: "Override Instance",
+        title: "Instance",
         tooltip: this._getInstanceOverrideTooltip(metadata),
         command: COMMAND.tuning.overrideInstance,
         arguments: [editor],
