@@ -124,6 +124,11 @@ class _S4TKWorkspace {
     );
 
     createFile(
+      vscode.Uri.joinPath(rootUri, "src", "strings", "sample.stbl"),
+      SAMPLES.stbl
+    );
+
+    createFile(
       vscode.Uri.joinPath(rootUri, "src", "strings", "default.stbl.json"),
       StringTableJson.generateBuffer(
         this.newStringTableJsonType,

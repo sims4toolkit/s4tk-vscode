@@ -29,9 +29,10 @@ export const SCHEMAS = _uriResolver("schemas", {
 });
 
 export const SAMPLES = _uriResolver("samples", {
-  config: ["default-s4tk-config.json"],
+  config: ["s4tk.config.json"],
   gitignore: ["gitignore.txt"],
-  readme: ["default-readme.md"],
-  simdata: ["example-simdata.xml"],
-  tuning: ["example-tuning.xml"],
+  readme: ["HowToUseS4TK.md"],
+  simdata: ["buff_Example.SimData.xml"],
+  stbl: ["sample.stbl"],
+  tuning: ["buff_Example.xml"],
 });

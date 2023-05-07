@@ -1,3 +1,4 @@
 .DS_Store
 out/
 BuildSummary.txt
+HowToUseS4TK.md
