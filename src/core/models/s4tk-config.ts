@@ -1,48 +1,81 @@
 import * as vscode from "vscode";
-import { StringTableLocale } from "@s4tk/models/enums";
 import { SCHEMAS } from "#assets";
 import { FILENAME } from "#constants";
 import { fileExists } from "#helpers/fs";
 import { parseAndValidateJson } from "#helpers/schemas";
 
-//#region Exported Members
+//#region Types
 
 export interface S4TKConfig {
-  projectInfo: {
-    creatorName: string;
-    projectName: string;
-    tuningPrefix?: string;
-  };
-
   buildInstructions: {
-    allowFolderCreation: boolean;
-    sourceFolder?: string;
+    source: string;
     destinations: string[];
-    packages?: {
+    packages: {
       filename: string;
       include: string[];
+      exclude?: string[];
     }[];
   };
 
-  stringTables: {
-    defaultLocale: StringTableLocale;
-    defaultPath?: string;
+  buildSettings: {
+    allowFolderCreation: boolean;
     generateMissingLocales: boolean;
-    newStringsToStart: boolean;
-    onePerPackage: boolean;
+    minifyTuning: boolean;
+    mergeStringTablesInSamePackage: boolean;
+    outputBuildSummaryFile: boolean;
   };
 
-  settings: {
-    showCopyConfirmation: boolean;
+  workspaceSettings: {
+    defaultLocale: StringTableLocaleName;
+    defaultStringTable: string;
+    newStringsToStartOfTable: boolean;
+    newStringTableJsonType: "array" | "object";
+    showCopyConfirmationPopup: boolean;
+    showStblJsonMetaDataButton: boolean;
+    showXmlKeyOverrideButtons: boolean;
     spacesPerIndent: number;
   };
 }
 
+const _CONFIG_TRANSFORMER: ConfigTransformer = {
+  buildInstructions: {
+    defaults: {
+      source: "",
+      destinations: [],
+      packages: [],
+    },
+  },
+  buildSettings: {
+    defaults: {
+      allowFolderCreation: false,
+      generateMissingLocales: true,
+      mergeStringTablesInSamePackage: true,
+      minifyTuning: false,
+      outputBuildSummaryFile: true,
+    },
+  },
+  workspaceSettings: {
+    defaults: {
+      defaultLocale: "English",
+      defaultStringTable: "",
+      newStringsToStartOfTable: true,
+      newStringTableJsonType: "object",
+      showCopyConfirmationPopup: true,
+      showStblJsonMetaDataButton: true,
+      showXmlKeyOverrideButtons: true,
+      spacesPerIndent: 2,
+    },
+  },
+};
+
 export namespace S4TKConfig {
-  type ConfigInfo = {
-    uri?: vscode.Uri;
-    exists: boolean;
-  };
+  /**
+   * Returns an empty object wrapped in an S4TKConfig proxy, so that default
+   * values can be accessed in a type-safe way.
+   */
+  export function blankProxy(): S4TKConfig {
+    return _getConfigProxy({} as S4TKConfig);
+  }
 
   /**
    * Finds the expected URI of the config file, if the current workspace were to
@@ -91,73 +124,51 @@ export namespace S4TKConfig {
    * @param config Config to stringify
    */
   export function stringify(config: S4TKConfig): string {
-    return JSON.stringify(config, ((key, value) => {
-      if (key === "defaultLocale" && typeof value === "number") {
-        return StringTableLocale[value];
-      }
-
-      return value;
-    }), 2); // FIXME: get number of spaces from somewhere
+    return JSON.stringify(
+      config,
+      null,
+      config.workspaceSettings.spacesPerIndent
+    );
   }
 }
 
 //#endregion
 
-//#region Transformer / Default Values
+//#region Helper Types + Proxy
 
-const _CONFIG_TRANSFORMER: ConfigTransformer = {
-  stringTables: {
-    defaults: {
-      defaultLocale: StringTableLocale.English,
-      defaultPath: "",
-      generateMissingLocales: true,
-      newStringsToStart: true,
-      onePerPackage: true,
-    },
-    getConverter(prop, value) {
-      if (prop === "defaultLocale" && typeof value === "string") {
-        //@ts-ignore This is safe because value passed the schema
-        return StringTableLocale[value];
-      }
-
-      return value;
-    }
-  },
-  settings: {
-    defaults: {
-      showCopyConfirmation: true,
-      spacesPerIndent: 2,
-    },
-  },
-};
-
-//#endregion
-
-//#region Config Proxy
+type StringTableLocaleName =
+  "English" |
+  "ChineseSimplified" |
+  "ChineseTraditional" |
+  "Czech" |
+  "Danish" |
+  "Dutch" |
+  "Finnish" |
+  "French" |
+  "German" |
+  "Italian" |
+  "Japanese" |
+  "Korean" |
+  "Norwegian" |
+  "Polish" |
+  "Portuguese" |
+  "Russian" |
+  "Spanish" |
+  "Swedish";
 
 interface ConfigPropertyTransformer<T> {
-  /**
-   * Whether or not this property can be null at runtime.
-   */
-  nullable?: boolean;
-
-  /**
-   * Default values to use for undefined or null properties.
-   */
-  defaults?: Partial<T>;
-
-  /**
-   * Converts a property from its schema type to its runtime type.
-   * 
-   * @param prop Name of property being converted
-   * @param value Value of property being converted
-   */
+  defaults: T;
   getConverter?: (prop: keyof T, value: any) => any;
 }
 
-type ConfigTransformer = Partial<{
+type ConfigTransformer = {
   [key in keyof S4TKConfig]: ConfigPropertyTransformer<S4TKConfig[key]>;
-}>;
+};
+
+type ConfigInfo = {
+  uri?: vscode.Uri;
+  exists: boolean;
+};
 
 function _getConfigProxy(config: S4TKConfig): S4TKConfig {
   return new Proxy<S4TKConfig>(config, {
@@ -172,15 +183,12 @@ function _getConfigProxy(config: S4TKConfig): S4TKConfig {
 }
 
 function _getObjectProxy<T extends object>(target: T | undefined, {
-  nullable = false,
-  defaults = {},
+  defaults = {} as T,
   getConverter = (_, value) => value
 }: ConfigPropertyTransformer<T>): T {
-  // Just using ! to silence TS even though these are known to be undefined
-  if (nullable && !target) return target!;
   return new Proxy<T>(target ?? {} as T, {
-    get(target, prop: string) {
-      //@ts-ignore This is safe because we're in a proxy
+    //@ts-ignore I genuinely do not understand why TS doesn't like this
+    get(target, prop: keyof T) {
       return getConverter(prop, target[prop] ?? defaults[prop]);
     },
   }) as T;
