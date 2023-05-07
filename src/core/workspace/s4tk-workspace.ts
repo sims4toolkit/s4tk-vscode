@@ -1,5 +1,5 @@
 import * as vscode from "vscode";
-import { SCHEMA_DEFAULTS } from "#assets";
+import { SAMPLES } from "#assets";
 import { CONTEXT, FILENAME } from "#constants";
 import { fileExists, findOpenDocument, getRelativeToRoot, replaceEntireDocument } from "#helpers/fs";
 import { S4TKConfig } from "#models/s4tk-config";
@@ -81,30 +81,56 @@ class _S4TKWorkspace {
       return;
     }
 
-    const configData = await vscode.workspace.fs.readFile(SCHEMA_DEFAULTS.config);
+    const configData = await vscode.workspace.fs.readFile(SAMPLES.config);
 
     vscode.workspace.fs.writeFile(configInfo.uri, configData).then(() => {
-      vscode.window.showTextDocument(configInfo.uri!);
       this.loadConfig();
     });
 
     const rootUri = vscode.workspace.workspaceFolders?.[0]?.uri as vscode.Uri;
     vscode.workspace.fs.createDirectory(vscode.Uri.joinPath(rootUri, "out"));
     vscode.workspace.fs.createDirectory(vscode.Uri.joinPath(rootUri, "src"));
-    vscode.workspace.fs.createDirectory(vscode.Uri.joinPath(rootUri, "strings"));
+    vscode.workspace.fs.createDirectory(vscode.Uri.joinPath(rootUri, "src", "strings"));
+    vscode.workspace.fs.createDirectory(vscode.Uri.joinPath(rootUri, "src", "tuning"));
 
-    const stblUri = vscode.Uri.joinPath(rootUri, "strings", "default.stbl.json");
-    if (!(await fileExists(stblUri))) {
-      const stblType = this.newStringTableJsonType;
-      vscode.workspace.fs.writeFile(
-        stblUri,
-        StringTableJson.generateBuffer(
-          stblType,
-          this.defaultLocale,
-          this.spacesPerIndent,
-        )
-      );
-    }
+    const createFile = async (uri: vscode.Uri, contentSource: vscode.Uri | Buffer) => {
+      if (!(await fileExists(uri))) {
+        const content = contentSource instanceof Buffer
+          ? contentSource
+          : await vscode.workspace.fs.readFile(contentSource);
+
+        await vscode.workspace.fs.writeFile(uri, content);
+      }
+    };
+
+    const readmeUri = vscode.Uri.joinPath(rootUri, "HowToUseS4TK.md");
+    createFile(readmeUri, SAMPLES.readme).then(() => {
+      vscode.window.showTextDocument(readmeUri);
+    });
+
+    createFile(
+      vscode.Uri.joinPath(rootUri, ".gitignore"),
+      SAMPLES.gitignore
+    );
+
+    createFile(
+      vscode.Uri.joinPath(rootUri, "src", "tuning", "buff_Example.xml"),
+      SAMPLES.tuning
+    );
+
+    createFile(
+      vscode.Uri.joinPath(rootUri, "src", "tuning", "buff_Example.SimData.xml"),
+      SAMPLES.simdata
+    );
+
+    createFile(
+      vscode.Uri.joinPath(rootUri, "src", "strings", "default.stbl.json"),
+      StringTableJson.generateBuffer(
+        this.newStringTableJsonType,
+        this.defaultLocale,
+        this.spacesPerIndent,
+      )
+    );
   }
 
   /**

@@ -28,6 +28,10 @@ export const SCHEMAS = _uriResolver("schemas", {
   stbl: ["stbl.schema.json"],
 });
 
-export const SCHEMA_DEFAULTS = _uriResolver("schemas", {
-  config: ["s4tk-config.default.json"],
+export const SAMPLES = _uriResolver("samples", {
+  config: ["default-s4tk-config.json"],
+  gitignore: ["gitignore.txt"],
+  readme: ["default-readme.md"],
+  simdata: ["example-simdata.xml"],
+  tuning: ["example-tuning.xml"],
 });

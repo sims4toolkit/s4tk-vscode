@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<I c="Buff" i="buff" m="buffs.buff" n="YourName:buff_Example" s="16853133178046418253">
+  <!--
+    Welcome to your new S4TK project!
+
+    You can organize and name your tuning files however you wish, including as
+    many subfolders as you want. Notice how the name of this file does not match
+    the text in `n`? That's fine too!
+
+    The only restrictions are:
+    • Tuning files MUST use the `.xml` file extension
+    • SimData files MUST be in the same folder as its paired tuning, and MUST
+      have the same name, but with a `.SimData.xml` file extension instead
+
+    S4TK will automatically infer your tuning files' types and instances from
+    their `i` and `s` attributes (or use the generic tuning type for modules),
+    and will default to a group of 0.
+
+    To see what values S4TK is going to use, hover over the Type, Group, and
+    Instance buttons at the top of this file until a tooltip appears. If you
+    need to override any of these values, click the button and a comment that
+    tells S4TK which values to use will be inserted.
+
+    Questions? Read the docs: https://vscode.sims4toolkit.com/
+  -->
+</I>

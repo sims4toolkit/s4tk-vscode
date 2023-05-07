@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8"?>
+<SimData version="0x00000101" u="0x00000000">
+  <Instances>
+    <I name="YourName:buff_Example" schema="Buff" type="Object">
+      <T name="audio_sting_on_add">00000000-00000000-0000000000000000</T>
+      <T name="audio_sting_on_remove">00000000-00000000-0000000000000000</T>
+      <T name="buff_description">0x00000000<!--What's this???--></T>
+      <T name="buff_name">0x00000000<!--Comments in SimData???--></T>
+      <!--
+        Yes! With S4TK, you can keep comments in your SimDatas. The reason they
+        disappear in S4S is because they are stored in a binary format, but with
+        this setup, it's just a plain text XML file.
+
+        Just like tuning, you can hover over the Type, Group, and Instance
+        buttons at the top of this file to see how S4TK will infer those values.
+        If you need to manually set any of them, just click the button to insert
+        a comment that tells S4TK what to do.
+
+        Questions? Read the docs: https://vscode.sims4toolkit.com/
+      -->
+      <T name="icon">00000000-00000000-0000000000000000</T>
+      <T name="mood_type">0</T>
+      <T name="mood_weight">0</T>
+      <T name="timeout_string">0x00000000</T>
+      <T name="timeout_string_no_next_buff">0x00000000</T>
+      <T name="ui_sort_order">0</T>
+    </I>
+  </Instances>
+  <Schemas>
+    <Schema name="Buff" schema_hash="0x0D045687">
+      <Columns>
+        <Column name="audio_sting_on_add" type="ResourceKey" flags="0x00000000"/>
+        <Column name="audio_sting_on_remove" type="ResourceKey" flags="0x00000000"/>
+        <Column name="buff_description" type="LocalizationKey" flags="0x00000000"/>
+        <Column name="buff_name" type="LocalizationKey" flags="0x00000000"/>
+        <Column name="icon" type="ResourceKey" flags="0x00000000"/>
+        <Column name="mood_type" type="TableSetReference" flags="0x00000000"/>
+        <Column name="mood_weight" type="Int32" flags="0x00000000"/>
+        <Column name="timeout_string" type="LocalizationKey" flags="0x00000000"/>
+        <Column name="timeout_string_no_next_buff" type="LocalizationKey" flags="0x00000000"/>
+        <Column name="ui_sort_order" type="Int32" flags="0x00000000"/>
+      </Columns>
+    </Schema>
+  </Schemas>
+</SimData>
