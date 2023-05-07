@@ -17,9 +17,9 @@ import { formatAsHexString } from "@s4tk/hashing/formatting";
 
 type KeyOverrideType = keyof ResourceKey;
 
-type XmlRootType = "instance" | "module" | "simdata" | "unknown";
+export type XmlRootType = "instance" | "module" | "simdata" | "unknown";
 
-type XmlMetaData = {
+export type XmlMetaData = {
   root: XmlRootType;
   key: Partial<ResourceKey>;
 };
@@ -39,7 +39,7 @@ const _S4TK_INSTANCE_REGEX = /instance:\s*([a-f0-9]{1,16})/i;
 const _HEADER_REGEX = /^\s*<([IMS])/m;
 const _INSTANCE_HEADER_REGEX = /^\s*<I/;
 const _MODULE_HEADER_REGEX = /^\s*<M/;
-const _SIMDATA_HEADER_REGEX = /^\s*<S/;
+const _SIMDATA_HEADER_REGEX = /^\s*<SimData/;
 
 //#endregion
 
@@ -181,8 +181,10 @@ function _parseAttributes(key: Partial<ResourceKey>, header: string) {
     // just parsing the opening tag, better than using regex to get attrs
     const root = XmlDocumentNode.from(header).child;
 
-    if (root.attributes.i)
-      key.type = TuningResourceType.parseAttr(root.attributes.i) ?? 0;
+    if (root.attributes.i) {
+      const type = TuningResourceType.parseAttr(root.attributes.i);
+      if (type !== TuningResourceType.Tuning) key.type = type;
+    }
 
     if (root.attributes.s)
       key.instance = root.attributes.s ? BigInt(root.attributes.s) : 0n;
