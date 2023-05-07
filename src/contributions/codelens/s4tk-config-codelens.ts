@@ -6,6 +6,7 @@ import BaseCodeLensProvider from './base-codelens';
  * Provides CodeLenses for S4TK Config files, including:
  * - Build S4TK Project
  * - Build S4TK Project (Dry Run)
+ * - Build S4TK Project (Release)
  * - Add Package Instructions
  */
 export default class S4TKConfigCodeLensProvider extends BaseCodeLensProvider {
@@ -53,6 +54,11 @@ export default class S4TKConfigCodeLensProvider extends BaseCodeLensProvider {
         title: "Dry Run",
         tooltip: "Run the build process, check for issues, and show where the files *would* have been output to, but do not actually write them.",
         command: COMMAND.workspace.buildDryRun,
+      }),
+      new vscode.CodeLens(line.range, {
+        title: "Release",
+        tooltip: "Build your project for release (ZIP all packages with optional other files), follwing `releaseSettings`.",
+        command: COMMAND.workspace.buildRelease,
       })
     );
   }

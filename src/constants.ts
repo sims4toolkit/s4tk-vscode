@@ -38,6 +38,7 @@ export const COMMAND = {
   workspace: {
     build: "s4tk.workspace.build",
     buildDryRun: "s4tk.workspace.buildDryRun",
+    buildRelease: "s4tk.workspace.buildRelease",
     createWorkspace: "s4tk.workspace.createWorkspace",
     reloadConfig: "s4tk.workspace.reloadConfig",
     setDefaultStbl: "s4tk.workspace.setDefaultStbl",

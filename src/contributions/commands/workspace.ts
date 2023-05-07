@@ -13,6 +13,11 @@ export default function registerWorkspaceCommands() {
     vscode.window.showInformationMessage("Dry Run");
   });
 
+  vscode.commands.registerCommand(COMMAND.workspace.buildRelease, () => {
+    // TODO:
+    vscode.window.showInformationMessage("Release");
+  });
+
   vscode.commands.registerCommand(COMMAND.workspace.createWorkspace, () => {
     S4TKWorkspace.createDefaultWorkspace();
   });
