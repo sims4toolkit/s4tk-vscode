@@ -1,8 +1,8 @@
 {
   "buildInstructions": {
-    "source": "./src",
+    "source": "src",
     "destinations": [
-      "./out"
+      "out"
     ],
     "packages": [
       {
@@ -27,7 +27,7 @@
   },
   "workspaceSettings": {
     "defaultLocale": "English",
-    "defaultStringTable": "./strings/default.stbl.json",
+    "defaultStringTable": "src/strings/default.stbl.json",
     "newStringsToStartOfTable": true,
     "newStringTableJsonType": "object",
     "showCopyConfirmationPopup": true,
