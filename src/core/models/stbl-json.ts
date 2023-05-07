@@ -19,13 +19,12 @@ interface StringTableJsonEntry {
 export default class StringTableJson {
   //#region Properties
 
-  // FIXME: use defaults from config, if available
-  private static _DEFAULT_LOCALE = "English";
-  private static _DEFAULT_GROUP = "0x80000000";
+  private static _DEFAULT_GROUP_STRING = "0x80000000";
+  private static _DEFAULT_GROUP_INT = 0x80000000;
 
   public get format() { return this._format; }
 
-  private _locale?: string;
+  private _locale?: StringTableLocaleName;
   public get locale() { return this._locale; }
 
   private _group?: string;
@@ -42,7 +41,7 @@ export default class StringTableJson {
     private _format: StringTableJsonFormat,
     private _entries: StringTableJsonEntry[],
     metadata?: {
-      locale?: string;
+      locale?: StringTableLocaleName;
       group?: string;
       instanceBase?: string;
     }) {
@@ -60,7 +59,7 @@ export default class StringTableJson {
   static parse(content: string): StringTableJson {
     const result = parseAndValidateJson<{
       entries: StringTableJsonEntry[];
-      locale?: string;
+      locale?: StringTableLocaleName;
       group?: string;
       instanceBase?: string;
     } | StringTableJsonEntry[]>(content, SCHEMAS.stbl);
@@ -79,26 +78,38 @@ export default class StringTableJson {
    * will be filled in with defaults (instanceBase will use random FNV56).
    * 
    * @param format Format to use for JSON
+   * @param defaultLocale Locale to use if format is object
    */
-  static generate(format: StringTableJsonFormat): StringTableJson {
+  static generate(
+    format: StringTableJsonFormat,
+    defaultLocale: StringTableLocaleName
+  ): StringTableJson {
     return format === "array"
       ? new StringTableJson(format, [])
       : new StringTableJson(format, [], {
-        locale: StringTableJson._DEFAULT_LOCALE,
-        group: StringTableJson._DEFAULT_GROUP,
+        locale: defaultLocale,
+        group: StringTableJson._DEFAULT_GROUP_STRING,
         instanceBase: formatAsHexString(randomFnv64(56), 14, true),
       });
   }
 
   /**
-   * Generates a Buffer containing StringTableJson data.If using the "object"
+   * Generates a Buffer containing StringTableJson data. If using the "object"
    * format, all metadata will be filled in with defaults (instanceBase will use
    * random FNV56).
    * 
    * @param format Format to use for JSON
+   * @param defaultLocale Locale to use if format is object
+   * @param spaces Number of spaces to use while formatting
    */
-  static generateBuffer(format: StringTableJsonFormat): Buffer {
-    return Buffer.from(StringTableJson.generate(format).stringify());
+  static generateBuffer(
+    format: StringTableJsonFormat,
+    defaultLocale: StringTableLocaleName,
+    spaces: number
+  ): Buffer {
+    return Buffer.from(
+      StringTableJson.generate(format, defaultLocale).stringify(spaces)
+    );
   }
 
   //#endregion
@@ -139,15 +150,20 @@ export default class StringTableJson {
    * Returns a resource key to use for a binary STBL created from this JSON. If
    * any metadata is missing, it will be filled in with default values (or a
    * random FNV56 in the case of the instance base).
+   * 
+   * @param defaultLocale Locale to use if one is not set
    */
-  getResourceKey(): ResourceKey {
+  getResourceKey(defaultLocale: StringTableLocaleName): ResourceKey {
     return {
       type: BinaryResourceType.StringTable,
-      group: parseInt(this._group ?? StringTableJson._DEFAULT_GROUP, 16),
+      group: this._group
+        ? parseInt(this._group, 16)
+        : StringTableJson._DEFAULT_GROUP_INT,
       instance: StringTableLocale.setHighByte(
-        //@ts-ignore If locale isn't valid, English is returned
-        StringTableLocale[this._locale] ?? StringTableLocale.English,
-        this._instanceBase ? BigInt(this._instanceBase) : randomFnv64()
+        StringTableLocale[this._locale ?? defaultLocale],
+        this._instanceBase
+          ? BigInt(this._instanceBase)
+          : randomFnv64()
       )
     }
   }
@@ -155,30 +171,31 @@ export default class StringTableJson {
   /**
    * Adds any missing metadata to this STBL by filling them in with defaults,
    * and also changes the format to "object" if needed.
+   * 
+   * @param defaultLocale Locale to insert if it is missing
    */
-  insertDefaultMetadata() {
-    this._locale ??= StringTableJson._DEFAULT_LOCALE;
-    this._group ??= StringTableJson._DEFAULT_GROUP;
+  insertDefaultMetadata(defaultLocale: StringTableLocaleName) {
+    this._locale ??= defaultLocale;
+    this._group ??= StringTableJson._DEFAULT_GROUP_STRING;
     this._instanceBase ??= formatAsHexString(randomFnv64(56), 14, true);
     this._format = "object";
   }
 
   /**
    * Writes this STBL JSON to a string.
+   * 
+   * @param spaces Number of spaces to use while formatting
    */
-  stringify(): string {
-    // TODO: get spacing from config / user settings
-    const spacing = 2;
-
+  stringify(spaces: number): string {
     if (this._format === "array") {
-      return JSON.stringify(this._entries, null, spacing);
+      return JSON.stringify(this._entries, null, spaces);
     } else {
       return JSON.stringify({
         locale: this._locale,
         group: this._group,
         instanceBase: this._instanceBase,
         entries: this._entries,
-      }, null, spacing);
+      }, null, spaces);
     }
   }
 

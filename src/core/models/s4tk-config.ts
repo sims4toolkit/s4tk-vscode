@@ -136,26 +136,6 @@ export namespace S4TKConfig {
 
 //#region Helper Types + Proxy
 
-type StringTableLocaleName =
-  "English" |
-  "ChineseSimplified" |
-  "ChineseTraditional" |
-  "Czech" |
-  "Danish" |
-  "Dutch" |
-  "Finnish" |
-  "French" |
-  "German" |
-  "Italian" |
-  "Japanese" |
-  "Korean" |
-  "Norwegian" |
-  "Polish" |
-  "Portuguese" |
-  "Russian" |
-  "Spanish" |
-  "Swedish";
-
 interface ConfigPropertyTransformer<T> {
   defaults: T;
   getConverter?: (prop: keyof T, value: any) => any;
