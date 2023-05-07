@@ -86,7 +86,14 @@ class _S4TKWorkspace {
     const stblUri = vscode.Uri.joinPath(rootUri, "strings", "default.stbl.json");
     if (!(await fileExists(stblUri))) {
       const stblType = this.config.workspaceSettings.newStringTableJsonType;
-      vscode.workspace.fs.writeFile(stblUri, StringTableJson.generateBuffer(stblType));
+      vscode.workspace.fs.writeFile(
+        stblUri,
+        StringTableJson.generateBuffer(
+          stblType,
+          this.config.workspaceSettings.defaultLocale,
+          this.config.workspaceSettings.spacesPerIndent,
+        )
+      );
     }
   }
 
