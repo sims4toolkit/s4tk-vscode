@@ -1,7 +1,57 @@
 # Welcome to your Sims 4 Toolkit project!
 
-This file walks you through the files that were just generated, but if you have
-any futher questions, please read the docs: https://vscode.sims4toolkit.com/
+Please read (or at least skim...) this file if you are new to the S4TK VS Code
+extension. It explains the files that were just generated, and provides tips for
+how to use VS Code with the S4TK extension.
+
+If you need more information, read the docs: https://vscode.sims4toolkit.com/
+
+--------------------------------------------------------------------------------
+
+# The Generated Files/Folders
+
+.gitignore
+  Only needed if you plan on using Git. Feel free to delete.
+
+HowToUseS4TK.md
+  What you're reading right now. Feel free to delete when you are done.
+
+s4tk.config.json
+  The S4TK configuration file. This is what makes your folder an S4TK project.
+  Do not delete, or you no longer have a project.
+
+out/
+  Where your built packages will be written to by default. You can add, edit,
+  and remove build folders in your s4tk.config.json file.
+
+src/
+  The folder that contains all of your mods' source files. These can be tuning,
+  SimData (as XML), string tables (as binary or JSON), and packages. If you want
+  to include any other resources, they either must be in a package, or must be
+  using the S4S file naming convention (T!G!I).
+
+src/strings/
+  A folder where you can keep all of your string tables. If you want to put them
+  somewhere else, feel free to rename or delete this folder.
+
+src/strings/default.stbl.json
+  A sample JSON string table that is set as the default string table in your
+  config file. JSON is the recommended format for string tables in S4TK.
+
+src/strings/sample.stbl
+  A sample binary string table file, which is view-only. This is just here to
+  demonstrate what the binary STBL viewer looks like; feel free to delete.
+
+src/tuning/
+  A folder of example tuning/SimData. You can use any folder structure you want
+  in your mod; feel free to delete this one, and organize your files in whatever
+  way makes sense to you and works with your build instructions.
+
+src/tuning/buff_Example.SimData.xml
+  A sample buff SimData, with comments explaining how S4TK processes SimData.
+
+src/tuning/buff_Example.xml
+  A sample buff tuning, with comments explaining how S4TK processes tuning.
 
 --------------------------------------------------------------------------------
 
