@@ -1,7 +1,7 @@
 import * as vscode from "vscode";
 import { SCHEMA_DEFAULTS } from "#assets";
 import { CONTEXT, FILENAME } from "#constants";
-import { fileExists, findOpenDocument, replaceEntireDocument } from "#helpers/fs";
+import { fileExists, findOpenDocument, getRelativeToRoot, replaceEntireDocument } from "#helpers/fs";
 import { S4TKConfig } from "#models/s4tk-config";
 import StringTableJson from "#models/stbl-json";
 import { MessageButton, handleMessageButtonClick } from "./messaging";
@@ -161,7 +161,8 @@ class _S4TKWorkspace {
    */
   async setDefaultStbl(stblUri: vscode.Uri) {
     await this._tryEditAndSaveConfig("Set Default STBL", null, (config) => {
-      config.workspaceSettings.defaultStringTable = stblUri.fsPath;
+      config.workspaceSettings.defaultStringTable =
+        getRelativeToRoot(stblUri) ?? stblUri.fsPath;
     });
   }
 
@@ -181,7 +182,7 @@ class _S4TKWorkspace {
   private async _tryEditAndSaveConfig(
     action: string,
     editor: vscode.TextEditor | undefined | null,
-    fn: (config: S4TKConfig) => void
+    fn: (config: S4TKConfig, configUri: vscode.Uri) => void
   ) {
     if (!this.active) {
       vscode.window.showErrorMessage(
@@ -212,7 +213,7 @@ class _S4TKWorkspace {
       return undefined;
     }
 
-    S4TKConfig.modify(this._activeConfig, fn);
+    S4TKConfig.modify(this._activeConfig, (config) => fn(config, configUri));
     const newContent = S4TKConfig.stringify(this._activeConfig);
     if (!(editor && await replaceEntireDocument(editor, newContent, true)))
       vscode.workspace.fs.writeFile(configUri, Buffer.from(newContent));

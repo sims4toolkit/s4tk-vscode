@@ -1,4 +1,19 @@
+import * as path from "path";
 import * as vscode from "vscode";
+
+/**
+ * Returns an FS path that is relative to the root of the VS Code workspace.
+ * 
+ * @param uri URI to make relative
+ */
+export function getRelativeToRoot(uri: vscode.Uri): string | undefined {
+  try {
+    const rootUri = vscode.workspace.workspaceFolders?.[0]?.uri;
+    if (!rootUri) return;
+    const relPath = path.relative(rootUri.fsPath, uri.fsPath);
+    if (relPath) return relPath;
+  } catch (_) { }
+}
 
 /**
  * Prompts the user for a file name and attempts to create it using the given
