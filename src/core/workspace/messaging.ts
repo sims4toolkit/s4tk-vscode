@@ -18,8 +18,10 @@ export function handleMessageButtonClick(button: string | undefined) {
 
   switch (button) {
     case MessageButton.GetHelp:
-    case MessageButton.ReportProblem:
       vscode.env.openExternal(vscode.Uri.parse(LINK.help));
+      break;
+    case MessageButton.ReportProblem:
+      vscode.env.openExternal(vscode.Uri.parse(LINK.issues));
       break;
     case MessageButton.ReloadConfig:
       vscode.commands.executeCommand(COMMAND.workspace.reloadConfig);

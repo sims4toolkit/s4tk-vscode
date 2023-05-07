@@ -54,4 +54,5 @@ export const FILENAME = {
 
 export const LINK = {
   help: "https://frankkmods.com/#/contact",
+  issues: "https://github.com/sims4toolkit/s4tk-vscode/issues",
 };
