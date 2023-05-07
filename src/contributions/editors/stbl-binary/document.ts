@@ -1,8 +1,8 @@
 import * as vscode from 'vscode';
 import { StringTableResource } from '@s4tk/models';
-import StringTableJson from '#models/stbl-json';
 import { fileExists } from '#helpers/fs';
 import ViewOnlyDocument from '../view-only/document';
+import S4TKWorkspace from '#workspace/s4tk-workspace';
 
 /**
  * Document containing binary STBL data.
@@ -45,8 +45,12 @@ export default class StringTableDocument extends ViewOnlyDocument {
       vscode.window.showWarningMessage(`STBL JSON already exists at ${uri.path}`);
       vscode.window.showTextDocument(uri);
     } else {
-      // FIXME: get number of spaces from somewhere
-      const content = JSON.stringify(this._stbl.toJsonObject(true), null, 2);
+      const content = JSON.stringify(
+        this._stbl.toJsonObject(true),
+        null,
+        S4TKWorkspace.config.workspaceSettings.spacesPerIndent
+      );
+
       vscode.workspace.fs.writeFile(uri, Buffer.from(content)).then(() => {
         vscode.window.showTextDocument(uri);
       });
