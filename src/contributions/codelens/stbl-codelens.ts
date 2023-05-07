@@ -2,6 +2,7 @@ import * as vscode from 'vscode';
 import { COMMAND } from '#constants';
 import StringTableJson from '#models/stbl-json';
 import BaseCodeLensProvider from './base-codelens';
+import S4TKWorkspace from '#workspace/s4tk-workspace';
 
 /**
  * Provides CodeLenses for STBL JSON files, including:
@@ -39,7 +40,7 @@ export default class StringTableJsonCodeLensProvider extends BaseCodeLensProvide
       })
     ];
 
-    if (stblJson.format === "array") this._codeLenses.push(
+    if (S4TKWorkspace.showStblJsonMetaDataButton && stblJson.format === "array") this._codeLenses.push(
       new vscode.CodeLens(new vscode.Range(0, 0, 0, 0), {
         title: "Insert Metadata",
         tooltip: "Convert this array-based STBL into an object-based one that tracks file metadata.",
