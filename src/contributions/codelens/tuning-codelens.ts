@@ -2,6 +2,7 @@ import * as vscode from 'vscode';
 import { COMMAND } from '#constants';
 import S4TKWorkspace from '#workspace/s4tk-workspace';
 import BaseCodeLensProvider from './base-codelens';
+import { getXmlKeyOverrides } from '#helpers/xml';
 
 /**
  * Provides CodeLenses for XML files, including:
@@ -25,11 +26,12 @@ export default class TuningCodeLensProvider extends BaseCodeLensProvider {
     document: vscode.TextDocument,
     token: vscode.CancellationToken
   ): vscode.CodeLens[] | Thenable<vscode.CodeLens[]> {
-    if (!S4TKWorkspace.active) return [];
     const editor = vscode.window.activeTextEditor;
+    if (!(S4TKWorkspace.active && editor)) return [];
+    const rangeZero = new vscode.Range(0, 0, 0, 0);
 
     this._codeLenses = [
-      new vscode.CodeLens(new vscode.Range(0, 0, 0, 0), {
+      new vscode.CodeLens(rangeZero, {
         title: "Format",
         tooltip: "Format this XML document.",
         command: COMMAND.tuning.format,
@@ -37,49 +39,37 @@ export default class TuningCodeLensProvider extends BaseCodeLensProvider {
       }),
     ];
 
-    if (!_linesContain(document, "Type:", 0, 4)) this._codeLenses.push(
-      new vscode.CodeLens(new vscode.Range(0, 0, 0, 0), {
-        title: "Set Type",
-        tooltip: "Add a comment that tells S4TK which Type to use instead of the one it infers from 'i'. It must be an 8-digit hex number.",
-        command: COMMAND.tuning.overrideType,
-        arguments: [editor],
-      })
-    );
+    if (S4TKWorkspace.showXmlKeyOverrideButtons) {
+      const overrides = getXmlKeyOverrides(document);
 
-    if (!_linesContain(document, "Group:", 0, 4)) this._codeLenses.push(
-      new vscode.CodeLens(new vscode.Range(0, 0, 0, 0), {
-        title: "Set Group",
-        tooltip: "Add a comment that tells S4TK which Group to use instead of 00000000. It must be an 8-digit hex number.",
-        command: COMMAND.tuning.overrideGroup,
-        arguments: [editor],
-      })
-    );
+      if (overrides?.type == undefined) this._codeLenses.push(
+        new vscode.CodeLens(rangeZero, {
+          title: "Override Type",
+          tooltip: "Add a comment that tells S4TK which Type to use instead of the one it infers from 'i'. It must be an 8-digit hex number.",
+          command: COMMAND.tuning.overrideType,
+          arguments: [editor],
+        })
+      );
 
-    if (!_linesContain(document, "Instance:", 0, 4)) this._codeLenses.push(
-      new vscode.CodeLens(new vscode.Range(0, 0, 0, 0), {
-        title: "Set Instance",
-        tooltip: "Add a comment that tells S4TK which Instance to use instead of the one it infers from 's'. It must be an 8-digit hex number.",
-        command: COMMAND.tuning.overrideInstance,
-        arguments: [editor],
-      })
-    );
+      if (overrides?.group == undefined) this._codeLenses.push(
+        new vscode.CodeLens(new vscode.Range(0, 0, 0, 0), {
+          title: "Set Group",
+          tooltip: "Add a comment that tells S4TK which Group to use instead of 00000000. It must be an 8-digit hex number.",
+          command: COMMAND.tuning.overrideGroup,
+          arguments: [editor],
+        })
+      );
+
+      if (overrides?.instance == undefined) this._codeLenses.push(
+        new vscode.CodeLens(new vscode.Range(0, 0, 0, 0), {
+          title: "Set Instance",
+          tooltip: "Add a comment that tells S4TK which Instance to use instead of the one it infers from 's'. It must be an 8-digit hex number.",
+          command: COMMAND.tuning.overrideInstance,
+          arguments: [editor],
+        })
+      );
+    }
 
     return this._codeLenses;
   }
-}
-
-// FIXME: this is dumb, it'll have to change when tuning intellisense is added
-function _linesContain(
-  document: vscode.TextDocument,
-  text: string,
-  start: number,
-  end: number
-): boolean {
-  for (let i = start; i <= start + end; ++i) {
-    try {
-      const line = document.lineAt(i);
-      if (line.text.includes(text)) return true;
-    } catch (_) { }
-  }
-  return false;
 }
