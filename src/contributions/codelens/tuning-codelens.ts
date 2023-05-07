@@ -2,7 +2,7 @@ import * as vscode from 'vscode';
 import { COMMAND } from '#constants';
 import S4TKWorkspace from '#workspace/s4tk-workspace';
 import BaseCodeLensProvider from './base-codelens';
-import { XmlMetaData, XmlRootType, getXmlKeyOverrides, inferXmlMetaData } from '#helpers/xml';
+import { XmlMetaData, getXmlKeyOverrides, inferXmlMetaData } from '#helpers/xml';
 import { formatAsHexString } from '@s4tk/hashing/formatting';
 import { TuningResourceType } from '@s4tk/models/enums';
 
