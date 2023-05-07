@@ -33,6 +33,7 @@
   "properties": {
     "buildInstructions": {
       "type": "object",
+      "description": "Information about where your source files are, how they should be built into packages, and where those packages should go.",
       "required": [
         "source",
         "destinations",

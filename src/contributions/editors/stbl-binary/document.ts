@@ -48,7 +48,7 @@ export default class StringTableDocument extends ViewOnlyDocument {
       const content = JSON.stringify(
         this._stbl.toJsonObject(true),
         null,
-        S4TKWorkspace.config.workspaceSettings.spacesPerIndent
+        S4TKWorkspace.spacesPerIndent
       );
 
       vscode.workspace.fs.writeFile(uri, Buffer.from(content)).then(() => {

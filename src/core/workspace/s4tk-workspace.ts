@@ -15,6 +15,16 @@ class _S4TKWorkspace {
   get config(): S4TKConfig { return this._activeConfig ?? this._blankConfig; }
   get active() { return Boolean(this._activeConfig); }
 
+  // aliases for workspace settings
+  get defaultLocale() { return this.config.workspaceSettings.defaultLocale; };
+  get defaultStringTable() { return this.config.workspaceSettings.defaultStringTable; };
+  get newStringTableJsonType() { return this.config.workspaceSettings.newStringTableJsonType; };
+  get newStringsToStartOfTable() { return this.config.workspaceSettings.newStringsToStartOfTable; };
+  get showCopyConfirmationPopup() { return this.config.workspaceSettings.showCopyConfirmationPopup; };
+  get showStblJsonMetaDataButton() { return this.config.workspaceSettings.showStblJsonMetaDataButton; };
+  get showXmlKeyOverrideButtons() { return this.config.workspaceSettings.showXmlKeyOverrideButtons; };
+  get spacesPerIndent() { return this.config.workspaceSettings.spacesPerIndent; };
+
   //#endregion
 
   //#region Activation
@@ -85,13 +95,13 @@ class _S4TKWorkspace {
 
     const stblUri = vscode.Uri.joinPath(rootUri, "strings", "default.stbl.json");
     if (!(await fileExists(stblUri))) {
-      const stblType = this.config.workspaceSettings.newStringTableJsonType;
+      const stblType = this.newStringTableJsonType;
       vscode.workspace.fs.writeFile(
         stblUri,
         StringTableJson.generateBuffer(
           stblType,
-          this.config.workspaceSettings.defaultLocale,
-          this.config.workspaceSettings.spacesPerIndent,
+          this.defaultLocale,
+          this.spacesPerIndent,
         )
       );
     }

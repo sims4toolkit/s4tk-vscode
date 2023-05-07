@@ -13,14 +13,10 @@ export default function registerTuningCommands() {
     (editor: vscode.TextEditor | undefined) => {
       if (!editor?.document) return;
       try {
-        const doc = XmlDocumentNode.from(editor.document.getText());
-        // FIXME: config should have proxy that always makes fields available
-        const spacesPerIndent = S4TKWorkspace.config?.settings.spacesPerIndent ?? 2;
         // FIXME: issue where comments get put between xml declaration and I
-        const formatted = doc.toXml({
-          spacesPerIndent: spacesPerIndent,
-          writeXmlDeclaration: false, // check if it has it first
-        });
+        const doc = XmlDocumentNode.from(editor.document.getText());
+        const spacesPerIndent = S4TKWorkspace.spacesPerIndent;
+        const formatted = doc.toXml({ spacesPerIndent });
         replaceEntireDocument(editor, formatted);
       } catch (_) {
         vscode.window.showWarningMessage('Could not format this XML document. There is probably a syntax error.');

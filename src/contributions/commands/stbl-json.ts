@@ -9,9 +9,9 @@ export default function registerStblJsonCommands() {
   vscode.commands.registerCommand(COMMAND.stblJson.addEntry,
     async (editor: vscode.TextEditor | undefined, stblJson: StringTableJson) => {
       if (editor) {
-        const start = S4TKWorkspace.config?.stringTables.newStringsToStart ?? true;
+        const start = S4TKWorkspace.newStringsToStartOfTable;
         stblJson.addEntry({ position: start ? "start" : "end" });
-        const content = stblJson.stringify();
+        const content = stblJson.stringify(S4TKWorkspace.spacesPerIndent);
         if (await replaceEntireDocument(editor, content)) return;
       }
 
@@ -27,8 +27,8 @@ export default function registerStblJsonCommands() {
       if (stblJson.format === "object") return;
 
       if (editor) {
-        stblJson.insertDefaultMetadata();
-        const content = stblJson.stringify();
+        stblJson.insertDefaultMetadata(S4TKWorkspace.defaultLocale);
+        const content = stblJson.stringify(S4TKWorkspace.spacesPerIndent);
         if (await replaceEntireDocument(editor, content)) return;
       }
 
@@ -43,7 +43,7 @@ export default function registerStblJsonCommands() {
     (stblJson: StringTableJson, entryIndex: number) => {
       const xml = stblJson.getEntryXml(entryIndex);
       vscode.env.clipboard.writeText(xml);
-      if (S4TKWorkspace.config?.settings.showCopyConfirmation ?? true)
+      if (S4TKWorkspace.showCopyConfirmationPopup)
         vscode.window.showInformationMessage(`Copied: ${xml}`);
     }
   );
