@@ -1,4 +1,3 @@
-import S4TKWorkspace from "#workspace/s4tk-workspace";
 import * as vscode from "vscode";
 
 export type BuildMode = "build" | "dryrun" | "release";

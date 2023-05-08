@@ -1,0 +1,175 @@
+{
+  "$schema": "http://json-schema.org/schema",
+  "definitions": {
+    "validatedPath": {
+      "type": "object",
+      "properties": {
+        "original": {
+          "type": "string",
+          "description": "The exact path that is written in your s4tk.config.json file."
+        },
+        "resolved": {
+          "type": "string",
+          "description": "That absolute path that the original path resolved to."
+        },
+        "warning": {
+          "type": "string",
+          "description": "Something about this path that doesn't seem right."
+        },
+        "ignore": {
+          "type": "string",
+          "description": "Whether or not this path is being ignored by the build script."
+        }
+      }
+    }
+  },
+  "type": "object",
+  "properties": {
+    "buildInfo": {
+      "type": "object",
+      "description": "Meta information about the build itself.",
+      "properties": {
+        "mode": {
+          "type": "string",
+          "description": "Which kind of build script generated this file.",
+          "enum": [
+            "build",
+            "dryrun",
+            "release"
+          ]
+        },
+        "success": {
+          "type": "boolean",
+          "description": "Whether or not this build was successful."
+        },
+        "problems": {
+          "type": "integer",
+          "description": "How many warnings were found while running the build script. If `success` if false or `fatalErrorMessage` is not null, then this number may actually be higher because fatal errors cause the build script to terminate early."
+        },
+        "fatalErrorMessage": {
+          "type": "string",
+          "description": "Fatal error that caused the build script to terminate early."
+        }
+      }
+    },
+    "config": {
+      "type": "object",
+      "description": "Information about how the config was parsed while preparing for the build process.",
+      "properties": {
+        "source": {
+          "$ref": "#/definitions/validatedPath",
+          "description": "The folder that contains all of this project's source files."
+        },
+        "destinations": {
+          "type": "array",
+          "description": "List of folders to output all built packages to.",
+          "items": {
+            "$ref": "#/definitions/validatedPath"
+          }
+        },
+        "packages": {
+          "type": "array",
+          "description": "Information about the packages being built.",
+          "items": {
+            "type": "object",
+            "properties": {
+              "filename": {
+                "type": "string",
+                "description": "Name of this package file."
+              },
+              "include": {
+                "type": "array",
+                "description": "List of glob patterns that specify which files to include in this package.",
+                "items": {
+                  "$ref": "#/definitions/validatedPath"
+                }
+              },
+              "exclude": {
+                "type": "array",
+                "description": "List of glob patterns that specify which files to exclude from this package.",
+                "items": {
+                  "$ref": "#/definitions/validatedPath"
+                }
+              },
+              "warning": {
+                "type": "string",
+                "description": "Something about this package that doesn't seem right."
+              }
+            }
+          }
+        },
+        "zip": {
+          "type": "object",
+          "description": "Information about the ZIP being built (release mode only).",
+          "properties": {
+            "filename": {
+              "type": "string",
+              "description": "The name of the ZIP file that contains all of the packages."
+            },
+            "otherFiles": {
+              "type": "array",
+              "description": "List of paths to other files to include in the ZIP.",
+              "items": {
+                "$ref": "#/definitions/validatedPath"
+              }
+            },
+            "warning": {
+              "type": "string",
+              "description": "Something about this ZIP that doesn't seem right."
+            }
+          }
+        }
+      }
+    },
+    "fileWarnings": {
+      "type": "array",
+      "description": "List of warnings found in built files.",
+      "items": {
+        "type": "object",
+        "properties": {
+          "file": {
+            "type": "string",
+            "description": "Relative path to the file from the source folder."
+          },
+          "warnings": {
+            "type": "array",
+            "description": "Things about this file that don't seem right.",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      }
+    },
+    "writtenPackages": {
+      "type": "array",
+      "description": "List of packages that were built and the resources they contain.",
+      "items": {
+        "type": "object",
+        "properties": {
+          "filename": {
+            "type": "string",
+            "description": "Name of package that was written."
+          },
+          "resources": {
+            "type": "array",
+            "description": "List of resources that were written to this package.",
+            "items": {
+              "type": "object",
+              "properties": {
+                "key": {
+                  "type": "string",
+                  "description": "Full resource key of this file."
+                },
+                "type": {
+                  "type": "string",
+                  "description": "Readable type of this file."
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

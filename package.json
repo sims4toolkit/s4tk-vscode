@@ -137,6 +137,10 @@
 			{
 				"fileMatch": "s4tk.config.json",
 				"url": "./schemas/s4tk-config.schema.json"
+			},
+			{
+				"fileMatch": "BuildSummary.json",
+				"url": "./schemas/build-summary.schema.json"
 			}
 		],
 		"languages": [
