@@ -1,16 +1,17 @@
 export type BuildMode = "build" | "dryrun" | "release";
 
 export interface ValidatedPath {
-  orignal: string;
+  original: string;
   resolved: string;
   warning?: string;
+  ignore?: boolean;
 }
 
 export interface BuildSummary {
   buildInfo: {
     mode: BuildMode;
     success: boolean;
-    warnings: number;
+    problems: number;
     fatalErrorMessage?: string;
   };
 
@@ -42,6 +43,8 @@ export interface BuildSummary {
       type: string;
     }[];
   }[];
+
+  // TODO: something for files in source that aren't being built
 }
 
 export namespace BuildSummary {
@@ -54,12 +57,12 @@ export namespace BuildSummary {
     return {
       buildInfo: {
         mode: mode,
-        success: false,
-        warnings: 0,
+        success: true,
+        problems: 0,
       },
       config: {
         source: {
-          orignal: unknownPath,
+          original: unknownPath,
           resolved: unknownPath,
         },
         destinations: [],

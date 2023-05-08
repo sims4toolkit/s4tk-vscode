@@ -22,10 +22,12 @@
 		"@s4tk/hashing": "^0.2.1",
 		"@s4tk/models": "^0.6.6",
 		"@s4tk/xml-dom": "^0.2.4",
+		"glob": "^10.2.2",
 		"jsonschema": "^1.4.1",
 		"uuid": "^9.0.0"
 	},
 	"devDependencies": {
+		"@types/glob": "^8.1.0",
 		"@types/node": "^16.11.7",
 		"@types/uuid": "^9.0.1",
 		"@types/vscode": "^1.73.0",

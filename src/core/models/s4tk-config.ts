@@ -1,3 +1,4 @@
+import * as path from "path";
 import * as vscode from "vscode";
 import { SCHEMAS } from "#assets";
 import { FILENAME } from "#constants";
@@ -146,6 +147,28 @@ export namespace S4TKConfig {
       null,
       config.workspaceSettings.spacesPerIndent
     );
+  }
+
+  /**
+   * Resolves one of the paths listed in the config.
+   * 
+   * @param original Original path to resolve
+   * @param relativeTo Path that original is relative to if not the config
+   * @param isGlob Whether or not to return a path compatible with globbing 
+   */
+  export function resolvePath(original: string, {
+    relativeTo = undefined,
+    isGlob = false,
+  }: {
+    relativeTo?: string;
+    isGlob?: boolean;
+  } = {}): string | undefined {
+    let absPath = original;
+    if (!path.isAbsolute(original)) {
+      const basePath = relativeTo ?? vscode.workspace.workspaceFolders?.[0]?.uri?.fsPath;
+      if (!basePath) return;
+    }
+    return isGlob ? absPath.replace(/\\/g, "/") : absPath;
   }
 }
 
