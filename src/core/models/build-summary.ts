@@ -23,7 +23,7 @@ export interface BuildSummary {
     packages: {
       filename: string;
       include: ValidatedPath[];
-      exclude?: ValidatedPath[];
+      exclude: ValidatedPath[];
       warning?: string;
     }[];
     zip?: {

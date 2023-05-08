@@ -57,20 +57,39 @@ export async function buildProject(mode: BuildMode): Promise<BuildSummary> {
 
 //#region Validation Helpers
 
+function FatalBuildError(message: string, kwargs?: {
+  addWarning?: {
+    warning?: string;
+  };
+}): Error {
+  if (kwargs?.addWarning) kwargs.addWarning.warning = message;
+  return new Error(message);
+}
+
+function _addAndGetItem<T>(array: T[], item: T): T {
+  array.push(item);
+  return item;
+}
+
 function _validateBuildSource(summary: BuildSummary) {
   const original = S4TKWorkspace.config.buildInstructions.source;
 
-  const resolved = original
+  const resolved = (original
     ? S4TKConfig.resolvePath(original)
-    : vscode.workspace.workspaceFolders?.[0]?.uri?.fsPath;
+    : vscode.workspace.workspaceFolders?.[0]?.uri?.fsPath) ?? '';
 
-  if (!resolved)
-    throw new Error(`buildInstructions.source could not be resolved to a valid path (${original})`);
+  summary.config.source.original = original;
+  summary.config.source.resolved = resolved;
 
-  if (!_isExistingDirectory(resolved))
-    throw new Error(`buildInstructions.source does not lead to a folder (${original})`);
+  if (!resolved) throw FatalBuildError(
+    "buildInstructions.source could not be resolved to a valid path", {
+    addWarning: summary.config.source
+  });
 
-  summary.config.source = { original, resolved };
+  if (!_isExistingDirectory(resolved)) throw FatalBuildError(
+    "buildInstructions.source does not lead to a folder", {
+    addWarning: summary.config.source
+  });
 }
 
 function _validateBuildDestinations(summary: BuildSummary) {
@@ -80,31 +99,32 @@ function _validateBuildDestinations(summary: BuildSummary) {
   const originals = useOverrides ? overrideDestinations : destinations;
   const propName = useOverrides ? 'releaseSettings.overrideDestinations' : 'buildInstructions.destinations';
 
-  if (originals.length < 1)
-    throw new Error(`${propName} cannot be empty`);
+  if (originals.length < 1) throw FatalBuildError(
+    `${propName} cannot be empty`
+  );
 
   const { allowFolderCreation } = S4TKWorkspace.config.buildSettings;
   const seenPaths = new Set<string>();
   originals.forEach((original, i) => {
-    const resolved = S4TKConfig.resolvePath(original);
+    const resolved = S4TKConfig.resolvePath(original) ?? '';
 
-    if (!resolved)
-      throw new Error(`${propName}[${i}] could not be resolved to a valid path (${original})`);
+    const destination = _addAndGetItem(summary.config.destinations, { original, resolved });
 
-    if (!allowFolderCreation && !_isExistingDirectory(resolved))
-      throw new Error(`${propName}[${i}] does not lead to an existing directory, and buildSettings.allowFolderCreation is false (${original})`);
+    if (!resolved) throw FatalBuildError(
+      `${propName}[${i}] could not be resolved to a valid path (${original})`, {
+      addWarning: destination
+    });
+
+    if (!allowFolderCreation && !_isExistingDirectory(resolved)) throw FatalBuildError(
+      `${propName}[${i}] does not lead to an existing directory, and buildSettings.allowFolderCreation is false (${original})`, {
+      addWarning: destination
+    });
 
     if (seenPaths.has(resolved)) {
-      summary.config.destinations.push({
-        original,
-        resolved,
-        warning: `${propName}[${i}] is listed more than once`,
-        ignore: true
-      });
-
+      destination.warning = `${propName}[${i}] is listed more than once`;
+      destination.ignore = true;
       summary.buildInfo.problems++;
     } else {
-      summary.config.destinations.push({ original, resolved });
       seenPaths.add(resolved);
     }
   });
@@ -115,88 +135,110 @@ function _validateBuildPackages(summary: BuildSummary) {
   const { buildSettings } = S4TKWorkspace.config;
   const propName = "buildInstructions.packages";
 
-  if (packages.length < 1)
-    throw new Error(`${propName} cannot be empty`);
+  if (packages.length < 1) throw FatalBuildError(
+    `${propName} cannot be empty`
+  );
 
   const seenFilenames = new Set<string>();
   const seenGlobMatches = new Set<string>();
   packages.forEach((pkg, i) => {
-    if (!pkg.filename)
-      throw new Error(`${propName}[${i}].filename cannot be empty`);
+    const validatedPkg = _addAndGetItem(summary.config.packages, {
+      filename: pkg.filename,
+      include: [],
+      exclude: [],
+    });
 
-    if (seenFilenames.has(pkg.filename))
-      throw new Error(`${propName}[${i}].filename is already in use by another package`);
+    if (!pkg.filename) throw FatalBuildError(
+      `${propName}[${i}].filename cannot be empty`, {
+      addWarning: validatedPkg
+    });
+
+    if (seenFilenames.has(pkg.filename)) throw FatalBuildError(
+      `${propName}[${i}].filename is already in use by another package`, {
+      addWarning: validatedPkg
+    });
+
     seenFilenames.add(pkg.filename);
 
-    if (pkg.include.length < 1 && !buildSettings.allowEmptyPackages)
-      throw new Error(`${propName}[${i}].include is empty, and buildSettings.allowEmptyPackages is false`);
+    if (pkg.include.length < 1 && !buildSettings.allowEmptyPackages) throw FatalBuildError(
+      `${propName}[${i}].include is empty, and buildSettings.allowEmptyPackages is false`, {
+      addWarning: validatedPkg
+    });
 
-    function resolveGlobArray(arrName: string) {
-      return function resolveGlob(original: string, j: number): ValidatedPath {
+    function resolveGlobArray(arrName: "include" | "exclude") {
+      return function resolveGlob(original: string, j: number) {
         const resolved = S4TKConfig.resolvePath(original, {
           relativeTo: summary.config.source.resolved,
           isGlob: true
+        }) ?? '';
+
+        const added = _addAndGetItem(validatedPkg[arrName], { original, resolved });
+
+        if (!resolved) throw FatalBuildError(
+          `${propName}[${i}].${arrName}[${j}] could not be resolved as a valid path`, {
+          addWarning: added
         });
-
-        if (!resolved)
-          throw new Error(`${propName}[${i}].${arrName}[${j}] could not be resolved as a valid path (${original})`);
-
-        return { original, resolved };
       }
     }
 
-    const validatedIncludes = pkg.include.map(resolveGlobArray("include"));
-    const validatedExcludes = pkg.exclude?.map(resolveGlobArray("exclude"));
-    const matches = _findGlobMatches(validatedIncludes, validatedExcludes);
-    let packageWarning: string | undefined;
+    pkg.include.forEach(resolveGlobArray("include"));
+    pkg.exclude?.forEach(resolveGlobArray("exclude"));
+    const matches = _findGlobMatches(validatedPkg.include, validatedPkg.exclude);
 
     if (matches.length < 1) {
       if (buildSettings.allowEmptyPackages) {
-        packageWarning = `${propName}[${i}]'s glob patterns do not match any supported file types, so it will be empty`;
+        validatedPkg.warning = `${propName}[${i}]'s glob patterns do not match any supported file types, so it will be empty`;
         summary.buildInfo.problems++;
       } else {
-        throw new Error(`${propName}[${i}]'s glob patterns do not match any supported file types, and buildSettings.allowEmptyPackages is false`);
+        throw FatalBuildError(
+          `${propName}[${i}]'s glob patterns do not match any supported file types, and buildSettings.allowEmptyPackages is false`, {
+          addWarning: validatedPkg
+        });
       }
     } else if (matches.some(match => seenGlobMatches.has(match))) {
       if (buildSettings.allowPackageOverlap) {
-        packageWarning = `${propName}[${i}]'s glob patterns match files that are already included in other packages, so there will be overlap`;
+        validatedPkg.warning = `${propName}[${i}]'s glob patterns match files that are already included in other packages, so there will be overlap`;
         summary.buildInfo.problems++;
       } else {
-        throw new Error(`${propName}[${i}]'s glob patterns match files that are already included in other packages, and buildSettings.allowPackageOverlap is false`);
+        throw FatalBuildError(
+          `${propName}[${i}]'s glob patterns match files that are already included in other packages, and buildSettings.allowPackageOverlap is false`, {
+          addWarning: validatedPkg
+        });
       }
     }
 
     matches.forEach(match => seenGlobMatches.add(match));
-
-    summary.config.packages.push({
-      filename: pkg.filename,
-      include: validatedIncludes,
-      exclude: validatedExcludes,
-      warning: packageWarning,
-    });
   });
 }
 
 function _validateBuildRelease(summary: BuildSummary) {
   const { releaseSettings } = S4TKWorkspace.config;
 
-  if (!releaseSettings.filename)
-    throw new Error(`releaseSettings.filename cannot be empty when building in release mode`);
-
-  const validatedOtherFiles = releaseSettings.otherFilesToInclude?.map((original, i) => {
-    const resolved = S4TKConfig.resolvePath(original);
-    const propName = `releaseSettings.otherFilesToInclude[${i}]`;
-    if (!resolved)
-      throw new Error(`${propName} could not be resolved as a valid path (${original})`);
-    if (!_isExistingFile(resolved))
-      throw new Error(`${propName} does not lead to an existing file (${original})`);
-    return { original, resolved };
-  });
-
   summary.config.zip = {
     filename: releaseSettings.filename,
-    otherFiles: validatedOtherFiles,
+    otherFiles: []
   };
+
+  if (!releaseSettings.filename) throw FatalBuildError(
+    `releaseSettings.filename cannot be empty when building in release mode`, {
+    addWarning: summary.config.zip
+  });
+
+  releaseSettings.otherFilesToInclude.forEach((original, i) => {
+    const resolved = S4TKConfig.resolvePath(original) ?? '';
+    const propName = `releaseSettings.otherFilesToInclude[${i}]`;
+    const otherFile = _addAndGetItem(summary.config.zip!.otherFiles, { original, resolved });
+
+    if (!resolved) throw FatalBuildError(
+      `${propName} could not be resolved as a valid path (${original})`, {
+      addWarning: otherFile
+    });
+
+    if (!_isExistingFile(resolved)) throw FatalBuildError(
+      `${propName} does not lead to an existing file (${original})`, {
+      addWarning: otherFile
+    });
+  });
 }
 
 //#endregion
