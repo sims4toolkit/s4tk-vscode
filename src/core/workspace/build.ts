@@ -209,6 +209,25 @@ function _validateBuildPackages(summary: BuildSummary) {
 
     matches.forEach(match => seenGlobMatches.add(match));
   });
+
+  const allGlob = S4TKConfig.resolvePath("**/*", {
+    relativeTo: summary.config.source.resolved,
+    isGlob: true
+  })!;
+
+  const allMatches = _findGlobMatches([allGlob], undefined);
+  const numMissingFiles = allMatches.length - seenGlobMatches.size;
+  if (numMissingFiles > 0) {
+    allMatches.forEach(match => {
+      if (!seenGlobMatches.has(match)) summary.missingSourceFiles.push(
+        match.replace(summary.config.source.resolved, "")
+      );
+    });
+
+    if (!buildSettings.allowMissingSourceFiles) throw FatalBuildError(
+      `${numMissingFiles} file(s) within the source folder is/are not captured by any package's glob patterns, and buildSettings.allowMissingSourceFiles is false`
+    );
+  }
 }
 
 function _validateBuildRelease(summary: BuildSummary) {
@@ -245,9 +264,14 @@ function _validateBuildRelease(summary: BuildSummary) {
 
 //#region Other Helpers
 
-function _findGlobMatches(include: ValidatedPath[], exclude: ValidatedPath[] | undefined): string[] {
-  return globSync(include.map(v => v.resolved), {
-    ignore: exclude?.map(v => v.resolved)
+function _findGlobMatches(
+  include: ValidatedPath[] | string[],
+  exclude: ValidatedPath[] | string[] | undefined
+): string[] {
+  const toAbsPath = (p: string | ValidatedPath) =>
+    typeof p === "string" ? p : p.resolved;
+  return globSync(include.map(toAbsPath), {
+    ignore: exclude?.map(toAbsPath)
   }).filter(_isSupportedFileType);
 }
 

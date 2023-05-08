@@ -103,6 +103,11 @@
           "description": "Whether or not the S4TK extension is allowed to create missing folders in order to output to `destinations` while building. If setting this to true, it is recommended that you do a Dry Run first to see where your packages are going to be written to.",
           "default": false
         },
+        "allowMissingSourceFiles": {
+          "type": "boolean",
+          "description": "Whether or not files within the source folder are allowed to be excluded from a build. If false, then any files within your source folder that are not captured by at least one package's glob patterns will cause the build process to fail. You should not set this to true unless you have a legitimate reason for doing so, as this setting will help you catch common bugs with glob patterns.",
+          "default": false
+        },
         "allowPackageOverlap": {
           "type": "boolean",
           "description": "Whether or not packages are allowed to contain the same resources. If false, then packages with overlapping glob patterns will cause the build process to fail. You should not set this to true unless you have a legitimate reason for doing so, as this setting will help you catch common bugs with glob patterns.",

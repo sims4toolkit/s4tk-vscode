@@ -1,8 +1,8 @@
 {
   "buildInstructions": {
-    "source": "./src",
+    "source": "src",
     "destinations": [
-      "./out"
+      "out"
     ],
     "packages": [
       {
@@ -16,6 +16,7 @@
   "buildSettings": {
     "allowEmptyPackages": false,
     "allowFolderCreation": false,
+    "allowMissingSourceFiles": false,
     "allowPackageOverlap": false,
     "generateMissingLocales": true,
     "mergeStringTablesInSamePackage": true,
@@ -29,7 +30,7 @@
   },
   "workspaceSettings": {
     "defaultLocale": "English",
-    "defaultStringTable": "./src/strings/default.stbl.json",
+    "defaultStringTable": "src/strings/default.stbl.json",
     "newStringsToStartOfTable": true,
     "newStringTableJsonType": "object",
     "showCopyConfirmationPopup": true,

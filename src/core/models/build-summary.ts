@@ -38,6 +38,8 @@ export interface BuildSummary {
     warnings: string[];
   }[];
 
+  missingSourceFiles: string[];
+
   writtenPackages: {
     filename: string;
     resources: {
@@ -45,8 +47,6 @@ export interface BuildSummary {
       type: string;
     }[];
   }[];
-
-  // TODO: something for files in source that aren't being built
 }
 
 export namespace BuildSummary {
@@ -75,6 +75,7 @@ export namespace BuildSummary {
         },
       },
       fileWarnings: [],
+      missingSourceFiles: [],
       writtenPackages: [],
     };
   }
