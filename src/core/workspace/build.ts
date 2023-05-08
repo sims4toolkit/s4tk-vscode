@@ -71,6 +71,10 @@ function _addAndGetItem<T>(array: T[], item: T): T {
   return item;
 }
 
+function _guaranteeExtension(filepath: string, ext: string): string {
+  return filepath.endsWith(ext) ? filepath : filepath + ext;
+}
+
 function _validateBuildSource(summary: BuildSummary) {
   const original = S4TKWorkspace.config.buildInstructions.source;
 
@@ -143,7 +147,7 @@ function _validateBuildPackages(summary: BuildSummary) {
   const seenGlobMatches = new Set<string>();
   packages.forEach((pkg, i) => {
     const validatedPkg = _addAndGetItem(summary.config.packages, {
-      filename: pkg.filename,
+      filename: _guaranteeExtension(pkg.filename, ".package"),
       include: [],
       exclude: [],
     });
@@ -153,12 +157,11 @@ function _validateBuildPackages(summary: BuildSummary) {
       addWarning: validatedPkg
     });
 
-    if (seenFilenames.has(pkg.filename)) throw FatalBuildError(
+    if (seenFilenames.has(validatedPkg.filename)) throw FatalBuildError(
       `${propName}[${i}].filename is already in use by another package`, {
       addWarning: validatedPkg
     });
-
-    seenFilenames.add(pkg.filename);
+    seenFilenames.add(validatedPkg.filename);
 
     if (pkg.include.length < 1 && !buildSettings.allowEmptyPackages) throw FatalBuildError(
       `${propName}[${i}].include is empty, and buildSettings.allowEmptyPackages is false`, {
@@ -234,7 +237,7 @@ function _validateBuildRelease(summary: BuildSummary) {
   const { releaseSettings } = S4TKWorkspace.config;
 
   summary.config.zip = {
-    filename: releaseSettings.filename,
+    filename: _guaranteeExtension(releaseSettings.filename, ".zip"),
     otherFiles: []
   };
 
