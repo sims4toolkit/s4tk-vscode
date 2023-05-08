@@ -1,3 +1,6 @@
+import S4TKWorkspace from "#workspace/s4tk-workspace";
+import * as vscode from "vscode";
+
 export type BuildMode = "build" | "dryrun" | "release";
 
 export interface ValidatedPath {
@@ -75,5 +78,14 @@ export namespace BuildSummary {
       fileWarnings: [],
       writtenPackages: [],
     };
+  }
+
+  /**
+   * Returns the URI at which to write the build summary file.
+   */
+  export function getUri(): vscode.Uri | undefined {
+    const rootDir = vscode.workspace.workspaceFolders?.[0]?.uri;
+    if (!rootDir) return;
+    return vscode.Uri.joinPath(rootDir, "BuildSummary.json");
   }
 }

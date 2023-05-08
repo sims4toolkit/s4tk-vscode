@@ -167,6 +167,7 @@ export namespace S4TKConfig {
     if (!path.isAbsolute(original)) {
       const basePath = relativeTo ?? vscode.workspace.workspaceFolders?.[0]?.uri?.fsPath;
       if (!basePath) return;
+      absPath = path.resolve(basePath, original);
     }
     return isGlob ? absPath.replace(/\\/g, "/") : absPath;
   }

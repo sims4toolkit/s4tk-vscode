@@ -125,7 +125,7 @@
         },
         "outputBuildSummaryFile": {
           "type": "boolean",
-          "description": "Whether or not the `BuildSummary.txt` file should be generated after each build. Useful for debugging issues with your config.",
+          "description": "Whether or not the `BuildSummary.json` file should be generated after each build. Useful for debugging issues with your config.",
           "default": true
         }
       }

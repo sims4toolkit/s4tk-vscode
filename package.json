@@ -27,7 +27,6 @@
 		"uuid": "^9.0.0"
 	},
 	"devDependencies": {
-		"@types/glob": "^8.1.0",
 		"@types/node": "^16.11.7",
 		"@types/uuid": "^9.0.1",
 		"@types/vscode": "^1.73.0",

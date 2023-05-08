@@ -90,7 +90,7 @@ Build: Builds your project and outputs your built packages to each directory
   listed in `destinations`.
 
 Dry Run: Runs the build process, but does not actually write any files other
-  than `BuildSummary.txt` (this is useful for debugging to make sure your build
+  than `BuildSummary.json` (this is useful for debugging to make sure your build
   script is actually running how you intend it to, before it starts overwriting
   your existing built files).
 
