@@ -127,6 +127,16 @@
 						"filenamePattern": "*.stbl"
 					}
 				]
+			},
+			{
+				"viewType": "s4tk.editor.package",
+				"priority": "default",
+				"displayName": "TS4 Package",
+				"selector": [
+					{
+						"filenamePattern": "*.package"
+					}
+				]
 			}
 		],
 		"jsonValidation": [

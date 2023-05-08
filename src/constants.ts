@@ -46,6 +46,7 @@ export const COMMAND = {
 };
 
 export const EDITOR = {
+  package: "s4tk.editor.package",
   stblBinary: "s4tk.editor.stblBinary",
 };
 

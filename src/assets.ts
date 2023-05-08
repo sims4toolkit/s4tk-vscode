@@ -18,6 +18,8 @@ export const MEDIA = {
     vscodeStyle: ["vscode.css"],
   }),
   editors: _uriResolver("media", {
+    packageStyle: ["editors", "package.css"],
+    packageScript: ["editors", "package.js"],
     stblBinaryStyle: ["editors", "stbl-binary.css"],
     stblBinaryScript: ["editors", "stbl-binary.js"],
   }),
