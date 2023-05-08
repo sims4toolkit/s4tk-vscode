@@ -43,11 +43,11 @@
       "properties": {
         "source": {
           "type": "string",
-          "description": "Absolute or relative path to the folder that contains all of the resources for this project.\n\nBoth Windows and Unix paths are accepted; they will be automatically converted as needed."
+          "description": "Absolute or relative path to the folder that contains all of the resources for this project.\n\nAbsolute paths must be platform-appropriate ('\\\\' for Windows, '/' for Unix/macOS), but relative paths can use either kind of slash (they will be normalized)."
         },
         "destinations": {
           "type": "array",
-          "description": "List of absolute and/or relative paths to folders where all built packages should be output to.\n\nBoth Windows and Unix paths are accepted; they will be automatically converted as needed.",
+          "description": "List of absolute and/or relative paths to folders where all built packages should be output to.\n\nAbsolute paths must be platform-appropriate ('\\\\' for Windows, '/' for Unix/macOS), but relative paths can use either kind of slash (they will be normalized).",
           "minItems": 1,
           "items": {
             "type": "string"
@@ -71,14 +71,14 @@
               },
               "include": {
                 "type": "array",
-                "description": "List of glob patterns (relative to the source folder) that capture all files that should be built into this package.\n\nBoth Windows and Unix paths are accepted; they will be automatically converted as needed.",
+                "description": "List of glob patterns (relative to the source folder) that capture all files that should be built into this package.\n\nBoth Windows and Unix/macOS paths are accepted; they will be automatically converted as needed.",
                 "items": {
                   "type": "string"
                 }
               },
               "exclude": {
                 "type": "array",
-                "description": "List of glob patterns (relative to the source folder) of files that should be excluded, even if they pass one of the `include` patterns.\n\nBoth Windows and Unix paths are accepted; they will be automatically converted as needed.",
+                "description": "List of glob patterns (relative to the source folder) of files that should be excluded, even if they pass one of the `include` patterns.\n\nBoth Windows and Unix/macOS paths are accepted; they will be automatically converted as needed.",
                 "items": {
                   "type": "string"
                 }
@@ -93,9 +93,19 @@
       "description": "Settings that affect the build process.",
       "additionalProperties": false,
       "properties": {
+        "allowEmptyPackages": {
+          "type": "boolean",
+          "description": "Whether or not packages are allowed to be empty. If false, then packages with glob patterns that do not match any files will cause the build process to fail. You should not set this to true unless you have a legitimate reason for doing so, as this setting will help you catch common bugs with glob patterns.",
+          "default": false
+        },
         "allowFolderCreation": {
           "type": "boolean",
-          "description": "Whether or not the S4TK extension is allowed to create missing folders in order to output to `destinations` while building.",
+          "description": "Whether or not the S4TK extension is allowed to create missing folders in order to output to `destinations` while building. If setting this to true, it is recommended that you do a Dry Run first to see where your packages are going to be written to.",
+          "default": false
+        },
+        "allowPackageOverlap": {
+          "type": "boolean",
+          "description": "Whether or not packages are allowed to contain the same resources. If false, then packages with overlapping glob patterns will cause the build process to fail. You should not set this to true unless you have a legitimate reason for doing so, as this setting will help you catch common bugs with glob patterns.",
           "default": false
         },
         "generateMissingLocales": {
@@ -132,14 +142,14 @@
         },
         "otherFilesToInclude": {
           "type": "array",
-          "description": "List of absolute and/or relative glob patterns that capture all additional files that should be zipped with your packages.\n\nBoth Windows and Unix paths are accepted; they will be automatically converted as needed.",
+          "description": "List of absolute and/or relative glob patterns that capture all additional files that should be zipped with your packages.\n\nAbsolute paths must be platform-appropriate ('\\\\' for Windows, '/' for Unix/macOS), but relative paths can use either kind of slash (they will be normalized).",
           "items": {
             "type": "string"
           }
         },
         "overrideDestinations": {
           "type": "array",
-          "description": "List of absolute and/or relative paths to folders where the ZIP file should be output to. If omitted or empty, then `buildInstructions.destinations` will be used.\n\nBoth Windows and Unix paths are accepted; they will be automatically converted as needed.",
+          "description": "List of absolute and/or relative paths to folders where the ZIP file should be output to. If omitted or empty, then `buildInstructions.destinations` will be used.\n\nAbsolute paths must be platform-appropriate ('\\\\' for Windows, '/' for Unix/macOS), but relative paths can use either kind of slash (they will be normalized).",
           "items": {
             "type": "string"
           }
@@ -158,7 +168,7 @@
         },
         "defaultStringTable": {
           "type": "string",
-          "description": "Absolute or relative path to the string table (binary or JSON) that serves as the default for this project. Any strings generated via commands will be added to this string table.\n\nBoth Windows and Unix paths are accepted; they will be automatically converted as needed."
+          "description": "Absolute or relative path to the string table (binary or JSON) that serves as the default for this project. Any strings generated via commands will be added to this string table.\n\nAbsolute paths must be platform-appropriate ('\\\\' for Windows, '/' for Unix/macOS), but relative paths can use either kind of slash (they will be normalized)."
         },
         "newStringsToStartOfTable": {
           "type": "boolean",

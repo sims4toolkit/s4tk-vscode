@@ -14,7 +14,9 @@
     ]
   },
   "buildSettings": {
+    "allowEmptyPackages": false,
     "allowFolderCreation": false,
+    "allowPackageOverlap": false,
     "generateMissingLocales": true,
     "mergeStringTablesInSamePackage": true,
     "minifyTuning": false,

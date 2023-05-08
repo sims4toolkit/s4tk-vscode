@@ -18,7 +18,9 @@ export interface S4TKConfig {
   };
 
   buildSettings: {
+    allowEmptyPackages: boolean;
     allowFolderCreation: boolean;
+    allowPackageOverlap: boolean;
     generateMissingLocales: boolean;
     minifyTuning: boolean;
     mergeStringTablesInSamePackage: boolean;
@@ -53,7 +55,9 @@ const _CONFIG_TRANSFORMER: ConfigTransformer = {
   },
   buildSettings: {
     defaults: {
+      allowEmptyPackages: false,
       allowFolderCreation: false,
+      allowPackageOverlap: false,
       generateMissingLocales: true,
       mergeStringTablesInSamePackage: true,
       minifyTuning: false,
