@@ -2,13 +2,15 @@ import * as fs from "fs";
 import * as path from "path";
 import { sync as globSync } from "glob";
 import * as vscode from "vscode";
-import { Package, RawResource, SimDataResource } from "@s4tk/models";
+import { Package, RawResource, SimDataResource, StringTableResource } from "@s4tk/models";
 import { ResourceKey, ResourceKeyPair } from "@s4tk/models/types";
 import { S4TKConfig } from "#models/s4tk-config";
 import S4TKWorkspace from "#workspace/s4tk-workspace";
 import { BuildMode, BuildPackageInfo, BuildSummary, ValidatedPath } from "#models/build-summary";
 import { getXmlKeyOverrides, inferXmlMetaData } from "#helpers/xml";
-import { BinaryResourceType, SimDataGroup } from "@s4tk/models/enums";
+import { BinaryResourceType, SimDataGroup, StringTableLocale } from "@s4tk/models/enums";
+import { randomFnv64 } from "#helpers/hashing";
+import StringTableJson from "#models/stbl-json";
 
 //#region Exported Functions
 
@@ -272,11 +274,16 @@ function _buildValidatedFiles(summary: BuildSummary) {
   // easy way around this until I parse ALL of the tuning first, which has
   // pretty nasty memory overhead
 
+  // TODO: check if any resource keys/stbl keys overlap
+
   summary.config.packages.forEach(packageInfo => {
     const pkg = _buildPackage(summary, packageInfo, tunings);
 
     if (summary.buildInfo.mode === "build") {
-      // TODO: write package
+      summary.config.destinations.forEach(({ resolved }) => {
+        const outPath = path.join(resolved, packageInfo.filename);
+        fs.writeFileSync(outPath, pkg.getBuffer());
+      });
     } else if (summary.buildInfo.mode === "release") {
       builtPackages.push(pkg);
     }
@@ -372,18 +379,65 @@ function _getResourcePaths(filepaths: string[]): ResourcePaths {
 
 function _parsePackage(summary: BuildSummary, filepath: string): ResourceKeyPair[] {
   // TODO: update summary
+  try {
+    // TODO: check if any keys overlap with existing ones
+    const buffer = fs.readFileSync(filepath);
+    return Package.extractResources(buffer);
+  } catch (e) {
+    throw FatalBuildError(
+      `Failed to extract resources from Package (${filepath}) [${e}]`
+    );
+  }
 }
 
 function _parseStblBinary(summary: BuildSummary, filepath: string): ResourceKeyPair {
   // TODO: update summary
+  const key: ResourceKey = _parseKeyFromTgi(path.basename(filepath)) ?? {
+    type: BinaryResourceType.StringTable,
+    group: 0x80000000,
+    instance: StringTableLocale.setHighByte(
+      StringTableLocale[S4TKWorkspace.defaultLocale],
+      randomFnv64()
+    )
+  };
+
+  try {
+    const buffer = fs.readFileSync(filepath);
+    return {
+      key: key,
+      value: StringTableResource.from(buffer)
+    };
+  } catch (e) {
+    throw FatalBuildError(
+      `Failed to validate binary string table (${filepath}) [${e}]`
+    );
+  }
 }
 
 function _parseStblJson(summary: BuildSummary, filepath: string): ResourceKeyPair {
   // TODO: update summary
+  try {
+    const buffer = fs.readFileSync(filepath);
+    const stblJson = StringTableJson.parse(buffer.toString());
+    return {
+      key: stblJson.getResourceKey(S4TKWorkspace.defaultLocale),
+      value: stblJson.toBinaryResource()
+    };
+  } catch (e) {
+    throw FatalBuildError(
+      `Failed to parse JSON string table (${filepath}) [${e}]`
+    );
+  }
 }
 
 function _parseTgiFile(summary: BuildSummary, filepath: string): ResourceKeyPair {
   // TODO: update summary
+  const key = _parseKeyFromTgi(path.basename(filepath));
+  if (!key) throw FatalBuildError( // should never happen b/c validation
+    `Could not parse type/group/instance from filename (${filepath})`
+  );
+
+  return { key, value: RawResource.from(fs.readFileSync(filepath)) };
 }
 
 function _parseXmlSimData(summary: BuildSummary, filepath: string, tunings: Map<string, ResourceKey>): ResourceKeyPair {
@@ -490,6 +544,18 @@ function _isSupportedFileType(filepath: string): boolean {
   const filename = path.basename(filepath);
   if (_SUPPORTED_EXTENSIONS.some(ext => filename.endsWith(ext))) return true;
   return _TGI_REGEX.test(filename);
+}
+
+function _parseKeyFromTgi(filename: string): ResourceKey | undefined {
+  const match = _TGI_REGEX.exec(filename);
+  if (match?.groups) {
+    const { t, g, i } = match.groups;
+    return {
+      type: parseInt(t, 16),
+      group: parseInt(g, 16),
+      instance: BigInt("0x" + i),
+    };
+  }
 }
 
 //#endregion
