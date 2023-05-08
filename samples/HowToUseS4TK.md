@@ -76,6 +76,20 @@ see a tooltip explaining what it is and how to use it. Additionally, hints will
 pop up as you type, and any errors detected by the validator will be underlined
 to signify that something is wrong.
 
+## Globbing Safeguards
+
+If you're not familiar with glob patterns (the patterns used in each package's
+`include` and `exclude` lists), you can relax. When using default settings, the
+build script will guarantee that:
+
+- Every package has at least one file being written to it
+- Every file in your source folder is being written to a package
+- No files are being built to multiple packages, i.e. no duplicates
+
+Advanced users with legitimate reasons for altering this behavior can do so by
+setting the `allowEmptyPackages`, `allowPackageOverlap`, and `allowIgnoredFiles`
+properties in `buildSettings` to true.
+
 --------------------------------------------------------------------------------
 
 # How to Build Your Project
