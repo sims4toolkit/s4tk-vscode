@@ -1,9 +1,23 @@
 import * as fs from "fs";
+import * as path from "path";
 import { sync as globSync } from "glob";
 import * as vscode from "vscode";
 import S4TKWorkspace from "#workspace/s4tk-workspace";
 import { BuildMode, BuildSummary, ValidatedPath } from "#models/build-summary";
 import { S4TKConfig } from "#models/s4tk-config";
+
+//#region Constants
+
+const _SUPPORTED_EXTENSIONS = [
+  ".package",
+  ".stbl",
+  ".stbl.json",
+  ".xml",
+];
+
+const _TGI_REGEX = /(?<t>[0-9a-f]{8}).(?<g>[0-9a-f]{8}).(?<i>[0-9a-f]{16})/i;
+
+//#endregion
 
 //#region Exported Functions
 
@@ -138,10 +152,10 @@ function _validateBuildPackages(summary: BuildSummary) {
 
     if (matches.length < 1) {
       if (buildSettings.allowEmptyPackages) {
-        packageWarning = `${propName}[${i}]'s glob patterns do not match any files, so it will be empty`;
+        packageWarning = `${propName}[${i}]'s glob patterns do not match any supported file types, so it will be empty`;
         summary.buildInfo.problems++;
       } else {
-        throw new Error(`${propName}[${i}]'s glob patterns do not match any files, and buildSettings.allowEmptyPackages is false`);
+        throw new Error(`${propName}[${i}]'s glob patterns do not match any supported file types, and buildSettings.allowEmptyPackages is false`);
       }
     } else if (matches.some(match => seenGlobMatches.has(match))) {
       if (buildSettings.allowPackageOverlap) {
@@ -192,7 +206,7 @@ function _validateBuildRelease(summary: BuildSummary) {
 function _findGlobMatches(include: ValidatedPath[], exclude: ValidatedPath[] | undefined): string[] {
   return globSync(include.map(v => v.resolved), {
     ignore: exclude?.map(v => v.resolved)
-  });
+  }).filter(_isSupportedFileType);
 }
 
 function _isExistingDirectory(sysPath: string): boolean {
@@ -201,6 +215,12 @@ function _isExistingDirectory(sysPath: string): boolean {
 
 function _isExistingFile(sysPath: string): boolean {
   return fs.existsSync(sysPath) && fs.lstatSync(sysPath).isFile();
+}
+
+function _isSupportedFileType(filepath: string): boolean {
+  const filename = path.basename(filepath);
+  if (_SUPPORTED_EXTENSIONS.some(ext => filename.endsWith(ext))) return true;
+  return _TGI_REGEX.test(filename);
 }
 
 //#endregion
