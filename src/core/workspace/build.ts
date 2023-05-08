@@ -6,7 +6,7 @@ import { Package, RawResource, SimDataResource } from "@s4tk/models";
 import { ResourceKey, ResourceKeyPair } from "@s4tk/models/types";
 import { S4TKConfig } from "#models/s4tk-config";
 import S4TKWorkspace from "#workspace/s4tk-workspace";
-import { BuildMode, BuildSummary, ValidatedPath } from "#models/build-summary";
+import { BuildMode, BuildPackageInfo, BuildSummary, ValidatedPath } from "#models/build-summary";
 import { getXmlKeyOverrides, inferXmlMetaData } from "#helpers/xml";
 import { BinaryResourceType, SimDataGroup } from "@s4tk/models/enums";
 
@@ -35,7 +35,7 @@ export async function buildProject(mode: BuildMode): Promise<BuildSummary> {
     if (mode === "release") _validateBuildRelease(summary);
 
     // performing build
-    _buildPackages(summary);
+    _buildValidatedFiles(summary);
   } catch (err) {
     summary.buildInfo.success = false;
     summary.buildInfo.problems++;
@@ -260,10 +260,10 @@ interface ResourcePaths {
   stblJson: string[];
   stblBinary: string[];
   tuning: string[];
-  tgiNames: string[];
+  tgi: string[];
 }
 
-function _buildPackages(summary: BuildSummary) {
+function _buildValidatedFiles(summary: BuildSummary) {
   const builtPackages: Package[] = []; // only for use with release mode
   const tunings = new Map<string, ResourceKey>(); // for use with SimData
 
@@ -273,30 +273,62 @@ function _buildPackages(summary: BuildSummary) {
   // pretty nasty memory overhead
 
   summary.config.packages.forEach(packageInfo => {
-    const pkg = new Package();
-    const matches = _findGlobMatches(packageInfo.include, packageInfo.exclude);
-    let resourcePaths = _getResourcePaths(matches);
+    const pkg = _buildPackage(summary, packageInfo, tunings);
 
-    resourcePaths.tuning.forEach(filepath => {
-      const tuning = _parseXmlTuning(summary, filepath);
-      const filename = path.basename(filepath).replace(/\.xml$/i, "");
-      tunings.set(filename, tuning.key);
-      pkg.add(tuning.key, tuning.value);
-    });
-
-    resourcePaths.simdata.forEach(filepath => {
-      const simdata = _parseXmlSimData(summary, filepath, tunings);
-      pkg.add(simdata.key, simdata.value);
-    });
-
-    // TODO: STBL JSON
-
-    // TODO: STBL Binary
-
-    // TODO: TGI files
-
-    // TODO: generate missing string tables if needed
+    if (summary.buildInfo.mode === "build") {
+      // TODO: write package
+    } else if (summary.buildInfo.mode === "release") {
+      builtPackages.push(pkg);
+    }
   });
+
+  if (summary.buildInfo.mode === "release") {
+    // TODO: create and write ZIP
+  }
+}
+
+function _buildPackage(summary: BuildSummary, packageInfo: BuildPackageInfo, tunings: Map<string, ResourceKey>): Package {
+  const pkg = new Package();
+  const matches = _findGlobMatches(packageInfo.include, packageInfo.exclude);
+  let resourcePaths = _getResourcePaths(matches);
+
+  resourcePaths.tuning.forEach(filepath => {
+    const tuning = _parseXmlTuning(summary, filepath);
+    const filename = path.basename(filepath).replace(/\.xml$/i, "");
+    tunings.set(filename, tuning.key);
+    pkg.add(tuning.key, tuning.value);
+  });
+
+  resourcePaths.simdata.forEach(filepath => {
+    const { key, value } = _parseXmlSimData(summary, filepath, tunings);
+    pkg.add(key, value);
+  });
+
+  // FIXME: merge stbls if setting is true
+
+  resourcePaths.stblJson.forEach(filepath => {
+    const { key, value } = _parseStblJson(summary, filepath);
+    pkg.add(key, value);
+  });
+
+  resourcePaths.stblBinary.forEach(filepath => {
+    const { key, value } = _parseStblBinary(summary, filepath);
+    pkg.add(key, value);
+  });
+
+  resourcePaths.tgi.forEach(filepath => {
+    const { key, value } = _parseTgiFile(summary, filepath);
+    pkg.add(key, value);
+  });
+
+  resourcePaths.packages.forEach(filepath => {
+    const entries = _parsePackage(summary, filepath);
+    pkg.addAll(entries);
+  });
+
+  // FIXME: generate missing string tables if setting is true
+
+  return pkg;
 }
 
 function _getResourcePaths(filepaths: string[]): ResourcePaths {
@@ -306,7 +338,7 @@ function _getResourcePaths(filepaths: string[]): ResourcePaths {
     stblJson: [],
     stblBinary: [],
     tuning: [],
-    tgiNames: [],
+    tgi: [],
   };
 
   filepaths.forEach(filepath => {
@@ -330,12 +362,28 @@ function _getResourcePaths(filepaths: string[]): ResourcePaths {
         resourcePaths.stblBinary.push(filepath);
         break;
       default:
-        resourcePaths.tgiNames.push(filepath);
+        resourcePaths.tgi.push(filepath);
         break;
     }
   });
 
   return resourcePaths;
+}
+
+function _parsePackage(summary: BuildSummary, filepath: string): ResourceKeyPair[] {
+  // TODO: update summary
+}
+
+function _parseStblBinary(summary: BuildSummary, filepath: string): ResourceKeyPair {
+  // TODO: update summary
+}
+
+function _parseStblJson(summary: BuildSummary, filepath: string): ResourceKeyPair {
+  // TODO: update summary
+}
+
+function _parseTgiFile(summary: BuildSummary, filepath: string): ResourceKeyPair {
+  // TODO: update summary
 }
 
 function _parseXmlSimData(summary: BuildSummary, filepath: string, tunings: Map<string, ResourceKey>): ResourceKeyPair {

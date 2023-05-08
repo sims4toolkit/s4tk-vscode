@@ -9,6 +9,13 @@ export interface ValidatedPath {
   ignore?: boolean;
 }
 
+export interface BuildPackageInfo {
+  filename: string;
+  include: ValidatedPath[];
+  exclude: ValidatedPath[];
+  warning?: string;
+}
+
 export interface BuildSummary {
   buildInfo: {
     mode: BuildMode;
@@ -20,12 +27,7 @@ export interface BuildSummary {
   config: {
     source: ValidatedPath;
     destinations: ValidatedPath[];
-    packages: {
-      filename: string;
-      include: ValidatedPath[];
-      exclude: ValidatedPath[];
-      warning?: string;
-    }[];
+    packages: BuildPackageInfo[];
     zip?: {
       filename: string;
       otherFiles: ValidatedPath[];
