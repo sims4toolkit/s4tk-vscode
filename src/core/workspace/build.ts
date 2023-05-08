@@ -2,22 +2,13 @@ import * as fs from "fs";
 import * as path from "path";
 import { sync as globSync } from "glob";
 import * as vscode from "vscode";
+import { Package, RawResource, SimDataResource } from "@s4tk/models";
+import { ResourceKey, ResourceKeyPair } from "@s4tk/models/types";
+import { S4TKConfig } from "#models/s4tk-config";
 import S4TKWorkspace from "#workspace/s4tk-workspace";
 import { BuildMode, BuildSummary, ValidatedPath } from "#models/build-summary";
-import { S4TKConfig } from "#models/s4tk-config";
-
-//#region Constants
-
-const _SUPPORTED_EXTENSIONS = [
-  ".package",
-  ".stbl",
-  ".stbl.json",
-  ".xml",
-];
-
-const _TGI_REGEX = /(?<t>[0-9a-f]{8}).(?<g>[0-9a-f]{8}).(?<i>[0-9a-f]{16})/i;
-
-//#endregion
+import { getXmlKeyOverrides, inferXmlMetaData } from "#helpers/xml";
+import { BinaryResourceType, SimDataGroup } from "@s4tk/models/enums";
 
 //#region Exported Functions
 
@@ -43,7 +34,8 @@ export async function buildProject(mode: BuildMode): Promise<BuildSummary> {
     _validateBuildPackages(summary);
     if (mode === "release") _validateBuildRelease(summary);
 
-    // TODO: actually build
+    // performing build
+    _buildPackages(summary);
   } catch (err) {
     summary.buildInfo.success = false;
     summary.buildInfo.problems++;
@@ -55,25 +47,20 @@ export async function buildProject(mode: BuildMode): Promise<BuildSummary> {
 
 //#endregion
 
+//#region Constants
+
+const _SUPPORTED_EXTENSIONS = [
+  ".package",
+  ".stbl",
+  ".stbl.json",
+  ".xml",
+];
+
+const _TGI_REGEX = /(?<t>[0-9a-f]{8}).(?<g>[0-9a-f]{8}).(?<i>[0-9a-f]{16})/i;
+
+//#endregion
+
 //#region Validation Helpers
-
-function FatalBuildError(message: string, kwargs?: {
-  addWarning?: {
-    warning?: string;
-  };
-}): Error {
-  if (kwargs?.addWarning) kwargs.addWarning.warning = message;
-  return new Error(message);
-}
-
-function _addAndGetItem<T>(array: T[], item: T): T {
-  array.push(item);
-  return item;
-}
-
-function _guaranteeExtension(filepath: string, ext: string): string {
-  return filepath.endsWith(ext) ? filepath : filepath + ext;
-}
 
 function _validateBuildSource(summary: BuildSummary) {
   const original = S4TKWorkspace.config.buildInstructions.source;
@@ -265,7 +252,168 @@ function _validateBuildRelease(summary: BuildSummary) {
 
 //#endregion
 
+//#region Build Helpers
+
+interface ResourcePaths {
+  packages: string[];
+  simdata: string[];
+  stblJson: string[];
+  stblBinary: string[];
+  tuning: string[];
+  tgiNames: string[];
+}
+
+function _buildPackages(summary: BuildSummary) {
+  const builtPackages: Package[] = []; // only for use with release mode
+  const tunings = new Map<string, ResourceKey>(); // for use with SimData
+
+  // FIXME: subtle bug, if a package contains a simdata paired with a tuning
+  // that is written in a later package, it will fail with fatal error... no
+  // easy way around this until I parse ALL of the tuning first, which has
+  // pretty nasty memory overhead
+
+  summary.config.packages.forEach(packageInfo => {
+    const pkg = new Package();
+    const matches = _findGlobMatches(packageInfo.include, packageInfo.exclude);
+    let resourcePaths = _getResourcePaths(matches);
+
+    resourcePaths.tuning.forEach(filepath => {
+      const tuning = _parseXmlTuning(summary, filepath);
+      const filename = path.basename(filepath).replace(/\.xml$/i, "");
+      tunings.set(filename, tuning.key);
+      pkg.add(tuning.key, tuning.value);
+    });
+
+    resourcePaths.simdata.forEach(filepath => {
+      const simdata = _parseXmlSimData(summary, filepath, tunings);
+      pkg.add(simdata.key, simdata.value);
+    });
+
+    // TODO: STBL JSON
+
+    // TODO: STBL Binary
+
+    // TODO: TGI files
+
+    // TODO: generate missing string tables if needed
+  });
+}
+
+function _getResourcePaths(filepaths: string[]): ResourcePaths {
+  const resourcePaths: ResourcePaths = {
+    packages: [],
+    simdata: [],
+    stblJson: [],
+    stblBinary: [],
+    tuning: [],
+    tgiNames: [],
+  };
+
+  filepaths.forEach(filepath => {
+    const ext = path.extname(filepath);
+
+    switch (ext) {
+      case ".xml":
+        if (filepath.endsWith(".SimData.xml"))
+          resourcePaths.simdata.push(filepath);
+        else
+          resourcePaths.tuning.push(filepath);
+        break;
+      case ".package":
+        resourcePaths.packages.push(filepath);
+        break;
+      case ".json":
+        if (filepath.endsWith(".stbl.json"))
+          resourcePaths.stblJson.push(filepath);
+        break;
+      case ".stbl":
+        resourcePaths.stblBinary.push(filepath);
+        break;
+      default:
+        resourcePaths.tgiNames.push(filepath);
+        break;
+    }
+  });
+
+  return resourcePaths;
+}
+
+function _parseXmlSimData(summary: BuildSummary, filepath: string, tunings: Map<string, ResourceKey>): ResourceKeyPair {
+  // TODO: update summary
+  const buffer = fs.readFileSync(filepath);
+  const content = buffer.toString();
+
+  const key: Partial<ResourceKey> = getXmlKeyOverrides(content) ?? {};
+  key.type ??= BinaryResourceType.SimData;
+  const filename = path.basename(filepath).replace(/\.SimData\.xml$/i, "");
+  const tuningKey = tunings.get(filename);
+  if (key.group == undefined && tuningKey?.type)
+    key.group = SimDataGroup.getForTuning(tuningKey.type);
+  if (key.instance == undefined && tuningKey?.instance)
+    key.instance = tuningKey.instance;
+
+  if (!key.group) throw FatalBuildError(
+    `Unable to infer group for SimData because it does not have a paired tuning, and no group override was found (${filepath})`
+  );
+
+  if (!key.instance) throw FatalBuildError(
+    `Unable to infer instance ID for SimData because it does not have a paired tuning, and no instance override was found (${filepath})`
+  );
+
+  try {
+    return {
+      key: key as ResourceKey,
+      value: SimDataResource.fromXml(content),
+    };
+  } catch (e) {
+    throw FatalBuildError(
+      `Failed to serialize SimData, it is likely malformed (${filepath}) [${e}]`
+    );
+  }
+}
+
+function _parseXmlTuning(summary: BuildSummary, filepath: string): ResourceKeyPair {
+  // TODO: update summary
+  const buffer = fs.readFileSync(filepath);
+  const content = buffer.toString();
+
+  const key: Partial<ResourceKey> = getXmlKeyOverrides(content) ?? {};
+  const inferredKey = inferXmlMetaData(content).key;
+  key.type ??= inferredKey.type;
+  key.group ??= inferredKey.group ?? 0;
+  key.instance ??= inferredKey.instance;
+
+  if (!key.type) throw FatalBuildError(
+    `Unable to infer tuning type from \`i\` attribute, and no type override was found (${filepath})`
+  );
+
+  if (!key.instance) throw FatalBuildError(
+    `Unable to infer tuning ID from \`s\` attribute, and no instance override was found (${filepath})`
+  );
+
+  return {
+    key: key as ResourceKey,
+    value: RawResource.from(buffer)
+  };
+}
+
+//#endregion
+
 //#region Other Helpers
+
+function FatalBuildError(message: string, kwargs?: {
+  addWarning?: {
+    warning?: string;
+  };
+}): Error {
+  if (kwargs?.addWarning) kwargs.addWarning.warning = message;
+  return new Error(message);
+}
+
+function _addAndGetItem<T>(array: T[], item: T): T {
+  array.push(item);
+  return item;
+}
 
 function _findGlobMatches(
   include: ValidatedPath[] | string[],
@@ -276,6 +424,10 @@ function _findGlobMatches(
   return globSync(include.map(toAbsPath), {
     ignore: exclude?.map(toAbsPath)
   }).filter(_isSupportedFileType);
+}
+
+function _guaranteeExtension(filepath: string, ext: string): string {
+  return filepath.endsWith(ext) ? filepath : filepath + ext;
 }
 
 function _isExistingDirectory(sysPath: string): boolean {
