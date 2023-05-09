@@ -21,6 +21,7 @@ export type XmlRootType = "instance" | "module" | "simdata" | "unknown";
 
 export type XmlMetaData = {
   root: XmlRootType;
+  filename?: string;
   key: Partial<ResourceKey>;
 };
 
@@ -176,18 +177,21 @@ function _inferXmlStringMetaData(content: string): XmlMetaData {
   return metaData;
 }
 
-function _parseAttributes(key: Partial<ResourceKey>, header: string) {
+function _parseAttributes(metaData: XmlMetaData, header: string) {
   try {
     // just parsing the opening tag, better than using regex to get attrs
     const root = XmlDocumentNode.from(header).child;
 
     if (root.attributes.i) {
       const type = TuningResourceType.parseAttr(root.attributes.i);
-      if (type !== TuningResourceType.Tuning) key.type = type;
+      if (type !== TuningResourceType.Tuning) metaData.key.type = type;
     }
 
     if (root.attributes.s)
-      key.instance = root.attributes.s ? BigInt(root.attributes.s) : 0n;
+      metaData.key.instance = root.attributes.s ? BigInt(root.attributes.s) : 0n;
+
+    if (root.attributes.n)
+      metaData.filename = root.attributes.n;
   } catch (_) { }
 }
 
@@ -205,7 +209,7 @@ function _parseKeyOverrides(key: Partial<ResourceKey>, comment: string): boolean
 function _parseMetaData(metaData: XmlMetaData, header: string): boolean {
   if (_INSTANCE_HEADER_REGEX.test(header)) {
     metaData.root = "instance";
-    _parseAttributes(metaData.key, header);
+    _parseAttributes(metaData, header);
     return true;
   } else if (_SIMDATA_HEADER_REGEX.test(header)) {
     metaData.root = "simdata";
@@ -214,7 +218,7 @@ function _parseMetaData(metaData: XmlMetaData, header: string): boolean {
   } else if (_MODULE_HEADER_REGEX.test(header)) {
     metaData.root = "module";
     metaData.key.type = TuningResourceType.Tuning;
-    _parseAttributes(metaData.key, header);
+    _parseAttributes(metaData, header);
     return true;
   }
 

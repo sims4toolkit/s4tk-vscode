@@ -5,6 +5,7 @@ import { BinaryResourceType, SimDataGroup, StringTableLocale, TuningResourceType
 import { formatResourceKey } from '@s4tk/hashing/formatting';
 import ViewOnlyDocument from '../view-only/document';
 import { PackageIndex } from './types';
+import { inferXmlMetaData } from '#helpers/xml';
 
 /**
  * Document containing binary DBPF data.
@@ -107,7 +108,9 @@ function _getEntryDetails(entry: ResourceKeyPair): string {
     const tuningName = entry.key.type === TuningResourceType.Tuning
       ? "Generic"
       : TuningResourceType[entry.key.type];
-    const filename = (entry.value as XmlResource).root?.name ?? 'Unnamed';
+    const filename = (entry.value as XmlResource).content
+      ? inferXmlMetaData((entry.value as XmlResource).content).filename ?? 'Unnamed'
+      : 'Unnamed';
     return `${tuningName} Tuning (${filename})`;
   } else {
     return "Unknown";
