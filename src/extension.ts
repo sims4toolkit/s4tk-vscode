@@ -7,6 +7,6 @@ export const getExtensionContext = () => _extensionContext;
 
 export function activate(context: vscode.ExtensionContext) {
 	_extensionContext = context;
-	registerContributions();
+	registerContributions(context);
 	S4TKWorkspace.activate();
 }

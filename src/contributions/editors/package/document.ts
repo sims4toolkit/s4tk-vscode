@@ -1,24 +1,22 @@
 import * as vscode from 'vscode';
-import { Package, RawResource, SimDataResource, StringTableResource, XmlResource } from '@s4tk/models';
 import { ResourceEntry, ResourceKeyPair } from '@s4tk/models/types';
+import { Package, RawResource, SimDataResource, StringTableResource, XmlResource } from '@s4tk/models';
 import { BinaryResourceType, SimDataGroup, StringTableLocale, TuningResourceType } from '@s4tk/models/enums';
 import { formatResourceKey } from '@s4tk/hashing/formatting';
+import { inferXmlMetaData } from '#helpers/xml';
+import S4TKWorkspace from '#workspace/s4tk-workspace';
 import ViewOnlyDocument from '../view-only/document';
 import { PackageIndex } from './types';
-import { inferXmlMetaData } from '#helpers/xml';
+import { VirtualFileSystem } from '../helpers/virtual-fs';
 
 /**
  * Document containing binary DBPF data.
  */
 export default class PackageDocument extends ViewOnlyDocument {
-  //#region Properties
-
-  public get pkg(): Package { return this._pkg; }
+  private _fs: VirtualFileSystem;
+  public get fs(): VirtualFileSystem { return this._fs; }
   public get index(): PackageIndex { return this._index; }
-
-  //#endregion
-
-  //#region Lifecycle
+  public get pkg(): Package { return this._pkg; }
 
   private constructor(
     uri: vscode.Uri,
@@ -26,6 +24,7 @@ export default class PackageDocument extends ViewOnlyDocument {
     private _index: PackageIndex
   ) {
     super(uri);
+    this._fs = new VirtualFileSystem(uri);
   }
 
   static async create(
@@ -38,7 +37,48 @@ export default class PackageDocument extends ViewOnlyDocument {
     return new PackageDocument(uri, pkg, _getPkgIndex(pkg));
   }
 
-  //#endregion
+  dispose(): void {
+    this.fs.dispose();
+    super.dispose();
+  }
+
+  launchVirtualFile(id: number) {
+    const entry = this.pkg.get(id);
+    this.fs.setContent(id, this._getVirtualContent(entry));
+    const uri = this.fs.getUri(id, this._getVirtualFilename(entry));
+    vscode.workspace.openTextDocument(uri).then(doc => {
+      vscode.window.showTextDocument(doc, { preview: false });
+    });
+  }
+
+  private _getVirtualContent(entry: ResourceKeyPair): string {
+    if (entry.value instanceof XmlResource) {
+      return entry.value.content;
+    } else if (entry.value instanceof SimDataResource) {
+      return entry.value.toXmlDocument().toXml();
+    } else if (entry.value instanceof StringTableResource) {
+      return JSON.stringify(
+        entry.value.toJsonObject(true),
+        null,
+        S4TKWorkspace.spacesPerIndent
+      );
+    } else {
+      return "Unsupported file type."
+    }
+  }
+
+  private _getVirtualFilename(entry: ResourceKeyPair): string {
+    const filename = formatResourceKey(entry.key, "!");
+    if (entry.value instanceof XmlResource) {
+      return filename + ".xml";
+    } else if (entry.value instanceof SimDataResource) {
+      return filename + ".SimData.xml";
+    } else if (entry.value instanceof StringTableResource) {
+      return filename + ".stbl.json";
+    } else {
+      return filename + ".binary";
+    }
+  }
 }
 
 //#region Helpers

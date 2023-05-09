@@ -3,6 +3,9 @@
  */
 export type PackageInMessage = {
   readonly type: 'ready';
+} | {
+  readonly type: 'view';
+  readonly body: number;
 };
 
 /**

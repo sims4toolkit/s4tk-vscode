@@ -19,8 +19,19 @@ div.entry > p.details {
 div.entry > p.key {
   opacity: 0.8;
   font-family: monospace;
+  margin-bottom: 0.2rem;
 }
 
 .margin-bottom {
   margin-bottom: 1rem;
+}
+
+.link-button {
+  color: var(--vscode-textLink-foreground);
+  text-decoration: underline;
+}
+
+.link-button:hover {
+  text-decoration: none;
+  cursor: pointer;
 }

@@ -54,6 +54,8 @@ export default class PackageEditorProvider
         type: "init",
         body: document.index,
       });
+    } else if (message.type === 'view') {
+      document.launchVirtualFile(message.body);
     }
   }
 }

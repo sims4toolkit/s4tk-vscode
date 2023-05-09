@@ -58,6 +58,13 @@
                         cls: "key",
                         innerText: entry.key,
                       }),
+                      createElement("span", {
+                        cls: "link-button",
+                        innerText: "View",
+                        onclick: () => {
+                          vscode.postMessage({ type: "view", body: entry.id });
+                        },
+                      }),
                     ],
                   });
                 }),
