@@ -161,7 +161,7 @@ function _getVirtualContent(entry: ResourceKeyPair): string {
 }
 
 function _getVirtualFilename(entry: ResourceKeyPair): string {
-  const filename = formatResourceKey(entry.key, "!");
+  const filename = formatResourceKey(entry.key, "_");
   if (entry.value instanceof XmlResource) {
     return filename + ".xml";
   } else if (entry.value instanceof SimDataResource) {
