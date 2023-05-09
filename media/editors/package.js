@@ -1,7 +1,7 @@
 (function () {
   const vscode = acquireVsCodeApi();
 
-  const MAX_SAFE_SIZE = 2000;
+  const MAX_SAFE_SIZE = 1000;
 
   function createElement(tag, options) {
     const element = document.createElement(tag);
@@ -41,30 +41,27 @@
             cls: "pkg-group",
             children: [
               createElement("h4", {
-                cls: "group",
-                innerText: `${group.group} (Count: ${group.entries.length})`,
+                cls: "group-title",
+                innerText: `${group.title}`,
               }),
               createElement("div", {
                 cls: "group-entries",
                 children: group.entries.map((entry) => {
                   return createElement("div", {
                     cls: "entry",
+                    onclick: () => {
+                      vscode.postMessage({ type: "view", body: entry.id });
+                    },
                     children: [
                       createElement("p", {
-                        cls: "details",
-                        innerText: entry.details,
+                        cls: "filename",
+                        innerText: entry.filename,
                       }),
                       createElement("p", {
                         cls: "key",
                         innerText: entry.key,
                       }),
-                      createElement("span", {
-                        cls: "link-button",
-                        innerText: "View",
-                        onclick: () => {
-                          vscode.postMessage({ type: "view", body: entry.id });
-                        },
-                      }),
+                      // TODO: show linked entries
                     ],
                   });
                 }),

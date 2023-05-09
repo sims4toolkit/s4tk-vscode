@@ -6,7 +6,7 @@ import { formatResourceKey } from '@s4tk/hashing/formatting';
 import { inferXmlMetaData } from '#helpers/xml';
 import S4TKWorkspace from '#workspace/s4tk-workspace';
 import ViewOnlyDocument from '../view-only/document';
-import { PackageIndex } from './types';
+import { PackageIndex, PackageIndexEntry, PackageIndexGroup } from './types';
 import { VirtualFileSystem } from '../helpers/virtual-fs';
 
 /**
@@ -71,17 +71,19 @@ function _getPkgIndex(pkg: models.Package): PackageIndex {
     groups: []
   };
 
-  groups.forEach((entries, group) => {
+  groups.forEach((entries, title) => {
     index.groups.push({
-      group,
+      title,
       entries: entries.map(entry => ({
         id: entry.id,
         key: formatResourceKey(entry.key, "-"),
-        details: _getEntryDetails(entry),
-        warnings: _getEntryWarnings(entry),
-      }))
+        filename: _getEntryFilename(entry),
+        // TODO: find linked resources
+      })).sort(_sortEntries)
     });
   });
+
+  index.groups.sort(_sortGroups);
 
   return index;
 }
@@ -91,53 +93,58 @@ function _getEntryGroup(entry: ResourceKeyPair): string {
     if (entry.key.type === enums.BinaryResourceType.StringTable) {
       return "String Tables";
     } else if (entry.key.type === enums.BinaryResourceType.SimData) {
-      return "SimData";
+      const type = enums.SimDataGroup[entry.key.group] ?? 'Unknown';
+      return `SimData, ${type} (No Tuning)`;
     } else {
-      return enums.BinaryResourceType[entry.key.type];
+      return `Other, ${enums.BinaryResourceType[entry.key.type]}`;
     }
   } else if (entry.key.type in enums.TuningResourceType) {
-    return "Tuning"
+    const type = entry.key.type === enums.TuningResourceType.Tuning ? "Generic"
+      : enums.TuningResourceType[entry.key.type];
+    return `Tuning, ${type}`;
   } else {
-    return "Unknown";
+    return "Other, Unknown";
   }
 }
 
-function _getEntryDetails(entry: ResourceKeyPair): string {
+function _getEntryFilename(entry: ResourceKeyPair): string {
   if (entry.key.type in enums.BinaryResourceType) {
     if (entry.key.type === enums.BinaryResourceType.StringTable) {
       const locale = enums.StringTableLocale.getLocale(entry.key.instance);
       const localeName = enums.StringTableLocale[locale] ?? "Unknown";
-      return `${localeName} String Table (Strings: ${(entry.value as models.StringTableResource).size})`;
+      return `${localeName} (Strings: ${(entry.value as models.StringTableResource).size})`;
     } else if (entry.key.type === enums.BinaryResourceType.SimData) {
-      const groupName = enums.SimDataGroup[entry.key.group] ?? "Unknown";
-      const filename = (entry.value as models.SimDataResource).instance?.name ?? 'Unnamed';
-      return `${groupName} SimData (${filename})`;
+      const filename = (entry.value as models.SimDataResource).instance?.name;
+      return filename ? `${filename} (SimData)` : 'Unnamed SimData';
     } else {
       return enums.BinaryResourceType[entry.key.type];
     }
   } else if (entry.key.type in enums.TuningResourceType) {
-    const tuningName = entry.key.type === enums.TuningResourceType.Tuning
-      ? "Generic"
-      : enums.TuningResourceType[entry.key.type];
-    const filename = (entry.value as models.XmlResource).content
-      ? inferXmlMetaData((entry.value as models.XmlResource).content).filename ?? 'Unnamed'
-      : 'Unnamed';
-    return `${tuningName} Tuning (${filename})`;
+    return ((entry.value as models.XmlResource).content
+      ? inferXmlMetaData((entry.value as models.XmlResource).content).filename
+      : null) ?? 'Unnamed Tuning';
   } else {
     return "Unknown";
   }
 }
 
-function _getEntryWarnings(entry: ResourceKeyPair): string[] | undefined {
-  if (entry.value instanceof models.RawResource) {
-    if (entry.key.type === enums.BinaryResourceType.StringTable) {
-      return ['Not a valid string table (it may be corrupt)'];
-    } else if (entry.key.type === enums.BinaryResourceType.SimData) {
-      return ['Not a valid SimData (it may be corrupt)'];
-    } else if (entry.key.type in enums.TuningResourceType) {
-      return ['Not a valid tuning file (it may be corrupt)'];
-    }
+function _sortGroups(g1: PackageIndexGroup, g2: PackageIndexGroup): number {
+  const priority = ["T", "Si", "St", "O"];
+  const p1 = priority.findIndex(p => g1.title.startsWith(p));
+  const p2 = priority.findIndex(p => g2.title.startsWith(p));
+  if (p1 === p2) {
+    if (g1.title > g2.title) return 1;
+    if (g1.title < g2.title) return -1;
+    return 0;
+  } else {
+    return p1 - p2;
   }
+}
+
+function _sortEntries(e1: PackageIndexEntry, e2: PackageIndexEntry): number {
+  if (e1.filename > e2.filename) return 1;
+  if (e1.filename < e2.filename) return -1;
+  return 0;
 }
 
 //#endregion
