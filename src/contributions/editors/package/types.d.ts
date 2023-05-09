@@ -10,14 +10,26 @@ export type PackageInMessage = {
  */
 export type PackageOutMessage = {
   readonly type: 'init';
-  readonly body: PackageEntryInfo[];
+  readonly body: PackageIndex;
 };
 
 /**
- * Information to display for each entry in a package.
+ * Information for rendering a single package entry's meta data.
  */
-interface PackageEntryInfo {
+interface PackageIndexEntry {
+  id: number;
   key: string;
   details: string;
   warnings?: string[];
+}
+
+/**
+ * Information for rendering a package's index.
+ */
+interface PackageIndex {
+  size: number;
+  groups: {
+    group: string;
+    entries: PackageIndexEntry[]
+  }[];
 }

@@ -18,35 +18,49 @@
     constructor(parent) {
       this.ready = false;
       this.parent = parent;
-      this.entriesWrapper = createElement("div", {
-        id: "entries-wrapper",
+      this.groupsWrapper = createElement("div", {
+        id: "groups-wrapper",
         parent,
       });
     }
 
-    async redrawEntries(entries) {
-      if (entries.length > MAX_SAFE_SIZE) {
-        this._showLargeDbpfMessage(entries);
-      } else if (entries.length > 0) {
-        this._renderEntries(entries);
+    async redrawIndex(index) {
+      if (index.size > MAX_SAFE_SIZE) {
+        this._showLargeDbpfMessage(index.groups);
+      } else if (index.size > 0) {
+        this._renderGroups(index.groups);
       } else {
         this._showEmptyDbpfMessage();
       }
     }
 
-    _renderEntries(entries) {
-      this.entriesWrapper.replaceChildren(
-        ...entries.map((entry) =>
+    _renderGroups(groups) {
+      this.groupsWrapper.replaceChildren(
+        ...groups.map((group) =>
           createElement("div", {
-            cls: "pkg-entry",
+            cls: "pkg-group",
             children: [
-              createElement("p", {
-                cls: "key",
-                innerText: entry.key,
+              createElement("h4", {
+                cls: "group",
+                innerText: `${group.group} (Count: ${group.entries.length})`,
               }),
-              createElement("p", {
-                cls: "details",
-                innerText: entry.details,
+              createElement("div", {
+                cls: "group-entries",
+                children: group.entries.map((entry) => {
+                  return createElement("div", {
+                    cls: "entry",
+                    children: [
+                      createElement("p", {
+                        cls: "details",
+                        innerText: entry.details,
+                      }),
+                      createElement("p", {
+                        cls: "key",
+                        innerText: entry.key,
+                      }),
+                    ],
+                  });
+                }),
               }),
               // ...(entry.warnings?.map((warning) => {
               //   createElement("p", {
@@ -60,8 +74,8 @@
       );
     }
 
-    _showLargeDbpfMessage(entries) {
-      this.entriesWrapper.replaceChildren(
+    _showLargeDbpfMessage(groups) {
+      this.groupsWrapper.replaceChildren(
         createElement("p", {
           cls: "margin-bottom",
           innerText: `This package contains ${entries.length} entries; rendering it may cause VS Code to lag or freeze.`,
@@ -69,14 +83,14 @@
         createElement("button", {
           innerText: "I Understand the Risks, Render Anyways",
           onclick: () => {
-            this._renderEntries(entries);
+            this._renderGroups(groups);
           },
         })
       );
     }
 
     _showEmptyDbpfMessage() {
-      this.entriesWrapper.replaceChildren(
+      this.groupsWrapper.replaceChildren(
         createElement("p", { innerText: "This package is empty." })
       );
     }
@@ -88,7 +102,7 @@
     const { type, body } = e.data;
     switch (type) {
       case "init": {
-        await editor.redrawEntries(body);
+        await editor.redrawIndex(body);
         return;
       }
     }

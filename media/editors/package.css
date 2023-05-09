@@ -1,4 +1,25 @@
+h4.group {
+  color: var(--vscode-textLink-foreground);
+  margin-bottom: 1rem;
+}
 
+div.group-entries {
+  margin-left: 2rem;
+}
+
+div.entry {
+  margin-bottom: 1rem;
+}
+
+div.entry > p.details {
+  font-weight: bold;
+  margin-bottom: 0.2rem;
+}
+
+div.entry > p.key {
+  opacity: 0.8;
+  font-family: monospace;
+}
 
 .margin-bottom {
   margin-bottom: 1rem;
