@@ -1,6 +1,10 @@
 h4.group {
-  color: var(--vscode-textLink-foreground);
-  margin-bottom: 1rem;
+  font-weight: bold;
+  background-color: var(--vscode-editor-background);
+  padding-bottom: 0.5rem;
+  position: sticky;
+  top: 0;
+  z-index: 10;
 }
 
 div.group-entries {
