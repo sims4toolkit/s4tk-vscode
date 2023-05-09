@@ -1,7 +1,7 @@
 import * as vscode from 'vscode';
 import { ResourceEntry, ResourceKeyPair } from '@s4tk/models/types';
-import { Package, RawResource, SimDataResource, StringTableResource, XmlResource } from '@s4tk/models';
-import { BinaryResourceType, SimDataGroup, StringTableLocale, TuningResourceType } from '@s4tk/models/enums';
+import * as models from '@s4tk/models';
+import * as enums from '@s4tk/models/enums';
 import { formatResourceKey } from '@s4tk/hashing/formatting';
 import { inferXmlMetaData } from '#helpers/xml';
 import S4TKWorkspace from '#workspace/s4tk-workspace';
@@ -16,11 +16,11 @@ export default class PackageDocument extends ViewOnlyDocument {
   private _fs: VirtualFileSystem;
   public get fs(): VirtualFileSystem { return this._fs; }
   public get index(): PackageIndex { return this._index; }
-  public get pkg(): Package { return this._pkg; }
+  public get pkg(): models.Package { return this._pkg; }
 
   private constructor(
     uri: vscode.Uri,
-    private _pkg: Package,
+    private _pkg: models.Package,
     private _index: PackageIndex
   ) {
     super(uri);
@@ -33,7 +33,7 @@ export default class PackageDocument extends ViewOnlyDocument {
   ): Promise<PackageDocument | PromiseLike<PackageDocument>> {
     const dataUri = backupId ? vscode.Uri.parse(backupId) : uri;
     const fileData = await vscode.workspace.fs.readFile(dataUri);
-    const pkg = Package.from(Buffer.from(fileData), { recoveryMode: true });
+    const pkg = models.Package.from(Buffer.from(fileData), { recoveryMode: true });
     return new PackageDocument(uri, pkg, _getPkgIndex(pkg));
   }
 
@@ -54,7 +54,7 @@ export default class PackageDocument extends ViewOnlyDocument {
 
 //#region Index Helpers
 
-function _getPkgIndex(pkg: Package): PackageIndex {
+function _getPkgIndex(pkg: models.Package): PackageIndex {
   const groups = new Map<string, ResourceEntry[]>();
 
   pkg.entries.forEach(entry => {
@@ -87,15 +87,15 @@ function _getPkgIndex(pkg: Package): PackageIndex {
 }
 
 function _getEntryGroup(entry: ResourceKeyPair): string {
-  if (entry.key.type in BinaryResourceType) {
-    if (entry.key.type === BinaryResourceType.StringTable) {
+  if (entry.key.type in enums.BinaryResourceType) {
+    if (entry.key.type === enums.BinaryResourceType.StringTable) {
       return "String Tables";
-    } else if (entry.key.type === BinaryResourceType.SimData) {
+    } else if (entry.key.type === enums.BinaryResourceType.SimData) {
       return "SimData";
     } else {
-      return BinaryResourceType[entry.key.type];
+      return enums.BinaryResourceType[entry.key.type];
     }
-  } else if (entry.key.type in TuningResourceType) {
+  } else if (entry.key.type in enums.TuningResourceType) {
     return "Tuning"
   } else {
     return "Unknown";
@@ -103,24 +103,24 @@ function _getEntryGroup(entry: ResourceKeyPair): string {
 }
 
 function _getEntryDetails(entry: ResourceKeyPair): string {
-  if (entry.key.type in BinaryResourceType) {
-    if (entry.key.type === BinaryResourceType.StringTable) {
-      const locale = StringTableLocale.getLocale(entry.key.instance);
-      const localeName = StringTableLocale[locale] ?? "Unknown";
-      return `${localeName} String Table (Strings: ${(entry.value as StringTableResource).size})`;
-    } else if (entry.key.type === BinaryResourceType.SimData) {
-      const groupName = SimDataGroup[entry.key.group] ?? "Unknown";
-      const filename = (entry.value as SimDataResource).instance?.name ?? 'Unnamed';
+  if (entry.key.type in enums.BinaryResourceType) {
+    if (entry.key.type === enums.BinaryResourceType.StringTable) {
+      const locale = enums.StringTableLocale.getLocale(entry.key.instance);
+      const localeName = enums.StringTableLocale[locale] ?? "Unknown";
+      return `${localeName} String Table (Strings: ${(entry.value as models.StringTableResource).size})`;
+    } else if (entry.key.type === enums.BinaryResourceType.SimData) {
+      const groupName = enums.SimDataGroup[entry.key.group] ?? "Unknown";
+      const filename = (entry.value as models.SimDataResource).instance?.name ?? 'Unnamed';
       return `${groupName} SimData (${filename})`;
     } else {
-      return BinaryResourceType[entry.key.type];
+      return enums.BinaryResourceType[entry.key.type];
     }
-  } else if (entry.key.type in TuningResourceType) {
-    const tuningName = entry.key.type === TuningResourceType.Tuning
+  } else if (entry.key.type in enums.TuningResourceType) {
+    const tuningName = entry.key.type === enums.TuningResourceType.Tuning
       ? "Generic"
-      : TuningResourceType[entry.key.type];
-    const filename = (entry.value as XmlResource).content
-      ? inferXmlMetaData((entry.value as XmlResource).content).filename ?? 'Unnamed'
+      : enums.TuningResourceType[entry.key.type];
+    const filename = (entry.value as models.XmlResource).content
+      ? inferXmlMetaData((entry.value as models.XmlResource).content).filename ?? 'Unnamed'
       : 'Unnamed';
     return `${tuningName} Tuning (${filename})`;
   } else {
@@ -129,12 +129,12 @@ function _getEntryDetails(entry: ResourceKeyPair): string {
 }
 
 function _getEntryWarnings(entry: ResourceKeyPair): string[] | undefined {
-  if (entry.value instanceof RawResource) {
-    if (entry.key.type === BinaryResourceType.StringTable) {
+  if (entry.value instanceof models.RawResource) {
+    if (entry.key.type === enums.BinaryResourceType.StringTable) {
       return ['Not a valid string table (it may be corrupt)'];
-    } else if (entry.key.type === BinaryResourceType.SimData) {
+    } else if (entry.key.type === enums.BinaryResourceType.SimData) {
       return ['Not a valid SimData (it may be corrupt)'];
-    } else if (entry.key.type in TuningResourceType) {
+    } else if (entry.key.type in enums.TuningResourceType) {
       return ['Not a valid tuning file (it may be corrupt)'];
     }
   }
@@ -145,11 +145,11 @@ function _getEntryWarnings(entry: ResourceKeyPair): string[] | undefined {
 //#region Virtual FS Helpers
 
 function _getVirtualContent(entry: ResourceKeyPair): string {
-  if (entry.value instanceof XmlResource) {
+  if (entry.value instanceof models.XmlResource) {
     return entry.value.content;
-  } else if (entry.value instanceof SimDataResource) {
+  } else if (entry.value instanceof models.SimDataResource) {
     return entry.value.toXmlDocument().toXml();
-  } else if (entry.value instanceof StringTableResource) {
+  } else if (entry.value instanceof models.StringTableResource) {
     return JSON.stringify(
       entry.value.toJsonObject(true),
       null,
@@ -162,11 +162,11 @@ function _getVirtualContent(entry: ResourceKeyPair): string {
 
 function _getVirtualFilename(entry: ResourceKeyPair): string {
   const filename = formatResourceKey(entry.key, "_");
-  if (entry.value instanceof XmlResource) {
+  if (entry.value instanceof models.XmlResource) {
     return filename + ".xml";
-  } else if (entry.value instanceof SimDataResource) {
+  } else if (entry.value instanceof models.SimDataResource) {
     return filename + ".SimData.xml";
-  } else if (entry.value instanceof StringTableResource) {
+  } else if (entry.value instanceof models.StringTableResource) {
     return filename + ".stbl.json";
   } else {
     return filename + ".binary";
