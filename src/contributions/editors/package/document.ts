@@ -44,44 +44,15 @@ export default class PackageDocument extends ViewOnlyDocument {
 
   launchVirtualFile(id: number) {
     const entry = this.pkg.get(id);
-    this.fs.setContent(id, this._getVirtualContent(entry));
-    const uri = this.fs.getUri(id, this._getVirtualFilename(entry));
+    this.fs.setContent(id, _getVirtualContent(entry));
+    const uri = this.fs.getUri(id, _getVirtualFilename(entry));
     vscode.workspace.openTextDocument(uri).then(doc => {
       vscode.window.showTextDocument(doc, { preview: false });
     });
   }
-
-  private _getVirtualContent(entry: ResourceKeyPair): string {
-    if (entry.value instanceof XmlResource) {
-      return entry.value.content;
-    } else if (entry.value instanceof SimDataResource) {
-      return entry.value.toXmlDocument().toXml();
-    } else if (entry.value instanceof StringTableResource) {
-      return JSON.stringify(
-        entry.value.toJsonObject(true),
-        null,
-        S4TKWorkspace.spacesPerIndent
-      );
-    } else {
-      return "Unsupported file type."
-    }
-  }
-
-  private _getVirtualFilename(entry: ResourceKeyPair): string {
-    const filename = formatResourceKey(entry.key, "!");
-    if (entry.value instanceof XmlResource) {
-      return filename + ".xml";
-    } else if (entry.value instanceof SimDataResource) {
-      return filename + ".SimData.xml";
-    } else if (entry.value instanceof StringTableResource) {
-      return filename + ".stbl.json";
-    } else {
-      return filename + ".binary";
-    }
-  }
 }
 
-//#region Helpers
+//#region Index Helpers
 
 function _getPkgIndex(pkg: Package): PackageIndex {
   const groups = new Map<string, ResourceEntry[]>();
@@ -166,6 +137,39 @@ function _getEntryWarnings(entry: ResourceKeyPair): string[] | undefined {
     } else if (entry.key.type in TuningResourceType) {
       return ['Not a valid tuning file (it may be corrupt)'];
     }
+  }
+}
+
+//#endregion
+
+//#region Virtual FS Helpers
+
+function _getVirtualContent(entry: ResourceKeyPair): string {
+  if (entry.value instanceof XmlResource) {
+    return entry.value.content;
+  } else if (entry.value instanceof SimDataResource) {
+    return entry.value.toXmlDocument().toXml();
+  } else if (entry.value instanceof StringTableResource) {
+    return JSON.stringify(
+      entry.value.toJsonObject(true),
+      null,
+      S4TKWorkspace.spacesPerIndent
+    );
+  } else {
+    return "Unsupported file type."
+  }
+}
+
+function _getVirtualFilename(entry: ResourceKeyPair): string {
+  const filename = formatResourceKey(entry.key, "!");
+  if (entry.value instanceof XmlResource) {
+    return filename + ".xml";
+  } else if (entry.value instanceof SimDataResource) {
+    return filename + ".SimData.xml";
+  } else if (entry.value instanceof StringTableResource) {
+    return filename + ".stbl.json";
+  } else {
+    return filename + ".binary";
   }
 }
 
