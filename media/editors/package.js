@@ -52,36 +52,51 @@
               }),
               createElement("div", {
                 cls: "group-entries",
-                children: group.entries.map((entry) => {
-                  return createElement("div", {
-                    cls: "entry",
-                    onclick: () => {
-                      vscode.postMessage({ type: "view", body: entry.id });
-                    },
-                    children: [
-                      createElement("p", {
-                        cls: "filename",
-                        innerText: entry.filename,
-                      }),
-                      createElement("p", {
-                        cls: "key",
-                        innerText: entry.key,
-                      }),
-                      // TODO: show linked entries
-                    ],
-                  });
-                }),
+                children: group.entries.map((e) => this._renderEntry(e)),
               }),
-              // ...(entry.warnings?.map((warning) => {
-              //   createElement("p", {
-              //     cls: "warnings",
-              //     innerText: warning,
-              //   });
-              // }) ?? []),
             ],
           })
         )
       );
+    }
+
+    _renderEntry(entry) {
+      const linked = entry.linked?.length
+        ? entry.linked?.map((e) => {
+            return createElement("div", {
+              cls: "linked",
+              children: [
+                createElement("span", {
+                  cls: "arrow",
+                  innerText: "↘",
+                }),
+                this._renderEntry(e),
+              ],
+            });
+          })
+        : [];
+
+      return createElement("div", {
+        children: [
+          createElement("div", {
+            cls: "entry",
+            onclick: () => {
+              vscode.postMessage({ type: "view", body: entry.id });
+            },
+            children: [
+              createElement("p", {
+                cls: "filename",
+                innerText: entry.filename,
+              }),
+              createElement("p", {
+                cls: "key",
+                innerText: entry.key,
+              }),
+            ],
+          }),
+          ...linked,
+        ],
+      });
     }
 
     _showLargeDbpfMessage(groups) {

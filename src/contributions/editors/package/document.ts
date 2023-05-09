@@ -1,5 +1,5 @@
 import * as vscode from 'vscode';
-import { ResourceEntry, ResourceKeyPair } from '@s4tk/models/types';
+import { Resource, ResourceEntry, ResourceKeyPair } from '@s4tk/models/types';
 import * as models from '@s4tk/models';
 import * as enums from '@s4tk/models/enums';
 import { formatResourceKey } from '@s4tk/hashing/formatting';
@@ -65,9 +65,30 @@ export default class PackageDocument extends ViewOnlyDocument {
 //#region Index Helpers
 
 function _getPkgIndex(pkg: models.Package): PackageIndex {
-  const groups = new Map<string, ResourceEntry[]>();
-
+  // finding linked tuning / simdata
+  const tuningIds = new Set<bigint>();
+  const simdatas = new Map<bigint, ResourceEntry>();
   pkg.entries.forEach(entry => {
+    if (entry.key.type === enums.BinaryResourceType.SimData)
+      simdatas.set(entry.key.instance, entry);
+    else if (entry.key.type in enums.TuningResourceType)
+      tuningIds.add(entry.key.instance);
+  });
+
+  const tuningToSimData = new Map<bigint, ResourceEntry>();
+  tuningIds.forEach((instance) => {
+    if (simdatas.has(instance))
+      tuningToSimData.set(instance, simdatas.get(instance)!);
+  });
+
+  // TODO: find linked string tables
+
+  const groups = new Map<string, ResourceEntry[]>();
+  pkg.entries.forEach(entry => {
+    if (entry.key.type === enums.BinaryResourceType.SimData
+      && tuningToSimData.has(entry.key.instance))
+      return;
+
     const group = _getEntryGroup(entry);
     if (groups.has(group)) {
       groups.get(group)?.push(entry)
@@ -88,7 +109,16 @@ function _getPkgIndex(pkg: models.Package): PackageIndex {
         id: entry.id,
         key: formatResourceKey(entry.key, "-"),
         filename: _getEntryFilename(entry),
-        // TODO: find linked resources
+        linked: tuningToSimData.has(entry.key.instance)
+          ? [(() => {
+            const simDataEntry = tuningToSimData.get(entry.key.instance)!;
+            return {
+              id: simDataEntry.id,
+              key: formatResourceKey(simDataEntry.key, "-"),
+              filename: "Paired SimData",
+            };
+          })()]
+          : undefined,
       })).sort(_sortEntries)
     });
   });
