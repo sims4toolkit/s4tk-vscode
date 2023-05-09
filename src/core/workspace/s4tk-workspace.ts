@@ -92,6 +92,7 @@ class _S4TKWorkspace {
     vscode.workspace.fs.createDirectory(vscode.Uri.joinPath(rootUri, "src"));
     vscode.workspace.fs.createDirectory(vscode.Uri.joinPath(rootUri, "src", "strings"));
     vscode.workspace.fs.createDirectory(vscode.Uri.joinPath(rootUri, "src", "tuning"));
+    vscode.workspace.fs.createDirectory(vscode.Uri.joinPath(rootUri, "src", "packages"));
 
     const createFile = async (uri: vscode.Uri, contentSource: vscode.Uri | Buffer) => {
       if (!(await fileExists(uri))) {
@@ -111,6 +112,11 @@ class _S4TKWorkspace {
     createFile(
       vscode.Uri.joinPath(rootUri, ".gitignore"),
       SAMPLES.gitignore
+    );
+
+    createFile(
+      vscode.Uri.joinPath(rootUri, "src", "packages", "Sample.package"),
+      SAMPLES.package
     );
 
     createFile(
