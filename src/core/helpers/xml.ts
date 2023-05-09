@@ -1,5 +1,4 @@
 import * as vscode from "vscode";
-import { XmlDocumentNode } from "@s4tk/xml-dom";
 import { ResourceKey } from "@s4tk/models/types";
 import { BinaryResourceType, TuningResourceType } from "@s4tk/models/enums";
 import { formatAsHexString } from "@s4tk/hashing/formatting";
@@ -179,19 +178,18 @@ function _inferXmlStringMetaData(content: string): XmlMetaData {
 
 function _parseAttributes(metaData: XmlMetaData, header: string) {
   try {
-    // just parsing the opening tag, better than using regex to get attrs
-    const root = XmlDocumentNode.from(header).child;
+    const i = /i="(?<i>[^"]+)"/.exec(header)?.groups?.i;
+    const s = /s="(?<s>[^"]+)"/.exec(header)?.groups?.s;
+    const n = /n="(?<n>[^"]+)"/.exec(header)?.groups?.n;
 
-    if (root.attributes.i) {
-      const type = TuningResourceType.parseAttr(root.attributes.i);
+    if (i) {
+      const type = TuningResourceType.parseAttr(i);
       if (type !== TuningResourceType.Tuning) metaData.key.type = type;
     }
 
-    if (root.attributes.s)
-      metaData.key.instance = root.attributes.s ? BigInt(root.attributes.s) : 0n;
+    if (s) metaData.key.instance = s ? BigInt(s) : 0n;
 
-    if (root.attributes.n)
-      metaData.filename = root.attributes.n;
+    if (n) metaData.filename = n;
   } catch (_) { }
 }
 
