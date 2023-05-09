@@ -31,23 +31,29 @@ export default class StringTableJsonCodeLensProvider extends BaseCodeLensProvide
     const stblJson = StringTableJson.parse(document.getText());
     const editor = vscode.window.activeTextEditor;
 
-    this._codeLenses = [
-      new vscode.CodeLens(new vscode.Range(0, 0, 0, 0), {
-        title: "New String",
-        tooltip: "Add a new string with a random hash to this STBL.",
-        command: COMMAND.stblJson.addEntry,
-        arguments: [editor, stblJson],
-      })
-    ];
+    this._codeLenses = [];
 
-    if (S4TKWorkspace.showStblJsonMetaDataButton && stblJson.format === "array") this._codeLenses.push(
-      new vscode.CodeLens(new vscode.Range(0, 0, 0, 0), {
-        title: "Insert Metadata",
-        tooltip: "Convert this array-based STBL into an object-based one that tracks file metadata.",
-        command: COMMAND.stblJson.addMetaData,
-        arguments: [editor, stblJson],
-      })
-    );
+    if (document.uri.scheme !== "s4tk") {
+      this._codeLenses.push(
+        new vscode.CodeLens(new vscode.Range(0, 0, 0, 0), {
+          title: "New String",
+          tooltip: "Add a new string with a random hash to this STBL.",
+          command: COMMAND.stblJson.addEntry,
+          arguments: [editor, stblJson],
+        })
+      );
+
+      if (S4TKWorkspace.showStblJsonMetaDataButton && stblJson.format === "array") {
+        this._codeLenses.push(
+          new vscode.CodeLens(new vscode.Range(0, 0, 0, 0), {
+            title: "Insert Metadata",
+            tooltip: "Convert this array-based STBL into an object-based one that tracks file metadata.",
+            command: COMMAND.stblJson.addMetaData,
+            arguments: [editor, stblJson],
+          })
+        );
+      }
+    }
 
     let stblEntryIndex = 0;
     const keyRegex = /^\s*"key"/;
