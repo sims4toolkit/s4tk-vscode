@@ -7,14 +7,12 @@ import { inferXmlMetaData } from '#helpers/xml';
 import S4TKWorkspace from '#workspace/s4tk-workspace';
 import ViewOnlyDocument from '../view-only/document';
 import { PackageIndex, PackageIndexEntry, PackageIndexGroup } from './types';
-import { VirtualFileSystem } from '../helpers/virtual-fs';
+import PackageResourceContentProvider from './package-fs';
 
 /**
  * Document containing binary DBPF data.
  */
 export default class PackageDocument extends ViewOnlyDocument {
-  private _fs: VirtualFileSystem;
-  public get fs(): VirtualFileSystem { return this._fs; }
   public get index(): PackageIndex { return this._index; }
   public get pkg(): models.Package { return this._pkg; }
 
@@ -24,31 +22,39 @@ export default class PackageDocument extends ViewOnlyDocument {
     private _index: PackageIndex
   ) {
     super(uri);
-    this._fs = new VirtualFileSystem(uri);
   }
 
-  static async create(
-    uri: vscode.Uri,
-    backupId: string | undefined
-  ): Promise<PackageDocument | PromiseLike<PackageDocument>> {
-    const dataUri = backupId ? vscode.Uri.parse(backupId) : uri;
-    const fileData = await vscode.workspace.fs.readFile(dataUri);
-    const pkg = models.Package.from(Buffer.from(fileData), { recoveryMode: true });
+  static async create(uri: vscode.Uri): Promise<PackageDocument> {
+    const data = await vscode.workspace.fs.readFile(uri);
+    const pkg = models.Package.from(Buffer.from(data), { recoveryMode: true });
     return new PackageDocument(uri, pkg, _getPkgIndex(pkg));
   }
 
   dispose(): void {
-    this.fs.dispose();
+    PackageResourceContentProvider.disposePackageDocumentContent(this.uri);
     super.dispose();
   }
 
   launchVirtualFile(id: number) {
     const entry = this.pkg.get(id);
-    this.fs.setContent(id, _getVirtualContent(entry));
-    const uri = this.fs.getUri(id, _getVirtualFilename(entry));
+
+    const uri = PackageResourceContentProvider.addPackageDocumentContent(
+      this.uri,
+      id,
+      _getVirtualFilename(entry),
+      _getVirtualContent(entry)
+    );
+
     vscode.workspace.openTextDocument(uri).then(doc => {
       vscode.window.showTextDocument(doc, { preview: false });
     });
+  }
+
+  async reload() {
+    PackageResourceContentProvider.disposePackageDocumentContent(this.uri);
+    const data = await vscode.workspace.fs.readFile(this.uri);
+    this._pkg = models.Package.from(Buffer.from(data), { recoveryMode: true });
+    this._index = _getPkgIndex(this._pkg);
   }
 }
 
@@ -163,7 +169,7 @@ function _getVirtualContent(entry: ResourceKeyPair): string {
       S4TKWorkspace.spacesPerIndent
     );
   } else {
-    return "Unsupported file type."
+    return entry.value.getBuffer().toString();
   }
 }
 

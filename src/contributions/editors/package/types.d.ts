@@ -1,6 +1,8 @@
 export type PackageInMessage = {
   readonly type: 'ready';
 } | {
+  readonly type: 'reload';
+} | {
   readonly type: 'view';
   readonly body: number;
 };
@@ -8,6 +10,8 @@ export type PackageInMessage = {
 export type PackageOutMessage = {
   readonly type: 'init';
   readonly body: PackageIndex;
+} | {
+  readonly type: 'loading';
 };
 
 interface PackageIndex {

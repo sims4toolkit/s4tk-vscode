@@ -31,13 +31,13 @@ export default class PackageEditorProvider
     openContext: { backupId?: string },
     _token: vscode.CancellationToken
   ): Promise<PackageDocument> {
-    return await PackageDocument.create(uri, openContext.backupId);
+    return await PackageDocument.create(uri);
   }
 
   protected _getHtmlForWebview(webview: vscode.Webview): string {
     return getHtmlForWebview(webview, {
       title: "TS4 Package",
-      body: `<p class="margin-bottom">Packages are view-only.</p>
+      body: `<p class="margin-bottom">Packages are view-only. <span id="reload-button" class="link-button">Reload</span>.</p>
       <div id="pkg-editor"></div>`,
       styles: [MEDIA.editors.packageStyle],
       scripts: [MEDIA.editors.packageScript],
@@ -56,6 +56,17 @@ export default class PackageEditorProvider
       });
     } else if (message.type === 'view') {
       document.launchVirtualFile(message.body);
+    } else if (message.type === 'reload') {
+      this._postMessage(webviewPanel, {
+        type: "loading",
+      });
+
+      document.reload().then(() => {
+        this._postMessage(webviewPanel, {
+          type: "init",
+          body: document.index,
+        });
+      });
     }
   }
 }

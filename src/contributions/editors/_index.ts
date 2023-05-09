@@ -1,7 +1,7 @@
 import * as vscode from "vscode";
 import PackageEditorProvider from "./package/provider";
 import StringTableEditorProvider from "./stbl-binary/provider";
-import { VirtualFileSystemManager } from "./helpers/virtual-fs";
+import PackageResourceContentProvider from "./package/package-fs";
 
 export default function registerEditorProviders(context: vscode.ExtensionContext) {
   PackageEditorProvider.register();
@@ -10,13 +10,7 @@ export default function registerEditorProviders(context: vscode.ExtensionContext
   context.subscriptions.push(
     vscode.workspace.registerTextDocumentContentProvider(
       "s4tk",
-      new class implements vscode.TextDocumentContentProvider {
-        onDidChangeEmitter = new vscode.EventEmitter<vscode.Uri>();
-        onDidChange = this.onDidChangeEmitter.event;
-        provideTextDocumentContent(uri: vscode.Uri): string {
-          return VirtualFileSystemManager.getContent(uri) ?? 'ERROR';
-        }
-      }
+      PackageResourceContentProvider
     )
   );
 }

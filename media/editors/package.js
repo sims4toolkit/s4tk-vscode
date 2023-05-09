@@ -24,6 +24,12 @@
       });
     }
 
+    async showLoading() {
+      this.groupsWrapper.replaceChildren(
+        createElement("p", { innerText: "Reloading..." })
+      );
+    }
+
     async redrawIndex(index) {
       if (index.size > MAX_SAFE_SIZE) {
         this._showLargeDbpfMessage(index.groups);
@@ -101,12 +107,18 @@
   }
 
   const editor = new PackageEditor(document.getElementById("pkg-editor"));
+  document.getElementById("reload-button").onclick = () => {
+    vscode.postMessage({ type: "reload" });
+  };
 
-  window.addEventListener("message", async (e) => {
-    const { type, body } = e.data;
-    switch (type) {
+  window.addEventListener("message", async ({ data }) => {
+    switch (data.type) {
       case "init": {
-        await editor.redrawIndex(body);
+        await editor.redrawIndex(data.body);
+        return;
+      }
+      case "loading": {
+        await editor.showLoading();
         return;
       }
     }

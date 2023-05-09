@@ -43,7 +43,7 @@ div.entry > p.key {
   margin-bottom: 1rem;
 }
 
-/* .link-button {
+.link-button {
   color: var(--vscode-textLink-foreground);
   text-decoration: underline;
 }
@@ -51,4 +51,4 @@ div.entry > p.key {
 .link-button:hover {
   text-decoration: none;
   cursor: pointer;
-} */
+}
