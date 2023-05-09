@@ -13,6 +13,7 @@ import PackageResourceContentProvider from './package-fs';
  * Document containing binary DBPF data.
  */
 export default class PackageDocument extends ViewOnlyDocument {
+  private _watcher: vscode.FileSystemWatcher;
   public get index(): PackageIndex { return this._index; }
   public get pkg(): models.Package { return this._pkg; }
 
@@ -22,6 +23,8 @@ export default class PackageDocument extends ViewOnlyDocument {
     private _index: PackageIndex
   ) {
     super(uri);
+    this._watcher = vscode.workspace.createFileSystemWatcher(uri.fsPath, true, false, true);
+    this._watcher.onDidChange(uri => this.reload());
   }
 
   static async create(uri: vscode.Uri): Promise<PackageDocument> {
@@ -31,6 +34,7 @@ export default class PackageDocument extends ViewOnlyDocument {
   }
 
   dispose(): void {
+    this._watcher.dispose();
     PackageResourceContentProvider.disposePackageDocumentContent(this.uri);
     super.dispose();
   }

@@ -30,6 +30,7 @@ export default class TuningCodeLensProvider extends BaseCodeLensProvider {
   ): vscode.CodeLens[] | Thenable<vscode.CodeLens[]> {
     const editor = vscode.window.activeTextEditor;
     if (!(S4TKWorkspace.active && editor)) return [];
+    if (editor.document.uri.scheme === "s4tk") return [];
 
     this._codeLenses = [
       new vscode.CodeLens(new vscode.Range(0, 0, 0, 0), {
