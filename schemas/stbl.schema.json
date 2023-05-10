@@ -10,25 +10,38 @@
       "pattern": "^0[xX][0-9a-fA-F]{14}$"
     },
     "entries": {
-      "description": "The list of key/value pairs in this string table.",
-      "type": "array",
-      "items": {
-        "type": "object",
-        "required": [
-          "key",
-          "value"
-        ],
-        "properties": {
-          "key": {
-            "$ref": "#/definitions/32bitNumber",
-            "description": "The 32-bit key for this string entry as an 8-digit hex number."
-          },
-          "value": {
-            "type": "string",
-            "description": "The text value for this string entry."
+      "description": "The key/value pairs in this string table. This can either be a list or an object.",
+      "oneOf": [
+        {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "key",
+              "value"
+            ],
+            "properties": {
+              "key": {
+                "$ref": "#/definitions/32bitNumber",
+                "description": "The 32-bit key for this string entry as an 8-digit hex number."
+              },
+              "value": {
+                "type": "string",
+                "description": "The text value for this string entry."
+              }
+            }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "patternProperties": {
+            "^0[xX][0-9a-fA-F]{8}$": {
+              "type": "string"
+            }
           }
         }
-      }
+      ]
     },
     "stringTableLocale": {
       "type": "string",

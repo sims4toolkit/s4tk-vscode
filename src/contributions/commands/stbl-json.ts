@@ -24,7 +24,7 @@ export default function registerStblJsonCommands() {
 
   vscode.commands.registerCommand(COMMAND.stblJson.addMetaData,
     async (editor: vscode.TextEditor | undefined, stblJson: StringTableJson) => {
-      if (stblJson.format === "object") return;
+      if (stblJson.hasMetaData) return;
 
       if (editor) {
         stblJson.insertDefaultMetadata(S4TKWorkspace.defaultLocale);
@@ -45,6 +45,41 @@ export default function registerStblJsonCommands() {
       vscode.env.clipboard.writeText(xml);
       if (S4TKWorkspace.showCopyConfirmationPopup)
         vscode.window.showInformationMessage(`Copied: ${xml}`);
+    }
+  );
+
+  vscode.commands.registerCommand(COMMAND.stblJson.toArray,
+    async (editor: vscode.TextEditor | undefined, stblJson: StringTableJson) => {
+      if (stblJson.isArray) return;
+
+      if (editor) {
+        stblJson.toArray();
+        stblJson.insertDefaultMetadata(S4TKWorkspace.defaultLocale);
+        const content = stblJson.stringify(S4TKWorkspace.spacesPerIndent);
+        if (await replaceEntireDocument(editor, content)) return;
+      }
+
+      vscode.window.showWarningMessage(
+        'Something unexpected went wrong while converting STBL JSON to array.',
+        MessageButton.ReportProblem,
+      ).then(handleMessageButtonClick);
+    }
+  );
+
+  vscode.commands.registerCommand(COMMAND.stblJson.toObject,
+    async (editor: vscode.TextEditor | undefined, stblJson: StringTableJson) => {
+      if (stblJson.isObject) return;
+
+      if (editor) {
+        stblJson.toObject();
+        const content = stblJson.stringify(S4TKWorkspace.spacesPerIndent);
+        if (await replaceEntireDocument(editor, content)) return;
+      }
+
+      vscode.window.showWarningMessage(
+        'Something unexpected went wrong while converting STBL JSON to object.',
+        MessageButton.ReportProblem,
+      ).then(handleMessageButtonClick);
     }
   );
 }

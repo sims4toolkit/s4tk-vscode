@@ -34,20 +34,42 @@ export default class StringTableJsonCodeLensProvider extends BaseCodeLensProvide
     this._codeLenses = [];
 
     if (document.uri.scheme !== "s4tk") {
-      this._codeLenses.push(
-        new vscode.CodeLens(new vscode.Range(0, 0, 0, 0), {
-          title: "New String",
-          tooltip: "Add a new string with a random hash to this STBL.",
-          command: COMMAND.stblJson.addEntry,
-          arguments: [editor, stblJson],
-        })
-      );
+      if (!stblJson.hasMetaData) {
+        this._codeLenses.push(
+          new vscode.CodeLens(new vscode.Range(0, 0, 0, 0), {
+            title: "New String",
+            tooltip: "Add a new string with a random hash to this STBL.",
+            command: COMMAND.stblJson.addEntry,
+            arguments: [editor, stblJson],
+          })
+        );
+      }
 
-      if (S4TKWorkspace.showStblJsonMetaDataButton && stblJson.format === "array") {
+      if (stblJson.isArray) {
+        this._codeLenses.push(
+          new vscode.CodeLens(new vscode.Range(0, 0, 0, 0), {
+            title: "Convert to Object",
+            tooltip: "Convert this array-based STBL JSON into an object-based one.",
+            command: COMMAND.stblJson.toObject,
+            arguments: [editor, stblJson],
+          })
+        );
+      } else {
+        this._codeLenses.push(
+          new vscode.CodeLens(new vscode.Range(0, 0, 0, 0), {
+            title: "Convert to Array",
+            tooltip: "Convert this object-based STBL JSON into an array-based one.",
+            command: COMMAND.stblJson.toArray,
+            arguments: [editor, stblJson],
+          })
+        );
+      }
+
+      if (S4TKWorkspace.showStblJsonMetaDataButton && !stblJson.hasMetaData) {
         this._codeLenses.push(
           new vscode.CodeLens(new vscode.Range(0, 0, 0, 0), {
             title: "Insert Metadata",
-            tooltip: "Convert this array-based STBL into an object-based one that tracks file metadata.",
+            tooltip: "Convert this STBL into an object that tracks metadata (locale, group, instance).",
             command: COMMAND.stblJson.addMetaData,
             arguments: [editor, stblJson],
           })
@@ -56,9 +78,23 @@ export default class StringTableJsonCodeLensProvider extends BaseCodeLensProvide
     }
 
     let stblEntryIndex = 0;
-    const keyRegex = /^\s*"key"/;
+    const keyRegex = stblJson.isArray ? /^\s*"key":/ : /^\s*"0[xX][a-fA-F0-9]{8}":/;
+    const entriesRegex = /^\s*"entries":/;
     for (let lineIndex = 0; lineIndex < document.lineCount; ++lineIndex) {
       const line = document.lineAt(lineIndex);
+
+      if (stblJson.hasMetaData && entriesRegex.test(line.text)) {
+        this._codeLenses.push(
+          new vscode.CodeLens(new vscode.Range(lineIndex, 0, lineIndex, 0), {
+            title: "New String",
+            tooltip: "Add a new string with a random hash to this STBL.",
+            command: COMMAND.stblJson.addEntry,
+            arguments: [editor, stblJson],
+          })
+        );
+
+        continue;
+      }
 
       if (keyRegex.test(line.text)) {
         this._codeLenses.push(new vscode.CodeLens(

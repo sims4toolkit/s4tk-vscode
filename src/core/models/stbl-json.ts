@@ -6,12 +6,22 @@ import { randomFnv32, randomFnv64 } from "#helpers/hashing";
 import { parseAndValidateJson } from "#helpers/schemas";
 import { SCHEMAS } from "#assets";
 
-type StringTableJsonFormat = "array" | "object";
+type StringTableJsonFormat = "array" | "object" | "array-metadata" | "object-metadata";
 
-interface StringTableJsonEntry {
-  key: string;
-  value: string;
+interface StringTableJsonEntry { key: string; value: string; }
+
+type RawStringTableJsonArray = StringTableJsonEntry[];
+type RawStringTableJsonObject = { [key: string]: string; };
+type RawStringTableJsonEntries = RawStringTableJsonArray | RawStringTableJsonObject;
+
+interface RawStringTableJsonMetaData {
+  locale?: StringTableLocaleName;
+  group?: string;
+  instanceBase?: string;
+  entries: RawStringTableJsonEntries;
 }
+
+type RawStringTableJson = RawStringTableJsonEntries | RawStringTableJsonMetaData;
 
 /**
  * A string table JSON that follows the `stbl.schema.json` schema.
@@ -23,6 +33,9 @@ export default class StringTableJson {
   private static _DEFAULT_GROUP_INT = 0x80000000;
 
   public get format() { return this._format; }
+  public get hasMetaData() { return this._format === "array-metadata" || this._format === "object-metadata"; }
+  public get isArray() { return this._format === "array" || this._format === "array-metadata"; }
+  public get isObject() { return this._format === "object" || this._format === "object-metadata"; }
 
   private _locale?: StringTableLocaleName;
   public get locale() { return this._locale; }
@@ -57,24 +70,44 @@ export default class StringTableJson {
    * @throws If JSON is malformed or violates schema
    */
   static parse(content: string): StringTableJson {
-    const result = parseAndValidateJson<{
-      entries: StringTableJsonEntry[];
-      locale?: StringTableLocaleName;
-      group?: string;
-      instanceBase?: string;
-    } | StringTableJsonEntry[]>(content, SCHEMAS.stbl);
+    const result = parseAndValidateJson<RawStringTableJson>(content, SCHEMAS.stbl);
 
     if (result.parsed) {
-      return Array.isArray(result.parsed)
-        ? new StringTableJson("array", result.parsed)
-        : new StringTableJson("object", result.parsed.entries, result.parsed);
+      if (Array.isArray(result.parsed)) {
+        const entriesArr = result.parsed as RawStringTableJsonArray;
+        return new StringTableJson("array", entriesArr);
+      } else if ((result.parsed as RawStringTableJsonMetaData).entries) {
+        const metadata = result.parsed as RawStringTableJsonMetaData;
+        if (Array.isArray(metadata.entries)) {
+          const entriesArr = metadata.entries as RawStringTableJsonArray;
+          return new StringTableJson("array-metadata", entriesArr, {
+            locale: metadata.locale,
+            group: metadata.group,
+            instanceBase: metadata.instanceBase,
+          });
+        } else {
+          const entriesObj = metadata.entries as RawStringTableJsonObject;
+          const entriesArr: RawStringTableJsonArray = [];
+          for (const key in entriesObj) entriesArr.push({ key, value: entriesObj[key] });
+          return new StringTableJson("object-metadata", entriesArr, {
+            locale: metadata.locale,
+            group: metadata.group,
+            instanceBase: metadata.instanceBase,
+          });
+        }
+      } else {
+        const entriesObj = result.parsed as RawStringTableJsonObject;
+        const entriesArr: RawStringTableJsonArray = [];
+        for (const key in entriesObj) entriesArr.push({ key, value: entriesObj[key] });
+        return new StringTableJson("object", entriesArr);
+      }
     } else {
       throw new Error(result.error);
     }
   }
 
   /**
-   * Generates a new StringTableJson. If using the "object" format, all metadata
+   * Generates a new StringTableJson. If using a "metadata" format, all metadata
    * will be filled in with defaults (instanceBase will use random FNV56).
    * 
    * @param format Format to use for JSON
@@ -84,7 +117,7 @@ export default class StringTableJson {
     format: StringTableJsonFormat,
     defaultLocale: StringTableLocaleName
   ): StringTableJson {
-    return format === "array"
+    return (format === "array" || format === "object")
       ? new StringTableJson(format, [])
       : new StringTableJson(format, [], {
         locale: defaultLocale,
@@ -94,7 +127,7 @@ export default class StringTableJson {
   }
 
   /**
-   * Generates a Buffer containing StringTableJson data. If using the "object"
+   * Generates a Buffer containing StringTableJson data. If using a "metadata"
    * format, all metadata will be filled in with defaults (instanceBase will use
    * random FNV56).
    * 
@@ -170,7 +203,7 @@ export default class StringTableJson {
 
   /**
    * Adds any missing metadata to this STBL by filling them in with defaults,
-   * and also changes the format to "object" if needed.
+   * and also changes the format to a "metadata" one if needed.
    * 
    * @param defaultLocale Locale to insert if it is missing
    */
@@ -178,7 +211,8 @@ export default class StringTableJson {
     this._locale ??= defaultLocale;
     this._group ??= StringTableJson._DEFAULT_GROUP_STRING;
     this._instanceBase ??= formatAsHexString(randomFnv64(56), 14, true);
-    this._format = "object";
+    if (this._format === "object") this._format = "object-metadata";
+    else if (this._format === "array") this._format = "array-metadata";
   }
 
   /**
@@ -187,16 +221,35 @@ export default class StringTableJson {
    * @param spaces Number of spaces to use while formatting
    */
   stringify(spaces: number): string {
-    if (this._format === "array") {
-      return JSON.stringify(this._entries, null, spaces);
-    } else {
+
+    let entries: RawStringTableJsonEntries = this._entries;
+    if (this.isObject) {
+      entries = {};
+      this._entries.forEach(({ key, value }) =>
+        (entries as RawStringTableJsonObject)[key] = value
+      );
+    }
+
+    if (this.hasMetaData) {
       return JSON.stringify({
         locale: this._locale,
         group: this._group,
         instanceBase: this._instanceBase,
-        entries: this._entries,
+        entries: entries,
       }, null, spaces);
+    } else {
+      return JSON.stringify(entries, null, spaces);
     }
+  }
+
+  toArray() {
+    if (this._format === "object") this._format = "array";
+    else if (this._format === "object-metadata") this._format = "array-metadata";
+  }
+
+  toObject() {
+    if (this._format === "array") this._format = "object";
+    else if (this._format === "array-metadata") this._format = "object-metadata";
   }
 
   /**

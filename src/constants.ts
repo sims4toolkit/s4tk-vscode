@@ -24,6 +24,8 @@ export const COMMAND = {
     addEntry: "s4tk.stblJson.addEntry",
     addMetaData: "s4tk.stblJson.addMetaData",
     copyEntry: "s4tk.stblJson.copyEntry",
+    toArray: "s4tk.stblJson.toArray",
+    toObject: "s4tk.stblJson.toObject",
   },
   ts4Files: {
     createStblBinary: "s4tk.ts4Files.createStblBinary",
