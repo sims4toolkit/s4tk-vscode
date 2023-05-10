@@ -1,3 +1,5 @@
+import * as vscode from "vscode";
+
 //#region Types
 
 export type BuildMode = "build" | "dryrun" | "release";
@@ -66,6 +68,8 @@ export interface WrittenResourceInfo {
 //#region Functions
 
 export namespace BuildSummary {
+  const _BUILD_SUMMARY_FILENAME = "BuildSummary.json";
+
   export function create(mode: BuildMode): BuildSummary {
     return {
       buildInfo: {
@@ -92,6 +96,12 @@ export namespace BuildSummary {
         packages: [],
       },
     };
+  }
+
+  export function getUri(): vscode.Uri | undefined {
+    const rootDir = vscode.workspace.workspaceFolders?.[0]?.uri;
+    if (!rootDir) return;
+    return vscode.Uri.joinPath(rootDir, _BUILD_SUMMARY_FILENAME);
   }
 }
 

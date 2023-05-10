@@ -1,8 +1,8 @@
 import * as vscode from "vscode";
 import { COMMAND } from "#constants";
 import S4TKWorkspace from "#workspace/s4tk-workspace";
-import { buildProject } from "#workspace/build";
-import { BuildMode, BuildSummary } from "#models/build-summary";
+import { buildProject } from "#building/builder";
+import { BuildMode, BuildSummary } from "#building/summary";
 
 export default function registerWorkspaceCommands() {
   vscode.commands.registerCommand(COMMAND.workspace.build, () => {
