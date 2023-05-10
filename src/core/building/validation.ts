@@ -2,9 +2,9 @@ import * as fs from "fs";
 import * as vscode from "vscode";
 import { S4TKConfig } from "#models/s4tk-config";
 import S4TKWorkspace from "#workspace/s4tk-workspace";
-import { BuildSummary } from "./summary";
 import { FatalBuildError, addAndGetItem } from "./helpers";
 import { findGlobMatches } from "./resources";
+import { BuildSummary } from "./summary";
 
 //#region Exported Functions
 
