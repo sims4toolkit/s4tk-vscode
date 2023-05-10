@@ -121,49 +121,73 @@
         }
       }
     },
-    "fileWarnings": {
-      "type": "array",
-      "description": "List of warnings found in built files.",
-      "items": {
-        "type": "object",
-        "properties": {
-          "file": {
-            "type": "string",
-            "description": "Relative path to the file from the source folder."
-          },
-          "warnings": {
-            "type": "array",
-            "description": "Things about this file that don't seem right.",
-            "items": {
-              "type": "string"
+    "written": {
+      "type": "object",
+      "description": "Information about the files that were written, as well as any within source that were ignored or missed.",
+      "properties": {
+        "fileWarnings": {
+          "type": "array",
+          "description": "List of files that were written to packages and warnings associated with them.",
+          "items": {
+            "type": "object",
+            "properties": {
+              "file": {
+                "type": "string",
+                "description": "Relative path to the file within the source folder."
+              },
+              "warnings": {
+                "type": "array",
+                "description": "List of warnings associated with this file.",
+                "items": {
+                  "type": "string"
+                }
+              }
             }
           }
-        }
-      }
-    },
-    "writtenPackages": {
-      "type": "array",
-      "description": "List of packages that were built and the resources they contain.",
-      "items": {
-        "type": "object",
-        "properties": {
-          "filename": {
-            "type": "string",
-            "description": "Name of package that was written."
-          },
-          "resources": {
-            "type": "array",
-            "description": "List of resources that were written to this package.",
-            "items": {
-              "type": "object",
-              "properties": {
-                "key": {
-                  "type": "string",
-                  "description": "Full resource key of this file."
-                },
-                "type": {
-                  "type": "string",
-                  "description": "Readable type of this file."
+        },
+        "ignoredSourceFiles": {
+          "type": "array",
+          "description": "List of files within the source folder that were ignored (i.e. they could not be identified as TS4 resources).",
+          "items": {
+            "type": "string"
+          }
+        },
+        "missingSourceFiles": {
+          "type": "array",
+          "description": "List of files within the source folder that were missed (i.e. they are understood to be TS4 resources, but no package glob patterns captured them).",
+          "items": {
+            "type": "string"
+          }
+        },
+        "packages": {
+          "type": "array",
+          "description": "List of packages that were written and the resources that contain.",
+          "items": {
+            "type": "object",
+            "properties": {
+              "filename": {
+                "type": "string",
+                "description": "Name of package that was written."
+              },
+              "resources": {
+                "type": "array",
+                "description": "List of resources that were written to this package.",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "filename": {
+                      "type": "string",
+                      "description": "The filename of this resource, if it has one (only applicable to tuning and SimData)."
+                    },
+                    "key": {
+                      "type": "string",
+                      "description": "The type, group, and instance of this resource (formatted as T-G-I in hex)."
+                    },
+                    "type": {
+                      "type": "string",
+                      "description": "A human-readable label for what kind of resource this is, based on its resource key."
+                    }
+                  }
                 }
               }
             }
