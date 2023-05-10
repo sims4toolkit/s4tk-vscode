@@ -1,34 +1,27 @@
-import type { BuildSummary, BuildMode } from "./types";
+import type { Warnable } from "./summary";
 
 /**
- * Returns a new BuildSummary object to fill out during the build process.
+ * Returns a new Error with the given message and adds a warning to a Warnable.
+ * This is just for cleaner syntax in the build script.
  * 
- * @param mode Mode that build will run in
+ * @param message Message to include in error
+ * @param kwargs Optional keyword args
  */
-export function getDefaultBuildSummary(mode: BuildMode): BuildSummary {
-  return {
-    buildInfo: {
-      mode: mode,
-      success: true,
-      problems: 0,
-    },
-    config: {
-      source: {
-        original: "",
-        resolved: "",
-      },
-      destinations: [],
-      packages: [],
-      zip: mode !== "release" ? undefined : {
-        filename: "",
-        otherFiles: [],
-      },
-    },
-    written: {
-      fileWarnings: [],
-      ignoredSourceFiles: [],
-      missingSourceFiles: [],
-      packages: [],
-    },
-  };
+export function FatalBuildError(message: string, kwargs?: {
+  addWarning?: Warnable;
+}): Error {
+  if (kwargs?.addWarning) kwargs.addWarning.warning = message;
+  return new Error(message);
+}
+
+/**
+ * Adds the given item to the given array and then returns it. This is nearly
+ * pointless, but it helps a lot with TypeScript type checking.
+ * 
+ * @param array Array to add item to
+ * @param item Item to add and return
+ */
+export function addAndGetItem<T>(array: T[], item: T): T {
+  array.push(item);
+  return item;
 }

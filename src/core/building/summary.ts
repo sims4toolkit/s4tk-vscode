@@ -1,3 +1,5 @@
+//#region Types
+
 export type BuildMode = "build" | "dryrun" | "release";
 
 export interface BuildSummary {
@@ -58,3 +60,39 @@ export interface WrittenResourceInfo {
   key: string;
   type: string;
 }
+
+//#endregion
+
+//#region Functions
+
+export namespace BuildSummary {
+  export function getDefault(mode: BuildMode): BuildSummary {
+    return {
+      buildInfo: {
+        mode: mode,
+        success: true,
+        problems: 0,
+      },
+      config: {
+        source: {
+          original: "",
+          resolved: "",
+        },
+        destinations: [],
+        packages: [],
+        zip: mode !== "release" ? undefined : {
+          filename: "",
+          otherFiles: [],
+        },
+      },
+      written: {
+        fileWarnings: [],
+        ignoredSourceFiles: [],
+        missingSourceFiles: [],
+        packages: [],
+      },
+    };
+  }
+}
+
+//#endregion
