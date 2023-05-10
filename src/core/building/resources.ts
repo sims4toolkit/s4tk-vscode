@@ -19,20 +19,22 @@ export const TGI_REGEX = /(?<t>[0-9a-f]{8}).(?<g>[0-9a-f]{8}).(?<i>[0-9a-f]{16})
 //#region Functions
 
 /**
- * Returns all filepaths resolved from the given patterns.
+ * Returns all supported filepaths resolved from the given patterns.
  * 
  * @param include Patterns to include in search
  * @param exclude Patterns to exclude from search
+ * @param unsupported If true, then inverts the supported filter
  */
 export function findGlobMatches(
   include: ValidatedPath[] | string[],
-  exclude: ValidatedPath[] | string[] | undefined
+  exclude: ValidatedPath[] | string[] | undefined,
+  unsupported: boolean = false,
 ): string[] {
   const toAbsPath = (p: string | ValidatedPath) =>
     typeof p === "string" ? p : p.resolved;
   return globSync(include.map(toAbsPath), {
     ignore: exclude?.map(toAbsPath)
-  }).filter(isSupportedFileType);
+  }).filter((fp) => isSupportedFileType(fp) !== unsupported);
 }
 
 /**
