@@ -13,6 +13,7 @@
       "#assets": ["assets.ts"],
       "#constants": ["constants.ts"],
       "#extension": ["extension.ts"],
+      "#building/*": ["core/building/*"],
       "#helpers/*": ["core/helpers/*"],
       "#models/*": ["core/models/*"],
       "#workspace/*": ["core/workspace/*"],
