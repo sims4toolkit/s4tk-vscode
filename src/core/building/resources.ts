@@ -25,10 +25,10 @@ export const TGI_REGEX = /(?<t>[0-9a-f]{8}).(?<g>[0-9a-f]{8}).(?<i>[0-9a-f]{16})
  * @param exclude Patterns to exclude from search
  */
 export function findGlobMatches(
-  include: summary.ValidatedPath[] | string[],
-  exclude: summary.ValidatedPath[] | string[] | undefined
+  include: ValidatedPath[] | string[],
+  exclude: ValidatedPath[] | string[] | undefined
 ): string[] {
-  const toAbsPath = (p: string | summary.ValidatedPath) =>
+  const toAbsPath = (p: string | ValidatedPath) =>
     typeof p === "string" ? p : p.resolved;
   return globSync(include.map(toAbsPath), {
     ignore: exclude?.map(toAbsPath)
