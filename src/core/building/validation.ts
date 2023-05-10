@@ -171,6 +171,8 @@ function _validateBuildPackages(summary: BuildSummary) {
 
   summary.written.ignoredSourceFiles.push(
     ...findGlobMatches([allGlob], undefined, true)
+      .filter(_isExistingFile)
+      .map(fp => fp.replace(summary.config.source.resolved, ""))
   );
 
   const allMatches = findGlobMatches([allGlob], undefined);
