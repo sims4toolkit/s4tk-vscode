@@ -66,7 +66,7 @@ export interface WrittenResourceInfo {
 //#region Functions
 
 export namespace BuildSummary {
-  export function getDefault(mode: BuildMode): BuildSummary {
+  export function create(mode: BuildMode): BuildSummary {
     return {
       buildInfo: {
         mode: mode,
