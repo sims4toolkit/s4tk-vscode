@@ -93,29 +93,27 @@ function _buildPackage(context: PackageBuildContext): models.Package {
 
 function _tryAddPackage(context: PackageBuildContext, filepath: string, buffer: Buffer): boolean {
   try {
-    if (path.extname(filepath) === ".package") {
-      models.Package.extractResources(buffer).forEach((entry, i) => {
-        let inPackageName = i.toString();
+    if (path.extname(filepath) !== ".package") return false;
 
-        if (entry.key.type === enums.BinaryResourceType.StringTable) {
-          context.stbls.push(entry as types.ResourceKeyPair<models.StringTableResource>);
-        } else {
-          if (entry.value instanceof models.SimDataResource) {
-            inPackageName = entry.value.instance.name;
-          } else if (entry.value instanceof models.XmlResource) {
-            const filename = inferXmlMetaData(entry.value.content).filename;
-            if (filename) inPackageName = filename;
-          }
+    models.Package.extractResources(buffer).forEach((entry, i) => {
+      let inPackageName = i.toString();
 
-          _addToPackageInfo(context, filepath, entry.key, { inPackageName });
-          context.pkg.add(entry.key, entry.value);
+      if (entry.key.type === enums.BinaryResourceType.StringTable) {
+        context.stbls.push(entry as types.ResourceKeyPair<models.StringTableResource>);
+      } else {
+        if (entry.value instanceof models.SimDataResource) {
+          inPackageName = entry.value.instance.name;
+        } else if (entry.value instanceof models.XmlResource) {
+          const filename = inferXmlMetaData(entry.value.content).filename;
+          if (filename) inPackageName = filename;
         }
-      });
 
-      return true;
-    }
+        _addToPackageInfo(context, filepath, entry.key, { inPackageName });
+        context.pkg.add(entry.key, entry.value);
+      }
+    });
 
-    return false;
+    return true;
   } catch (e) {
     throw FatalBuildError(
       `Failed to extract resources from Package (${BuildSummary.makeRelative(context.summary, filepath)}) [${e}]`
@@ -124,32 +122,32 @@ function _tryAddPackage(context: PackageBuildContext, filepath: string, buffer: 
 }
 
 function _tryAddTgiFile(context: PackageBuildContext, filepath: string, buffer: Buffer): boolean {
-  const tgiKey = parseKeyFromTgi(filepath);
-  if (!tgiKey) return false;
+  try {
+    const tgiKey = parseKeyFromTgi(filepath);
+    if (!tgiKey) return false;
 
-  if (tgiKey.type === enums.BinaryResourceType.SimData) {
-    _addToPackageInfo(context, filepath, tgiKey);
+    if (tgiKey.type === enums.BinaryResourceType.SimData) {
+      _addToPackageInfo(context, filepath, tgiKey);
+      const resource = (buffer.slice(0, 4).toString() === "DATA")
+        ? models.RawResource.from(buffer)
+        : models.SimDataResource.fromXml(buffer);
+      context.pkg.add(tgiKey, resource);
+    } else if (tgiKey.type === enums.BinaryResourceType.StringTable) {
+      const resource = (buffer.slice(0, 4).toString() === "STBL")
+        ? models.StringTableResource.from(buffer)
+        : StringTableJson.parse(buffer.toString()).toBinaryResource();
+      context.stbls.push({ key: tgiKey, value: resource });
+    } else {
+      _addToPackageInfo(context, filepath, tgiKey);
+      context.pkg.add(tgiKey, models.RawResource.from(buffer));
+    }
 
-    const resource = (buffer.slice(0, 4).toString() === "DATA")
-      ? models.RawResource.from(buffer)
-      : models.SimDataResource.fromXml(buffer);
-
-    context.pkg.add(tgiKey, resource);
-  } else if (tgiKey.type === enums.BinaryResourceType.StringTable) {
-    // intentionally not adding to package info, stbls are processed later
-
-    const resource = (buffer.slice(0, 4).toString() === "STBL")
-      ? models.StringTableResource.from(buffer)
-      : StringTableJson.parse(buffer.toString()).toBinaryResource();
-
-    context.stbls.push({ key: tgiKey, value: resource });
-  } else {
-    _addToPackageInfo(context, filepath, tgiKey);
-
-    context.pkg.add(tgiKey, models.RawResource.from(buffer));
+    return true;
+  } catch (e) {
+    throw FatalBuildError(
+      `Failed to parse TGI file as a TS4 resource (${BuildSummary.makeRelative(context.summary, filepath)}) [${e}]`
+    );
   }
-
-  return true;
 }
 
 function _tryAddSupportedFile(context: PackageBuildContext, filepath: string, buffer: Buffer): boolean {
