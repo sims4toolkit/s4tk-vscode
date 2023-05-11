@@ -155,20 +155,20 @@ function _tryAddTgiFile(context: PackageBuildContext, filepath: string, buffer: 
 
   if (tgiKey.type === enums.BinaryResourceType.SimData) {
     // TODO: push to context.pkgInfo.resources
-    if (buffer.slice(0, 4).toString() === "DATA") {
-      context.pkg.add(tgiKey, models.RawResource.from(buffer));
-    } else {
-      context.pkg.add(tgiKey, models.SimDataResource.fromXml(buffer));
-    }
+
+    const resource = (buffer.slice(0, 4).toString() === "DATA")
+      ? models.RawResource.from(buffer)
+      : models.SimDataResource.fromXml(buffer);
+
+    context.pkg.add(tgiKey, resource);
   } else if (tgiKey.type === enums.BinaryResourceType.StringTable) {
     // TODO: push to context.pkgInfo.resources
-    if (buffer.slice(0, 4).toString() === "STBL") {
-      const stbl = models.StringTableResource.from(buffer);
-      context.stbls.push({ key: tgiKey, value: stbl });
-    } else {
-      const stblJson = StringTableJson.parse(buffer.toString());
-      context.stbls.push({ key: tgiKey, value: stblJson.toBinaryResource() });
-    }
+
+    const resource = (buffer.slice(0, 4).toString() === "STBL")
+      ? models.StringTableResource.from(buffer)
+      : StringTableJson.parse(buffer.toString()).toBinaryResource();
+
+    context.pkg.add(tgiKey, resource);
   } else {
     // TODO: push to context.pkgInfo.resources
     context.pkg.add(tgiKey, models.RawResource.from(buffer));
