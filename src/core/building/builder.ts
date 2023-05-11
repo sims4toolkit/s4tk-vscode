@@ -231,73 +231,17 @@ function _addStringTable(context: PackageBuildContext, filepath: string, buffer:
 }
 
 function _addXmlSimData(context: PackageBuildContext, filepath: string, buffer: Buffer) {
-  const key = _getSimDataKey(context, filepath, buffer.toString());
-
-
-  // TODO:
+  const content = buffer.toString();
+  const key = _getSimDataKey(context, filepath, content);
+  _addToPackageInfo(context, filepath, key);
+  context.pkg.add(key, models.SimDataResource.fromXml(content));
 }
 
 function _addXmlTuning(context: PackageBuildContext, filepath: string, buffer: Buffer) {
-  // TODO:
-}
-
-function _parseXmlSimData(summary: BuildSummary, filepath: string, tunings: Map<string, types.ResourceKey>): types.ResourceKeyPair {
-  // TODO: update summary
-  const buffer = fs.readFileSync(filepath);
   const content = buffer.toString();
-
-  const key: Partial<types.ResourceKey> = getXmlKeyOverrides(content) ?? {};
-  key.type ??= enums.BinaryResourceType.SimData;
-  const filename = path.basename(filepath).replace(/\.SimData\.xml$/i, "");
-  const tuningKey = tunings.get(filename);
-  if (key.group == undefined && tuningKey?.type)
-    key.group = enums.SimDataGroup.getForTuning(tuningKey.type);
-  if (key.instance == undefined && tuningKey?.instance)
-    key.instance = tuningKey.instance;
-
-  if (!key.group) throw FatalBuildError(
-    `Unable to infer group for SimData because it does not have a paired tuning, and no group override was found (${filepath})`
-  );
-
-  if (!key.instance) throw FatalBuildError(
-    `Unable to infer instance ID for SimData because it does not have a paired tuning, and no instance override was found (${filepath})`
-  );
-
-  try {
-    return {
-      key: key as types.ResourceKey,
-      value: models.SimDataResource.fromXml(content),
-    };
-  } catch (e) {
-    throw FatalBuildError(
-      `Failed to serialize SimData, it is likely malformed (${filepath}) [${e}]`
-    );
-  }
-}
-
-function _parseXmlTuning(summary: BuildSummary, filepath: string): types.ResourceKeyPair {
-  // TODO: update summary
-  const buffer = fs.readFileSync(filepath);
-  const content = buffer.toString();
-
-  const key: Partial<types.ResourceKey> = getXmlKeyOverrides(content) ?? {};
-  const inferredKey = inferXmlMetaData(content).key;
-  key.type ??= inferredKey.type;
-  key.group ??= inferredKey.group ?? 0;
-  key.instance ??= inferredKey.instance;
-
-  if (!key.type) throw FatalBuildError(
-    `Unable to infer tuning type from \`i\` attribute, and no type override was found (${filepath})`
-  );
-
-  if (!key.instance) throw FatalBuildError(
-    `Unable to infer tuning ID from \`s\` attribute, and no instance override was found (${filepath})`
-  );
-
-  return {
-    key: key as types.ResourceKey,
-    value: models.RawResource.from(buffer)
-  };
+  const key = _getTuningKey(context, filepath, content);
+  _addToPackageInfo(context, filepath, key);
+  context.pkg.add(key, models.RawResource.from(buffer));
 }
 
 //#endregion
