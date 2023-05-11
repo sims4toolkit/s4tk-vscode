@@ -7,24 +7,17 @@ import { randomFnv64 } from "#helpers/hashing";
 import { getXmlKeyOverrides, inferXmlMetaData } from "#helpers/xml";
 import StringTableJson from "#models/stbl-json";
 import S4TKWorkspace from "#workspace/s4tk-workspace";
-import { FatalBuildError } from "./helpers";
-import { findGlobMatches, parseKeyFromTgi } from "./resources";
+import { FatalBuildError, addAndGetItem } from "./helpers";
+import { TGI_REGEX, findGlobMatches, parseKeyFromTgi } from "./resources";
 import { BuildMode, BuildSummary, ValidatedPackageInfo } from "./summary";
 import { validateBuild } from "./validation";
-
-interface ResourcePaths {
-  packages: string[];
-  simdata: string[];
-  stblJson: string[];
-  stblBinary: string[];
-  tuning: string[];
-  tgi: string[];
-}
+import { BuildContext, PackageBuildContext } from "./context";
 
 //#region Exported Functions
 
 /**
- * Builds the project and returns a BuildSummary object 
+ * Builds the project and returns a BuildSummary object. If any errors occur,
+ * they will not be thrown, but will be logged in the BuildSummary.
  * 
  * @param mode Mode to build for
  */
@@ -56,21 +49,14 @@ export async function buildProject(mode: BuildMode): Promise<BuildSummary> {
 
 function _buildValidatedProject(summary: BuildSummary) {
   const builtPackages: models.Package[] = []; // only for use with release mode
-  const tunings = new Map<string, types.ResourceKey>(); // for use with SimData
+  const context = BuildContext.create(summary);
 
-  // FIXME: subtle bug, if a package contains a simdata paired with a tuning
-  // that is written in a later package, it will fail with fatal error... no
-  // easy way around this until I parse ALL of the tuning first, which has
-  // pretty nasty memory overhead
-
-  // TODO: check if any resource keys/stbl keys overlap
-
-  summary.config.packages.forEach(packageInfo => {
-    const pkg = _buildPackage(summary, packageInfo, tunings);
+  summary.config.packages.forEach(pkgConfig => {
+    const pkg = _buildPackage(BuildContext.forPackage(context, pkgConfig));
 
     if (summary.buildInfo.mode === "build") {
       summary.config.destinations.forEach(({ resolved }) => {
-        const outPath = path.join(resolved, packageInfo.filename);
+        const outPath = path.join(resolved, pkgConfig.filename);
         fs.writeFileSync(outPath, pkg.getBuffer());
       });
     } else if (summary.buildInfo.mode === "release") {
@@ -83,87 +69,93 @@ function _buildValidatedProject(summary: BuildSummary) {
   }
 }
 
-function _buildPackage(summary: BuildSummary, packageInfo: ValidatedPackageInfo, tunings: Map<string, types.ResourceKey>): models.Package {
-  const pkg = new models.Package();
-  const matches = findGlobMatches(packageInfo.include, packageInfo.exclude);
-  let resourcePaths = _getResourcePaths(matches);
+function _buildPackage(context: PackageBuildContext): models.Package {
+  context.filepaths.forEach(filepath => {
+    const buffer = fs.readFileSync(filepath);
 
-  resourcePaths.tuning.forEach(filepath => {
-    const tuning = _parseXmlTuning(summary, filepath);
-    const filename = path.basename(filepath).replace(/\.xml$/i, "");
-    tunings.set(filename, tuning.key);
-    pkg.add(tuning.key, tuning.value);
-  });
+    if (buffer.slice(0, 4).toString() === "DBPF") {
+      models.Package.extractResources(buffer).forEach((entry) => {
+        if (entry.key.type === enums.BinaryResourceType.StringTable) {
+          context.stbls.push(entry as types.ResourceKeyPair<models.StringTableResource>);
+        } else {
+          // TODO: add to build summary
+          context.pkg.add(entry.key, entry.value);
+        }
+      });
+      return;
+    }
 
-  resourcePaths.simdata.forEach(filepath => {
-    const { key, value } = _parseXmlSimData(summary, filepath, tunings);
-    pkg.add(key, value);
-  });
+    // TODO: add to build summary if adding to package
+    // context.pkgInfo.resources.push
 
-  // FIXME: merge stbls if setting is true
+    const tgiKey = parseKeyFromTgi(filepath);
+    if (tgiKey) {
+      if (tgiKey.type === enums.BinaryResourceType.SimData) {
+        if (buffer.slice(0, 4).toString() === "DATA") {
+          context.pkg.add(tgiKey, models.RawResource.from(buffer));
+        } else {
+          context.pkg.add(tgiKey, models.SimDataResource.fromXml(buffer));
+        }
+      } else if (tgiKey.type === enums.BinaryResourceType.StringTable) {
+        if (buffer.slice(0, 4).toString() === "STBL") {
+          const stbl = models.StringTableResource.from(buffer);
+          context.stbls.push({ key: tgiKey, value: stbl });
+        } else {
+          const stblJson = StringTableJson.parse(buffer.toString());
+          context.stbls.push({ key: tgiKey, value: stblJson.toBinaryResource() });
+        }
+      } else {
+        // intentionally not checking for tuning or adding filepath to tuning
+        // map, because no SimData is going to have the same path if it has TGI
+        context.pkg.add(tgiKey, models.RawResource.from(buffer));
+      }
+    } else {
+      const basename = path.basename(filepath);
+      const extname = path.extname(basename);
 
-  resourcePaths.stblJson.forEach(filepath => {
-    const { key, value } = _parseStblJson(summary, filepath);
-    pkg.add(key, value);
-  });
+      if (extname === ".xml") {
+        if (basename.endsWith(".SimData.xml")) {
+          // TODO:
+        } else {
+          // TODO:
+        }
+      } else if (extname === ".json") {
+        // assuming STBL JSON for now, as no other JSONs pass the filter
+        // TODO: add warning if random instance is being used
+        const stblJson = StringTableJson.parse(buffer.toString());
+        context.stbls.push({
+          key: stblJson.getResourceKey(S4TKWorkspace.defaultLocale),
+          value: stblJson.toBinaryResource()
+        });
+      } else if (extname === ".stbl") {
+        // TODO: add warning that random instance is being used
+        context.stbls.push({
+          key: {
+            type: enums.BinaryResourceType.StringTable,
+            group: 0x80000000,
+            instance: enums.StringTableLocale.setHighByte(
+              enums.StringTableLocale[S4TKWorkspace.defaultLocale],
+              randomFnv64()
+            )
+          },
+          value: models.StringTableResource.from(buffer),
+        });
+      } else {
+        const warning = "File could not be resolved as a TS4 resource. This error should never occur. If you are reading this, please report it.";
 
-  resourcePaths.stblBinary.forEach(filepath => {
-    const { key, value } = _parseStblBinary(summary, filepath);
-    pkg.add(key, value);
-  });
+        context.summary.written.fileWarnings.push({
+          file: BuildSummary.makeRelative(context.summary, filepath),
+          warnings: [warning],
+        });
 
-  resourcePaths.tgi.forEach(filepath => {
-    const { key, value } = _parseTgiFile(summary, filepath);
-    pkg.add(key, value);
-  });
-
-  resourcePaths.packages.forEach(filepath => {
-    const entries = _parsePackage(summary, filepath);
-    pkg.addAll(entries);
-  });
-
-  // FIXME: generate missing string tables if setting is true
-
-  return pkg;
-}
-
-function _getResourcePaths(filepaths: string[]): ResourcePaths {
-  const resourcePaths: ResourcePaths = {
-    packages: [],
-    simdata: [],
-    stblJson: [],
-    stblBinary: [],
-    tuning: [],
-    tgi: [],
-  };
-
-  filepaths.forEach(filepath => {
-    const ext = path.extname(filepath);
-
-    switch (ext) {
-      case ".xml":
-        if (filepath.endsWith(".SimData.xml"))
-          resourcePaths.simdata.push(filepath);
-        else
-          resourcePaths.tuning.push(filepath);
-        break;
-      case ".package":
-        resourcePaths.packages.push(filepath);
-        break;
-      case ".json":
-        if (filepath.endsWith(".stbl.json"))
-          resourcePaths.stblJson.push(filepath);
-        break;
-      case ".stbl":
-        resourcePaths.stblBinary.push(filepath);
-        break;
-      default:
-        resourcePaths.tgi.push(filepath);
-        break;
+        throw FatalBuildError(warning);
+      }
     }
   });
 
-  return resourcePaths;
+  // TODO: merge / generate stbls
+
+  return context.pkg;
 }
 
 function _parsePackage(summary: BuildSummary, filepath: string): types.ResourceKeyPair[] {

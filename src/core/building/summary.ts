@@ -104,6 +104,10 @@ export namespace BuildSummary {
     if (!rootDir) return;
     return vscode.Uri.joinPath(rootDir, _BUILD_SUMMARY_FILENAME);
   }
+
+  export function makeRelative(summary: BuildSummary, filepath: string): string {
+    return filepath.replace(summary.config.source.resolved, "");
+  }
 }
 
 //#endregion

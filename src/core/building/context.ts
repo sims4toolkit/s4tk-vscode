@@ -17,7 +17,7 @@ export interface BuildContext {
 
 export interface PackageBuildContext extends BuildContext {
   /** Paths to all files to include in this package. */
-  readonly filepaths: string[];
+  readonly filepaths: readonly string[];
 
   /** Package that the source file is being written to. */
   readonly pkg: Package;
