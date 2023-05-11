@@ -130,11 +130,20 @@ function _buildPackage(context: PackageBuildContext): models.Package {
 function _tryAddPackage(context: PackageBuildContext, filepath: string, buffer: Buffer): boolean {
   try {
     if (buffer.slice(0, 4).toString() === "DBPF") {
-      models.Package.extractResources(buffer).forEach((entry) => {
+      models.Package.extractResources(buffer).forEach((entry, i) => {
+        let inPackageName = i.toString();
+
         if (entry.key.type === enums.BinaryResourceType.StringTable) {
           context.stbls.push(entry as types.ResourceKeyPair<models.StringTableResource>);
         } else {
-          _addToPackageInfo(context, filepath, entry.key);
+          if (entry.value instanceof models.SimDataResource) {
+            inPackageName = entry.value.instance.name;
+          } else if (entry.value instanceof models.XmlResource) {
+            const filename = inferXmlMetaData(entry.value.content).filename;
+            if (filename) inPackageName = filename;
+          }
+
+          _addToPackageInfo(context, filepath, entry.key, { inPackageName });
           context.pkg.add(entry.key, entry.value);
         }
       });
@@ -282,9 +291,17 @@ function _parseXmlTuning(summary: BuildSummary, filepath: string): types.Resourc
 
 //#region Other Helpers
 
-function _addToPackageInfo(context: PackageBuildContext, filepath: string, key: types.ResourceKey) {
+function _addToPackageInfo(
+  context: PackageBuildContext,
+  filepath: string,
+  key: types.ResourceKey,
+  kwargs?: {
+    inPackageName?: string;
+  }) {
+  let filename = BuildSummary.makeRelative(context.summary, filepath);
+  if (kwargs?.inPackageName) filename += `[${kwargs.inPackageName}]`;
   context.pkgInfo.resources.push({
-    filename: path.basename(filepath),
+    filename: filename,
     key: formatResourceKey(key, "-"),
     type: _getFileTypeString(key),
   });
