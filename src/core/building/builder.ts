@@ -12,6 +12,7 @@ import { TGI_REGEX, findGlobMatches, parseKeyFromTgi } from "./resources";
 import { BuildMode, BuildSummary, ValidatedPackageInfo } from "./summary";
 import { validateBuild } from "./validation";
 import { BuildContext, PackageBuildContext } from "./context";
+import { formatResourceKey } from "@s4tk/hashing/formatting";
 
 //#region Exported Functions
 
@@ -45,7 +46,7 @@ export async function buildProject(mode: BuildMode): Promise<BuildSummary> {
 
 //#endregion
 
-//#region Helpers
+//#region Build Helpers
 
 function _buildValidatedProject(summary: BuildSummary) {
   const builtPackages: models.Package[] = []; // only for use with release mode
@@ -133,7 +134,7 @@ function _tryAddPackage(context: PackageBuildContext, filepath: string, buffer: 
         if (entry.key.type === enums.BinaryResourceType.StringTable) {
           context.stbls.push(entry as types.ResourceKeyPair<models.StringTableResource>);
         } else {
-          // TODO: push to context.pkgInfo.resources
+          _addToPackageInfo(context, filepath, entry.key);
           context.pkg.add(entry.key, entry.value);
         }
       });
@@ -154,7 +155,7 @@ function _tryAddTgiFile(context: PackageBuildContext, filepath: string, buffer: 
   if (!tgiKey) return false;
 
   if (tgiKey.type === enums.BinaryResourceType.SimData) {
-    // TODO: push to context.pkgInfo.resources
+    _addToPackageInfo(context, filepath, tgiKey);
 
     const resource = (buffer.slice(0, 4).toString() === "DATA")
       ? models.RawResource.from(buffer)
@@ -162,15 +163,16 @@ function _tryAddTgiFile(context: PackageBuildContext, filepath: string, buffer: 
 
     context.pkg.add(tgiKey, resource);
   } else if (tgiKey.type === enums.BinaryResourceType.StringTable) {
-    // TODO: push to context.pkgInfo.resources
+    // intentionally not adding to package info, stbls are processed later
 
     const resource = (buffer.slice(0, 4).toString() === "STBL")
       ? models.StringTableResource.from(buffer)
       : StringTableJson.parse(buffer.toString()).toBinaryResource();
 
-    context.pkg.add(tgiKey, resource);
+    context.stbls.push({ key: tgiKey, value: resource });
   } else {
-    // TODO: push to context.pkgInfo.resources
+    _addToPackageInfo(context, filepath, tgiKey);
+
     context.pkg.add(tgiKey, models.RawResource.from(buffer));
   }
 
@@ -215,16 +217,6 @@ function _parseStblJson(summary: BuildSummary, filepath: string): types.Resource
       `Failed to parse JSON string table (${filepath}) [${e}]`
     );
   }
-}
-
-function _parseTgiFile(summary: BuildSummary, filepath: string): types.ResourceKeyPair {
-  // TODO: update summary
-  const key = parseKeyFromTgi(path.basename(filepath));
-  if (!key) throw FatalBuildError( // should never happen b/c validation
-    `Could not parse type/group/instance from filename (${filepath})`
-  );
-
-  return { key, value: models.RawResource.from(fs.readFileSync(filepath)) };
 }
 
 function _parseXmlSimData(summary: BuildSummary, filepath: string, tunings: Map<string, types.ResourceKey>): types.ResourceKeyPair {
@@ -284,6 +276,37 @@ function _parseXmlTuning(summary: BuildSummary, filepath: string): types.Resourc
     key: key as types.ResourceKey,
     value: models.RawResource.from(buffer)
   };
+}
+
+//#endregion
+
+//#region Other Helpers
+
+function _addToPackageInfo(context: PackageBuildContext, filepath: string, key: types.ResourceKey) {
+  context.pkgInfo.resources.push({
+    filename: path.basename(filepath),
+    key: formatResourceKey(key, "-"),
+    type: _getFileTypeString(key),
+  });
+}
+
+function _getFileTypeString(key: types.ResourceKey): string {
+  if (key.type === enums.BinaryResourceType.SimData) {
+    return `SimData (${enums.SimDataGroup[key.group] ?? "Unknown"})`;
+  } else if (key.type === enums.BinaryResourceType.StringTable) {
+    const locale = enums.StringTableLocale.getLocale(key.instance);
+    return (locale in enums.StringTableLocale)
+      ? `String Table (${enums.StringTableLocale[locale]})`
+      : "String Table (Unknown Locale)";
+  } else if (key.type in enums.BinaryResourceType) {
+    return enums.BinaryResourceType[key.type];
+  } else if (key.type === enums.TuningResourceType.Tuning) {
+    return "Tuning (Generic)";
+  } else if (key.type in enums.TuningResourceType) {
+    return `Tuning (${enums.TuningResourceType[key.type]})`;
+  } else {
+    return "Unknown";
+  }
 }
 
 //#endregion

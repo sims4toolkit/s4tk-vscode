@@ -59,7 +59,7 @@ export interface WrittenPackageInfo {
 }
 
 export interface WrittenResourceInfo {
-  filename?: string;
+  filename: string;
   key: string;
   type: string;
 }
