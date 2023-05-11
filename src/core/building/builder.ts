@@ -151,23 +151,35 @@ function _tryAddTgiFile(context: PackageBuildContext, filepath: string, buffer: 
 }
 
 function _tryAddSupportedFile(context: PackageBuildContext, filepath: string, buffer: Buffer): boolean {
-  const extname = path.extname(filepath);
+  let filetype = "TS4 resource";
 
-  if (extname === ".xml") {
-    if (filepath.endsWith(".SimData.xml")) {
-      _addXmlSimData(context, filepath, buffer);
+  try {
+    const extname = path.extname(filepath);
+
+    if (extname === ".xml") {
+      if (filepath.endsWith(".SimData.xml")) {
+        filetype = "SimData";
+        _addXmlSimData(context, filepath, buffer);
+      } else {
+        filetype = "Tuning";
+        _addXmlTuning(context, filepath, buffer);
+      }
+    } else if (extname === ".json") {
+      filetype = "STBL JSON";
+      _addStringTable(context, filepath, buffer, true);
+    } else if (extname === ".stbl") {
+      filetype = "Binary STBL";
+      _addStringTable(context, filepath, buffer, false);
     } else {
-      _addXmlTuning(context, filepath, buffer);
+      return false;
     }
-  } else if (extname === ".json") {
-    _addStringTable(context, filepath, buffer, true);
-  } else if (extname === ".stbl") {
-    _addStringTable(context, filepath, buffer, false);
-  } else {
-    return false;
-  }
 
-  return true;
+    return true;
+  } catch (e) {
+    throw FatalBuildError(
+      `Failed to parse file as ${filetype} (${BuildSummary.makeRelative(context.summary, filepath)}) [${e}]`
+    );
+  }
 }
 
 function _addStringTable(context: PackageBuildContext, filepath: string, buffer: Buffer, json: boolean) {
