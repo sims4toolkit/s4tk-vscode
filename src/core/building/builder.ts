@@ -12,7 +12,7 @@ import { FatalBuildError, addAndGetItem } from "./helpers";
 import { parseKeyFromTgi } from "./resources";
 import { BuildMode, BuildSummary } from "./summary";
 import { validateBuild } from "./validation";
-import { BuildContext, PackageBuildContext } from "./context";
+import { BuildContext, PackageBuildContext, StringTableReference } from "./context";
 
 //#region Exported Functions
 
@@ -86,7 +86,7 @@ function _buildPackage(context: PackageBuildContext): models.Package {
     throw FatalBuildError(warning);
   });
 
-  // TODO: merge / generate stbls
+  _resolveStringTables(context);
 
   return context.pkg;
 }
@@ -99,7 +99,10 @@ function _tryAddPackage(context: PackageBuildContext, filepath: string, buffer: 
       let inPackageName = i.toString();
 
       if (entry.key.type === enums.BinaryResourceType.StringTable) {
-        context.stbls.push(entry as types.ResourceKeyPair<models.StringTableResource>);
+        context.stbls.push({
+          filepath: `${filepath}[${inPackageName}]`,
+          stbl: entry as types.ResourceKeyPair<models.StringTableResource>
+        });
       } else {
         if (entry.value instanceof models.SimDataResource) {
           inPackageName = entry.value.instance.name;
@@ -136,7 +139,7 @@ function _tryAddTgiFile(context: PackageBuildContext, filepath: string, buffer: 
       const resource = (buffer.slice(0, 4).toString() === "STBL")
         ? models.StringTableResource.from(buffer)
         : StringTableJson.parse(buffer.toString()).toBinaryResource();
-      context.stbls.push({ key: tgiKey, value: resource });
+      context.stbls.push({ filepath, stbl: { key: tgiKey, value: resource } });
     } else {
       _addToPackageInfo(context, filepath, tgiKey);
       context.pkg.add(tgiKey, models.RawResource.from(buffer));
@@ -204,8 +207,11 @@ function _addStringTable(context: PackageBuildContext, filepath: string, buffer:
     }
 
     context.stbls.push({
-      key: stblJson.getResourceKey(S4TKWorkspace.defaultLocale),
-      value: stblJson.toBinaryResource()
+      filepath,
+      stbl: {
+        key: stblJson.getResourceKey(S4TKWorkspace.defaultLocale),
+        value: stblJson.toBinaryResource()
+      }
     });
   } else {
     context.summary.written.fileWarnings.push({
@@ -217,15 +223,18 @@ function _addStringTable(context: PackageBuildContext, filepath: string, buffer:
     });
 
     context.stbls.push({
-      key: {
-        type: enums.BinaryResourceType.StringTable,
-        group: 0x80000000,
-        instance: enums.StringTableLocale.setHighByte(
-          enums.StringTableLocale[S4TKWorkspace.defaultLocale],
-          randomFnv64()
-        )
-      },
-      value: models.StringTableResource.from(buffer),
+      filepath,
+      stbl: {
+        key: {
+          type: enums.BinaryResourceType.StringTable,
+          group: 0x80000000,
+          instance: enums.StringTableLocale.setHighByte(
+            enums.StringTableLocale[S4TKWorkspace.defaultLocale],
+            randomFnv64()
+          )
+        },
+        value: models.StringTableResource.from(buffer),
+      }
     });
   }
 }
@@ -242,6 +251,100 @@ function _addXmlTuning(context: PackageBuildContext, filepath: string, buffer: B
   const key = _getTuningKey(context, filepath, content);
   _addToPackageInfo(context, filepath, key);
   context.pkg.add(key, models.RawResource.from(buffer));
+}
+
+function _resolveStringTables(context: PackageBuildContext) {
+  if (context.stbls.length < 1) return;
+
+  context.stbls.forEach(({ stbl }) => {
+    stbl.value.entries.forEach(({ key }) => {
+      if (context.stringKeys.has(key)) {
+        // TODO: record repeated key
+      } else {
+        context.stringKeys.add(key);
+      }
+    });
+  });
+
+  if (S4TKWorkspace.config.buildSettings.mergeStringTablesInSamePackage)
+    _mergeStringTables(context);
+
+  if (S4TKWorkspace.config.buildSettings.generateMissingLocales)
+    _generateStringTables(context);
+
+  context.stbls.forEach(stblRef => {
+    _addToPackageInfo(context, stblRef.filepath, stblRef.stbl.key);
+    context.pkg.add(stblRef.stbl.key, stblRef.stbl.value);
+  });
+}
+
+function _mergeStringTables(context: PackageBuildContext) {
+  const stblsByLocale = _orderStblsByLocale(context.stbls);
+  const mergedStbls: StringTableReference[] = [];
+
+  stblsByLocale.forEach((stbls) => {
+    const filenames = "Merged: " + stbls.map(({ filepath }) =>
+      BuildSummary.makeRelative(context.summary, filepath)).join(" | ");
+
+    const merged = stbls.pop()!;
+    merged.filepath = filenames;
+    stbls.forEach(({ stbl }) => merged.stbl.value.addAll(stbl.value.entries));
+    mergedStbls.push(merged);
+  });
+
+  //@ts-expect-error It's readonly, but this is the one and only spot that is
+  // allowed to reset it - don't wanna get rid of the readonly for intellisense
+  context.stbls = mergedStbls;
+}
+
+function _generateStringTables(context: PackageBuildContext) {
+  const stblsByLocale = _orderStblsByLocale(context.stbls);
+  const primaryLocale = enums.StringTableLocale[S4TKWorkspace.defaultLocale];
+  const primaryStbls = stblsByLocale.get(primaryLocale);
+  if (!primaryStbls) return; // can't generate if no primary
+  stblsByLocale.delete(primaryLocale);
+
+  enums.StringTableLocale.all().forEach(locale => {
+    if (locale === primaryLocale) return;
+    const localeStbls = stblsByLocale.get(locale);
+
+    function pushClonedStbl(primaryStbl: StringTableReference) {
+      context.stbls.push({
+        filepath: `Generated from: ${primaryStbl.filepath}`,
+        stbl: {
+          key: {
+            type: primaryStbl.stbl.key.type,
+            group: primaryStbl.stbl.key.group,
+            instance: enums.StringTableLocale.setHighByte(
+              locale,
+              primaryStbl.stbl.key.instance
+            )
+          },
+          value: primaryStbl.stbl.value,
+        }
+      });
+    }
+
+    if (localeStbls) {
+      primaryStbls.forEach(primaryStbl => {
+        const instanceBase = enums.StringTableLocale.getInstanceBase(primaryStbl.stbl.key.instance);
+
+        const matchingStbl = localeStbls.find(({ stbl }) =>
+          enums.StringTableLocale.getInstanceBase(stbl.key.instance) === instanceBase);
+
+        if (matchingStbl) {
+          primaryStbl.stbl.value.entries.forEach(entry => {
+            if (!matchingStbl.stbl.value.hasKey(entry.key))
+              matchingStbl.stbl.value.add(entry.key, entry.value);
+          });
+        } else {
+          pushClonedStbl(primaryStbl);
+        }
+      });
+    } else {
+      primaryStbls.forEach(pushClonedStbl);
+    }
+  });
 }
 
 //#endregion
@@ -363,6 +466,22 @@ function _getSimDataKey(context: BuildContext, filepath: string, content: string
   }
 
   return key as types.ResourceKey;
+}
+
+type StringTableLocaleMap = Map<enums.StringTableLocale, StringTableReference[]>;
+function _orderStblsByLocale(stbls: StringTableReference[]): StringTableLocaleMap {
+  const stblsByLocale: StringTableLocaleMap = new Map();
+
+  stbls.forEach(stbl => {
+    const locale = enums.StringTableLocale.getLocale(stbl.stbl.key.instance);
+    if (stblsByLocale.has(locale)) {
+      stblsByLocale.get(locale)!.push(stbl);
+    } else {
+      stblsByLocale.set(locale, [stbl]);
+    }
+  });
+
+  return stblsByLocale;
 }
 
 //#endregion

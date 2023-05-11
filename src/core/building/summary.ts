@@ -106,6 +106,7 @@ export namespace BuildSummary {
   }
 
   export function makeRelative(summary: BuildSummary, filepath: string): string {
+    // easier / more efficient that using path lib
     return filepath.replace(summary.config.source.resolved, "");
   }
 }

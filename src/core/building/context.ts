@@ -26,7 +26,12 @@ export interface PackageBuildContext extends BuildContext {
   readonly pkgInfo: WrittenPackageInfo;
 
   /** All string table to include in this package (merge/generate after). */
-  readonly stbls: ResourceKeyPair<StringTableResource>[];
+  readonly stbls: StringTableReference[];
+}
+
+export interface StringTableReference {
+  filepath: string;
+  stbl: ResourceKeyPair<StringTableResource>;
 }
 
 export namespace BuildContext {
