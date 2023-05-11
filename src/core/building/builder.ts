@@ -3,7 +3,7 @@ import * as path from "path";
 import * as models from "@s4tk/models";
 import * as enums from "@s4tk/models/enums";
 import * as types from "@s4tk/models/types";
-import { formatAsHexString, formatResourceKey, formatResourceType } from "@s4tk/hashing/formatting";
+import * as hashFormat from "@s4tk/hashing/formatting";
 import { randomFnv64 } from "#helpers/hashing";
 import { getXmlKeyOverrides, inferXmlMetaData } from "#helpers/xml";
 import StringTableJson from "#models/stbl-json";
@@ -259,7 +259,7 @@ function _addToPackageInfo(
   if (kwargs?.inPackageName) filename += `[${kwargs.inPackageName}]`;
   context.pkgInfo.resources.push({
     filename: filename,
-    key: formatResourceKey(key, "-"),
+    key: hashFormat.formatResourceKey(key, "-"),
     type: _getFileTypeString(key),
   });
 }
@@ -347,7 +347,7 @@ function _getSimDataKey(context: BuildContext, filepath: string, content: string
       key.group = enums.SimDataGroup.getForTuning(tuningKey.type);
 
       if (key.group == undefined) {
-        const warning = `SimData group could not be inferred for tuning type '${formatResourceType(tuningKey.type)}'. If you are certain that your tuning type is correct, you must manually set this SimData's group.`;
+        const warning = `SimData group could not be inferred for tuning type '${hashFormat.formatResourceType(tuningKey.type)}'. If you are certain that your tuning type is correct, you must manually set this SimData's group.`;
 
         context.summary.written.fileWarnings.push({
           file: BuildSummary.makeRelative(context.summary, filepath),
