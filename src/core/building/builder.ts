@@ -3,7 +3,7 @@ import * as path from "path";
 import * as models from "@s4tk/models";
 import * as enums from "@s4tk/models/enums";
 import * as types from "@s4tk/models/types";
-import { formatResourceKey } from "@s4tk/hashing/formatting";
+import { formatAsHexString, formatResourceKey, formatResourceType } from "@s4tk/hashing/formatting";
 import { randomFnv64 } from "#helpers/hashing";
 import { getXmlKeyOverrides, inferXmlMetaData } from "#helpers/xml";
 import StringTableJson from "#models/stbl-json";
@@ -231,6 +231,9 @@ function _addStringTable(context: PackageBuildContext, filepath: string, buffer:
 }
 
 function _addXmlSimData(context: PackageBuildContext, filepath: string, buffer: Buffer) {
+  const key = _getSimDataKey(context, filepath, buffer.toString());
+
+
   // TODO:
 }
 
@@ -334,6 +337,88 @@ function _getFileTypeString(key: types.ResourceKey): string {
   } else {
     return "Unknown";
   }
+}
+
+function _getTuningKey(context: BuildContext, filepath: string, content: string): types.ResourceKey {
+  const key: Partial<types.ResourceKey> = getXmlKeyOverrides(content) ?? {};
+
+  if (key.type != undefined && key.instance != undefined) {
+    key.group ??= 0;
+    return key as types.ResourceKey;
+  }
+
+  const metadata = inferXmlMetaData(content);
+  key.type ??= metadata.key.type;
+  key.group ??= metadata.key.group ?? 0;
+  key.instance ??= metadata.key.instance;
+
+  if (key.type == undefined || key.instance == undefined) {
+    const fileWarnings = addAndGetItem(context.summary.written.fileWarnings, {
+      file: BuildSummary.makeRelative(context.summary, filepath),
+      warnings: []
+    });
+
+    if (key.type == undefined)
+      fileWarnings.warnings.push("Tuning does not contain a recognized `i` attribute, and no type override was found.");
+
+    if (key.instance == undefined)
+      fileWarnings.warnings.push("Tuning does not contain a valid `s` attribute, and no instance override was found.");
+
+    throw FatalBuildError("Tuning type and/or instance could not be inferred, and no overrides were found.");
+  }
+
+  return key as types.ResourceKey;
+}
+
+function _getSimDataKey(context: BuildContext, filepath: string, content: string): types.ResourceKey {
+  const key: Partial<types.ResourceKey> = getXmlKeyOverrides(content) ?? {};
+  key.type ??= enums.BinaryResourceType.SimData;
+
+  if (key.group == undefined || key.instance == undefined) {
+    const tuningPath = filepath.replace(/\.SimData\.xml$/, ".xml");
+
+    let tuningKey: types.ResourceKey;
+    if (context.tuningKeys.has(tuningPath)) {
+      tuningKey = context.tuningKeys.get(tuningPath)!;
+    } else {
+      let tuningContent: string;
+      try {
+        tuningContent = fs.readFileSync(tuningPath).toString();
+      } catch (_) {
+        const warning = `SimData group and/or instance cannot be inferred because it does not have a paired tuning and no sufficient overrides were found.`;
+
+        context.summary.written.fileWarnings.push({
+          file: BuildSummary.makeRelative(context.summary, filepath),
+          warnings: [warning]
+        });
+
+        throw FatalBuildError(warning);
+      }
+
+      tuningKey = _getTuningKey(context, filepath, tuningContent);
+      context.tuningKeys.set(tuningPath, tuningKey);
+    }
+
+    if (key.group == undefined) {
+      key.group = enums.SimDataGroup.getForTuning(tuningKey.type);
+
+      if (key.group == undefined) {
+        const warning = `SimData group could not be inferred for tuning type '${formatResourceType(tuningKey.type)}'. If you are certain that your tuning type is correct, you must manually set this SimData's group.`;
+
+        context.summary.written.fileWarnings.push({
+          file: BuildSummary.makeRelative(context.summary, filepath),
+          warnings: [warning]
+        });
+
+        throw FatalBuildError(warning);
+      }
+    }
+
+    // guaranteed to be defined b/c _getTuningKey() would've thrown if not
+    key.instance ??= tuningKey.instance;
+  }
+
+  return key as types.ResourceKey;
 }
 
 //#endregion
