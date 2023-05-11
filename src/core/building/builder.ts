@@ -3,16 +3,16 @@ import * as path from "path";
 import * as models from "@s4tk/models";
 import * as enums from "@s4tk/models/enums";
 import * as types from "@s4tk/models/types";
+import { formatResourceKey } from "@s4tk/hashing/formatting";
 import { randomFnv64 } from "#helpers/hashing";
 import { getXmlKeyOverrides, inferXmlMetaData } from "#helpers/xml";
 import StringTableJson from "#models/stbl-json";
 import S4TKWorkspace from "#workspace/s4tk-workspace";
 import { FatalBuildError, addAndGetItem } from "./helpers";
-import { TGI_REGEX, findGlobMatches, parseKeyFromTgi } from "./resources";
-import { BuildMode, BuildSummary, ValidatedPackageInfo } from "./summary";
+import { parseKeyFromTgi } from "./resources";
+import { BuildMode, BuildSummary } from "./summary";
 import { validateBuild } from "./validation";
 import { BuildContext, PackageBuildContext } from "./context";
-import { formatResourceKey } from "@s4tk/hashing/formatting";
 
 //#region Exported Functions
 
@@ -76,50 +76,14 @@ function _buildPackage(context: PackageBuildContext): models.Package {
 
     if (_tryAddPackage(context, filepath, buffer)) return;
     if (_tryAddTgiFile(context, filepath, buffer)) return;
+    if (_tryAddSupportedFile(context, filepath, buffer)) return;
 
-    // TODO: add to build summary if adding to package
-    // context.pkgInfo.resources.push
-
-    const basename = path.basename(filepath);
-    const extname = path.extname(basename);
-
-    if (extname === ".xml") {
-      if (basename.endsWith(".SimData.xml")) {
-        // TODO:
-      } else {
-        // TODO:
-      }
-    } else if (extname === ".json") {
-      // assuming STBL JSON for now, as no other JSONs pass the filter
-      // TODO: add warning if random instance is being used
-      const stblJson = StringTableJson.parse(buffer.toString());
-      context.stbls.push({
-        key: stblJson.getResourceKey(S4TKWorkspace.defaultLocale),
-        value: stblJson.toBinaryResource()
-      });
-    } else if (extname === ".stbl") {
-      // TODO: add warning that random instance is being used
-      context.stbls.push({
-        key: {
-          type: enums.BinaryResourceType.StringTable,
-          group: 0x80000000,
-          instance: enums.StringTableLocale.setHighByte(
-            enums.StringTableLocale[S4TKWorkspace.defaultLocale],
-            randomFnv64()
-          )
-        },
-        value: models.StringTableResource.from(buffer),
-      });
-    } else {
-      const warning = "File could not be resolved as a TS4 resource. This error should never occur. If you are reading this, please report it.";
-
-      context.summary.written.fileWarnings.push({
-        file: BuildSummary.makeRelative(context.summary, filepath),
-        warnings: [warning],
-      });
-
-      throw FatalBuildError(warning);
-    }
+    const warning = "File could not be resolved as a TS4 resource. This error should never occur. If you are reading this, please report it.";
+    context.summary.written.fileWarnings.push({
+      file: BuildSummary.makeRelative(context.summary, filepath),
+      warnings: [warning],
+    });
+    throw FatalBuildError(warning);
   });
 
   // TODO: merge / generate stbls
@@ -129,7 +93,7 @@ function _buildPackage(context: PackageBuildContext): models.Package {
 
 function _tryAddPackage(context: PackageBuildContext, filepath: string, buffer: Buffer): boolean {
   try {
-    if (buffer.slice(0, 4).toString() === "DBPF") {
+    if (path.extname(filepath) === ".package") {
       models.Package.extractResources(buffer).forEach((entry, i) => {
         let inPackageName = i.toString();
 
@@ -154,7 +118,7 @@ function _tryAddPackage(context: PackageBuildContext, filepath: string, buffer: 
     return false;
   } catch (e) {
     throw FatalBuildError(
-      `Failed to extract resources from Package (${filepath}) [${e}]`
+      `Failed to extract resources from Package (${BuildSummary.makeRelative(context.summary, filepath)}) [${e}]`
     );
   }
 }
@@ -188,44 +152,80 @@ function _tryAddTgiFile(context: PackageBuildContext, filepath: string, buffer: 
   return true;
 }
 
-function _parseStblBinary(summary: BuildSummary, filepath: string): types.ResourceKeyPair {
-  // TODO: update summary
-  const key: types.ResourceKey = parseKeyFromTgi(path.basename(filepath)) ?? {
-    type: enums.BinaryResourceType.StringTable,
-    group: 0x80000000,
-    instance: enums.StringTableLocale.setHighByte(
-      enums.StringTableLocale[S4TKWorkspace.defaultLocale],
-      randomFnv64()
-    )
-  };
+function _tryAddSupportedFile(context: PackageBuildContext, filepath: string, buffer: Buffer): boolean {
+  const extname = path.extname(filepath);
 
-  try {
-    const buffer = fs.readFileSync(filepath);
-    return {
-      key: key,
-      value: models.StringTableResource.from(buffer)
-    };
-  } catch (e) {
-    throw FatalBuildError(
-      `Failed to validate binary string table (${filepath}) [${e}]`
-    );
+  if (extname === ".xml") {
+    if (filepath.endsWith(".SimData.xml")) {
+      _addXmlSimData(context, filepath, buffer);
+    } else {
+      _addXmlTuning(context, filepath, buffer);
+    }
+  } else if (extname === ".json") {
+    _addStringTable(context, filepath, buffer, true);
+  } else if (extname === ".stbl") {
+    _addStringTable(context, filepath, buffer, false);
+  } else {
+    return false;
+  }
+
+  return true;
+}
+
+function _addStringTable(context: PackageBuildContext, filepath: string, buffer: Buffer, json: boolean) {
+  if (json) {
+    const stblJson = StringTableJson.parse(buffer.toString());
+
+    if (stblJson.instanceBase == undefined || stblJson.locale == undefined) {
+      const fileWarnings = addAndGetItem(context.summary.written.fileWarnings, {
+        file: BuildSummary.makeRelative(context.summary, filepath),
+        warnings: []
+      });
+
+      if (stblJson.instanceBase == undefined) {
+        fileWarnings.warnings.push("No instance is set in this STBL's meta data; using a random FNV56.");
+        context.summary.buildInfo.problems++;
+      }
+
+      if (stblJson.locale == undefined) {
+        fileWarnings.warnings.push(`No locale is set in this STBL's meta data; assuming default of '${S4TKWorkspace.defaultLocale}'.`);
+        context.summary.buildInfo.problems++;
+      }
+    }
+
+    context.stbls.push({
+      key: stblJson.getResourceKey(S4TKWorkspace.defaultLocale),
+      value: stblJson.toBinaryResource()
+    });
+  } else {
+    context.summary.written.fileWarnings.push({
+      file: BuildSummary.makeRelative(context.summary, filepath),
+      warnings: [
+        "Binary STBLs without TGI in filename have no known instance; using a random FNV56.",
+        `Binary STBLs without TGI in filename have no known locale; assuming default of '${S4TKWorkspace.defaultLocale}'.`
+      ]
+    });
+
+    context.stbls.push({
+      key: {
+        type: enums.BinaryResourceType.StringTable,
+        group: 0x80000000,
+        instance: enums.StringTableLocale.setHighByte(
+          enums.StringTableLocale[S4TKWorkspace.defaultLocale],
+          randomFnv64()
+        )
+      },
+      value: models.StringTableResource.from(buffer),
+    });
   }
 }
 
-function _parseStblJson(summary: BuildSummary, filepath: string): types.ResourceKeyPair {
-  // TODO: update summary
-  try {
-    const buffer = fs.readFileSync(filepath);
-    const stblJson = StringTableJson.parse(buffer.toString());
-    return {
-      key: stblJson.getResourceKey(S4TKWorkspace.defaultLocale),
-      value: stblJson.toBinaryResource()
-    };
-  } catch (e) {
-    throw FatalBuildError(
-      `Failed to parse JSON string table (${filepath}) [${e}]`
-    );
-  }
+function _addXmlSimData(context: PackageBuildContext, filepath: string, buffer: Buffer) {
+  // TODO:
+}
+
+function _addXmlTuning(context: PackageBuildContext, filepath: string, buffer: Buffer) {
+  // TODO:
 }
 
 function _parseXmlSimData(summary: BuildSummary, filepath: string, tunings: Map<string, types.ResourceKey>): types.ResourceKeyPair {
