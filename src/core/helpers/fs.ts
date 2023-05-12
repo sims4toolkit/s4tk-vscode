@@ -17,13 +17,14 @@ export function getRelativeToRoot(uri: vscode.Uri): string | undefined {
 
 /**
  * Prompts the user for a file name and attempts to create it using the given
- * content generator. If the 
+ * content generator.
  * 
  * @param options Options for prompting the user and creating the document
  */
 export async function tryCreateCustomFile(options: {
   promptTitle: string;
   fileExtension: string;
+  folderUri?: vscode.Uri;
   contentGenerator: () => Uint8Array;
   launchFile: (uri: vscode.Uri) => void;
 }) {
@@ -33,20 +34,35 @@ export async function tryCreateCustomFile(options: {
     return;
   }
 
-  let filename = await vscode.window.showInputBox({
-    title: options.promptTitle,
-    prompt: "File path is relative to the root of your profect. Use slashes to indicate subfolders.",
-  });
+  let destination: vscode.Uri | undefined;
 
-  if (!filename) return;
-  if (!filename.endsWith(options.fileExtension))
-    filename = filename + options.fileExtension;
+  if (options.folderUri) {
+    let filename = await vscode.window.showInputBox({
+      title: options.promptTitle,
+      prompt: `File will be created in '${options.folderUri.fsPath}'`,
+    });
 
-  const uri = vscode.Uri.joinPath(workspaceFolders[0].uri, filename);
-  if (!(await fileExists(uri)))
-    await vscode.workspace.fs.writeFile(uri, options.contentGenerator());
+    if (!filename) return;
 
-  options.launchFile(uri);
+    destination = vscode.Uri.joinPath(options.folderUri, filename);
+  } else {
+    destination = (await vscode.window.showSaveDialog({
+      defaultUri: workspaceFolders[0]?.uri,
+      saveLabel: "Create File",
+    }));
+  }
+
+  if (!destination) return;
+
+  if (!destination.path.endsWith(options.fileExtension))
+    destination = destination.with({
+      path: destination.path + options.fileExtension,
+    });
+
+  if (!(await fileExists(destination)))
+    await vscode.workspace.fs.writeFile(destination, options.contentGenerator());
+
+  options.launchFile(destination);
 }
 
 /**

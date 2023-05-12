@@ -78,12 +78,12 @@
 			},
 			{
 				"command": "s4tk.ts4Files.createStblBinary",
-				"title": "Create empty STBL (Binary)",
+				"title": "Create String Table (Binary)",
 				"category": "TS4 Files"
 			},
 			{
 				"command": "s4tk.ts4Files.createStblJson",
-				"title": "Create empty STBL (JSON)",
+				"title": "Create String Table (JSON)",
 				"category": "TS4 Files"
 			},
 			{
@@ -92,8 +92,13 @@
 				"category": "S4TK Workspace"
 			},
 			{
+				"command": "s4tk.workspace.createConfig",
+				"title": "Create S4TK Config",
+				"category": "S4TK Workspace"
+			},
+			{
 				"command": "s4tk.workspace.createWorkspace",
-				"title": "Create S4TK Project",
+				"title": "Create Sample S4TK Project",
 				"category": "S4TK Workspace"
 			},
 			{
@@ -183,7 +188,22 @@
 			"explorer/context": [
 				{
 					"when": "explorerResourceIsFolder && !s4tk.workspace.active",
+					"command": "s4tk.workspace.createConfig",
+					"group": "S4TK"
+				},
+				{
+					"when": "explorerResourceIsFolder && !s4tk.workspace.active",
 					"command": "s4tk.workspace.createWorkspace",
+					"group": "S4TK"
+				},
+				{
+					"when": "explorerResourceIsFolder",
+					"command": "s4tk.ts4Files.createStblBinary",
+					"group": "S4TK"
+				},
+				{
+					"when": "explorerResourceIsFolder",
+					"command": "s4tk.ts4Files.createStblJson",
 					"group": "S4TK"
 				},
 				{

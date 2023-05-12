@@ -21,7 +21,11 @@ export default function registerWorkspaceCommands() {
     _runBuild("release", "Release");
   });
 
-  vscode.commands.registerCommand(COMMAND.workspace.createWorkspace, () => {
+  vscode.commands.registerCommand(COMMAND.workspace.createConfig, (_?: vscode.Uri) => {
+    S4TKWorkspace.createConfig(true);
+  });
+
+  vscode.commands.registerCommand(COMMAND.workspace.createWorkspace, (_?: vscode.Uri) => {
     S4TKWorkspace.createDefaultWorkspace();
   });
 

@@ -6,10 +6,11 @@ import { tryCreateCustomFile } from "#helpers/fs";
 import S4TKWorkspace from "#workspace/s4tk-workspace";
 
 export default function registerTS4FilesCommands() {
-  vscode.commands.registerCommand(COMMAND.ts4Files.createStblBinary, () => {
+  vscode.commands.registerCommand(COMMAND.ts4Files.createStblBinary, (folderUri?: vscode.Uri) => {
     tryCreateCustomFile({
-      promptTitle: "Name of New String Table (Binary)",
+      promptTitle: "Name of String Table (Binary)",
       fileExtension: ".stbl",
+      folderUri: folderUri,
       contentGenerator: () => (new StringTableResource()).getBuffer(),
       launchFile: (uri) => vscode.commands.executeCommand(
         'vscode.openWith',
@@ -19,10 +20,11 @@ export default function registerTS4FilesCommands() {
     });
   });
 
-  vscode.commands.registerCommand(COMMAND.ts4Files.createStblJson, () => {
+  vscode.commands.registerCommand(COMMAND.ts4Files.createStblJson, (folderUri?: vscode.Uri) => {
     tryCreateCustomFile({
-      promptTitle: "Name of New String Table (JSON)",
+      promptTitle: "Name of String Table (JSON)",
       fileExtension: ".stbl.json",
+      folderUri: folderUri,
       contentGenerator: () => StringTableJson.generateBuffer(
         S4TKWorkspace.defaultStringTableJsonType,
         S4TKWorkspace.defaultLocale,

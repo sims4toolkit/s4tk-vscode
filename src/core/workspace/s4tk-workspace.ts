@@ -66,24 +66,37 @@ class _S4TKWorkspace {
   }
 
   /**
-   * Generates the files needed for an S4TK project and loads the config.
+   * Generates an S4TK config at the project root. Returns true if one was
+   * created successfully.
+   * 
+   * @param show Whether or not to show the document when it's created
    */
-  async createDefaultWorkspace() {
+  async createConfig(show: boolean): Promise<boolean> {
     // confirm workspace doesn't already exist
     const configInfo = await S4TKConfig.find();
     if (configInfo.exists) {
       vscode.window.showWarningMessage("S4TK config file already exists.");
-      return;
+      return false;
     } else if (!configInfo.uri) {
       vscode.window.showErrorMessage("Failed to locate URI for config file.");
-      return;
+      return false;
     }
 
     const configData = await vscode.workspace.fs.readFile(SAMPLES.config);
 
     vscode.workspace.fs.writeFile(configInfo.uri, configData).then(() => {
       this.loadConfig();
+      if (show) vscode.window.showTextDocument(configInfo.uri!);
     });
+
+    return true;
+  }
+
+  /**
+   * Generates a sample S4TK project, including a config.
+   */
+  async createDefaultWorkspace() {
+    if (!(await this.createConfig(false))) return;
 
     const rootUri = vscode.workspace.workspaceFolders?.[0]?.uri as vscode.Uri;
     vscode.workspace.fs.createDirectory(vscode.Uri.joinPath(rootUri, "out"));
