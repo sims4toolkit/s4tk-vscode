@@ -273,11 +273,11 @@ function _resolveStringTables(context: PackageBuildContext) {
     });
   });
 
-  if (S4TKWorkspace.config.buildSettings.mergeStringTablesInSamePackage)
-    _mergeStringTables(context);
-
   if (S4TKWorkspace.config.buildSettings.generateMissingLocales)
     _generateStringTables(context);
+
+  if (S4TKWorkspace.config.buildSettings.mergeStringTablesInSamePackage)
+    _mergeStringTables(context);
 
   context.stbls.forEach(stblRef => {
     _addToPackageInfo(context, stblRef.filepath, stblRef.stbl.key);
@@ -327,7 +327,7 @@ function _generateStringTables(context: PackageBuildContext) {
               primaryStbl.stbl.key.instance
             )
           },
-          value: primaryStbl.stbl.value,
+          value: primaryStbl.stbl.value.clone(),
         }
       });
     }
