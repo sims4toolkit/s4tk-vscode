@@ -16,9 +16,9 @@ export const COMMAND = {
     text: "s4tk.hashing.text",
     text32: "s4tk.hashing.text32",
     text64: "s4tk.hashing.text64",
-    random: "s4tk.hashing.randomFnv",
-    random32: "s4tk.hashing.randomFnv32",
-    random64: "s4tk.hashing.randomFnv64",
+    random: "s4tk.hashing.random",
+    random32: "s4tk.hashing.random32",
+    random64: "s4tk.hashing.random64",
   },
   stblJson: {
     addEntry: "s4tk.stblJson.addEntry",
