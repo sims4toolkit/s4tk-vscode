@@ -50,7 +50,7 @@ export async function buildProject(mode: BuildMode): Promise<BuildSummary> {
 //#region Build Helpers
 
 async function _buildValidatedProject(summary: BuildSummary) {
-  const builtPackages: models.Package[] = []; // only for use with release mode
+  const builtPackages: Buffer[] = []; // only for use with release mode
   const context = BuildContext.create(summary);
 
   summary.config.packages.forEach(pkgConfig => {
@@ -58,38 +58,18 @@ async function _buildValidatedProject(summary: BuildSummary) {
 
     if (summary.buildInfo.mode === "build") {
       summary.config.destinations.forEach(({ resolved }) => {
-        // if validation passed, we're allowed to write missing destinations
+        // if validation passed, folder either exists or we're allowed to create
         if (!fs.existsSync(resolved)) fs.mkdirSync(resolved, { recursive: true });
         const outPath = path.join(resolved, pkgConfig.filename);
         fs.writeFileSync(outPath, pkg.getBuffer());
       });
     } else if (summary.buildInfo.mode === "release") {
-      builtPackages.push(pkg);
+      builtPackages.push(pkg.getBuffer());
     }
   });
 
-  if (summary.buildInfo.mode === "release") {
-    const zip = new JSZip();
-
-    builtPackages.forEach((pkg, i) => {
-      const pkgConfig = summary.config.packages[i];
-      zip.file(pkgConfig.filename, pkg.getBuffer());
-    });
-
-    summary.config.zip!.otherFiles.forEach(({ resolved }) => {
-      const buffer = fs.readFileSync(resolved);
-      zip.file(path.basename(resolved), buffer);
-    });
-
-    const buffer = await zip.generateAsync({ type: "nodebuffer" });
-
-    summary.config.destinations.forEach(({ resolved }) => {
-      // if validation passed, we're allowed to write missing destinations
-      if (!fs.existsSync(resolved)) fs.mkdirSync(resolved, { recursive: true });
-      const filepath = path.join(resolved, summary.config.zip!.filename);
-      fs.writeFileSync(filepath, buffer);
-    });
-  }
+  if (summary.buildInfo.mode === "release")
+    await _zipPackagesAndWrite(context, builtPackages);
 }
 
 function _buildPackage(context: PackageBuildContext): models.Package {
@@ -191,14 +171,14 @@ function _tryAddSupportedFile(context: PackageBuildContext, filepath: string, bu
         filetype = "SimData";
         _addXmlSimData(context, filepath, buffer);
       } else {
-        filetype = "Tuning";
+        filetype = "tuning";
         _addXmlTuning(context, filepath, buffer);
       }
     } else if (extname === ".json") {
-      filetype = "STBL JSON";
+      filetype = "string table";
       _addStringTable(context, filepath, buffer, true);
     } else if (extname === ".stbl") {
-      filetype = "Binary STBL";
+      filetype = "string table";
       _addStringTable(context, filepath, buffer, false);
     } else {
       return false;
@@ -279,6 +259,7 @@ function _addXmlTuning(context: PackageBuildContext, filepath: string, buffer: B
   const content = buffer.toString();
   const key = _getTuningKey(context, filepath, content);
   _addToPackageInfo(context, filepath, key);
+  // raw is more memory efficient than XML, just stores a buffer
   context.pkg.add(key, models.RawResource.from(buffer));
 }
 
@@ -376,6 +357,29 @@ function _generateStringTables(context: PackageBuildContext) {
   });
 }
 
+async function _zipPackagesAndWrite(context: BuildContext, buffers: Buffer[]) {
+  const zip = new JSZip();
+
+  buffers.forEach((buffer, i) => {
+    const pkgConfig = context.summary.config.packages[i];
+    zip.file(pkgConfig.filename, buffer);
+  });
+
+  context.summary.config.zip!.otherFiles.forEach(({ resolved }) => {
+    const buffer = fs.readFileSync(resolved);
+    zip.file(path.basename(resolved), buffer);
+  });
+
+  const buffer = await zip.generateAsync({ type: "nodebuffer" });
+
+  context.summary.config.destinations.forEach(({ resolved }) => {
+    // if validation passed, we're allowed to write missing destinations
+    if (!fs.existsSync(resolved)) fs.mkdirSync(resolved, { recursive: true });
+    const filepath = path.join(resolved, context.summary.config.zip!.filename);
+    fs.writeFileSync(filepath, buffer);
+  });
+}
+
 //#endregion
 
 //#region Other Helpers
@@ -442,7 +446,7 @@ function _getTuningKey(context: BuildContext, filepath: string, content: string)
     if (key.instance == undefined)
       fileWarnings.warnings.push("Tuning does not contain a valid `s` attribute, and no instance override was found.");
 
-    throw FatalBuildError("Tuning type and/or instance could not be inferred, and no overrides were found.");
+    throw FatalBuildError(fileWarnings.warnings.join(" "));
   }
 
   return key as types.ResourceKey;

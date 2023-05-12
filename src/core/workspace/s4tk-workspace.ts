@@ -184,7 +184,7 @@ class _S4TKWorkspace {
       this._setConfig(config);
     } catch (e) {
       vscode.window.showErrorMessage(
-        `Could not validate S4TK config. You will not be able to build your project until all errors are resolved and the config has been reloaded. (${e})`,
+        `Could not validate S4TK config. You will not be able to build your project until all errors are resolved and the config has been reloaded. [${e}]`,
         MessageButton.GetHelp,
         MessageButton.ReloadConfig,
       ).then(handleMessageButtonClick);
