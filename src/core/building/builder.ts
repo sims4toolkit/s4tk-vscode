@@ -125,17 +125,22 @@ function _tryAddPackage(context: PackageBuildContext, filepath: string, buffer: 
 }
 
 function _tryAddTgiFile(context: PackageBuildContext, filepath: string, buffer: Buffer): boolean {
+  let fileType = "TGI file";
+
   try {
     const tgiKey = parseKeyFromTgi(filepath);
     if (!tgiKey) return false;
 
     if (tgiKey.type === enums.BinaryResourceType.SimData) {
+      fileType = "SimData";
       _addToPackageInfo(context, filepath, tgiKey);
       const resource = (buffer.slice(0, 4).toString() === "DATA")
         ? models.RawResource.from(buffer)
         : models.SimDataResource.fromXml(buffer);
+      resource.getBuffer(true); // just to catch serialization errors
       context.pkg.add(tgiKey, resource);
     } else if (tgiKey.type === enums.BinaryResourceType.StringTable) {
+      fileType = "string table";
       const resource = (buffer.slice(0, 4).toString() === "STBL")
         ? models.StringTableResource.from(buffer)
         : StringTableJson.parse(buffer.toString()).toBinaryResource();
@@ -148,7 +153,7 @@ function _tryAddTgiFile(context: PackageBuildContext, filepath: string, buffer: 
     return true;
   } catch (e) {
     throw FatalBuildError(
-      `Failed to parse TGI file as a TS4 resource (${BuildSummary.makeRelative(context.summary, filepath)}) [${e}]`
+      `Failed to parse ${fileType} (${BuildSummary.makeRelative(context.summary, filepath)}) [${e}]`
     );
   }
 }
@@ -243,7 +248,9 @@ function _addXmlSimData(context: PackageBuildContext, filepath: string, buffer: 
   const content = buffer.toString();
   const key = _getSimDataKey(context, filepath, content);
   _addToPackageInfo(context, filepath, key);
-  context.pkg.add(key, models.SimDataResource.fromXml(content));
+  const simdata = models.SimDataResource.fromXml(content);
+  simdata.getBuffer(true); // just to catch serialization errors
+  context.pkg.add(key, simdata);
 }
 
 function _addXmlTuning(context: PackageBuildContext, filepath: string, buffer: Buffer) {
