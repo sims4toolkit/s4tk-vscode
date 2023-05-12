@@ -35,9 +35,23 @@ export default function registerWorkspaceCommands() {
 
   vscode.commands.registerCommand(COMMAND.workspace.addNewString, async (clickedUri?: vscode.Uri) => {
     try {
-      const uri = clickedUri ?? vscode.Uri.parse(S4TKConfig.resolvePath(S4TKWorkspace.defaultStringTable)!);
-      const bytes = await vscode.workspace.fs.readFile(uri);
-      const stbl = new StringTableProxy(bytes);
+      let uri = clickedUri;
+      if (!uri) {
+        if (!S4TKWorkspace.defaultStringTable) {
+          vscode.window.showWarningMessage("Cannot add string because no default string table is set in s4tk.config.json.");
+          return;
+        }
+
+        uri = vscode.Uri.parse(S4TKConfig.resolvePath(S4TKWorkspace.defaultStringTable)!);
+      }
+
+      try {
+        const bytes = await vscode.workspace.fs.readFile(uri);
+        var stbl = new StringTableProxy(bytes);
+      } catch (e) {
+        vscode.window.showErrorMessage(`Path '${uri.fsPath}' does not lead to a valid string table.`);
+        return;
+      }
 
       const input = await vscode.window.showInputBox({
         title: "Enter String Text",

@@ -173,7 +173,8 @@
         },
         "defaultStringTable": {
           "type": "string",
-          "description": "Absolute or relative path to the string table (binary or JSON) that serves as the default for this project. Any strings generated via commands will be added to this string table.\n\nAbsolute paths must be platform-appropriate ('\\\\' for Windows, '/' for Unix/macOS), but relative paths can use either kind of slash (they will be normalized)."
+          "description": "Absolute or relative path to the string table (binary or JSON) that serves as the default for this project. Any strings generated via commands will be added to this string table.\n\nAbsolute paths must be platform-appropriate ('\\\\' for Windows, '/' for Unix/macOS), but relative paths can use either kind of slash (they will be normalized).",
+          "pattern": "\\.stbl(\\.json)?$"
         },
         "defaultStringTableJsonType": {
           "type": "string",
