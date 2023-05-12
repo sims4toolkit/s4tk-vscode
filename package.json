@@ -103,6 +103,11 @@
 				"enablement": "resourceFilename =~ /\\.stbl(\\.json)?$/"
 			},
 			{
+				"command": "s4tk.workspace.addNewString",
+				"title": "Add New String",
+				"category": "S4TK Workspace"
+			},
+			{
 				"command": "s4tk.workspace.build",
 				"title": "Build S4TK Project",
 				"category": "S4TK Workspace"
@@ -205,6 +210,11 @@
 					"when": "resourceFilename =~ /\\.stbl(\\.json)?$/",
 					"command": "s4tk.workspace.setDefaultStbl",
 					"group": "S4TK"
+				},
+				{
+					"when": "resourceFilename =~ /\\.stbl(\\.json)?$/",
+					"command": "s4tk.workspace.addNewString",
+					"group": "S4TK"
 				}
 			],
 			"editor/title/context": [
@@ -231,6 +241,11 @@
 				{
 					"when": "resourceFilename =~ /\\.stbl(\\.json)?$/",
 					"command": "s4tk.workspace.setDefaultStbl",
+					"group": "S4TK"
+				},
+				{
+					"when": "resourceFilename =~ /\\.stbl(\\.json)?$/",
+					"command": "s4tk.workspace.addNewString",
 					"group": "S4TK"
 				}
 			]

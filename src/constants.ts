@@ -44,6 +44,7 @@ export const COMMAND = {
     createWorkspace: "s4tk.workspace.createWorkspace",
     reloadConfig: "s4tk.workspace.reloadConfig",
     setDefaultStbl: "s4tk.workspace.setDefaultStbl",
+    addNewString: "s4tk.workspace.addNewString",
   },
 };
 

@@ -19,7 +19,7 @@ class _S4TKWorkspace {
   get defaultLocale() { return this.config.workspaceSettings.defaultLocale; };
   get defaultStringTable() { return this.config.workspaceSettings.defaultStringTable; };
   get defaultStringTableJsonType() { return this.config.workspaceSettings.defaultStringTableJsonType; };
-  get newStringsToStartOfStbl() { return this.config.workspaceSettings.newStringsToStartOfStbl; };
+  get newStringsToStartOfStblJson() { return this.config.workspaceSettings.newStringsToStartOfStblJson; };
   get showCopyConfirmationPopup() { return this.config.workspaceSettings.showCopyConfirmationPopup; };
   get spacesPerIndent() { return this.config.workspaceSettings.spacesPerIndent; };
 

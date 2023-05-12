@@ -32,7 +32,7 @@
     "defaultLocale": "English",
     "defaultStringTable": "src/strings/default.stbl.json",
     "defaultStringTableJsonType": "object",
-    "newStringsToStartOfStbl": true,
+    "newStringsToStartOfStblJson": true,
     "showCopyConfirmationPopup": true,
     "spacesPerIndent": 2
   }

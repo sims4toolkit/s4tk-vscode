@@ -184,9 +184,9 @@
           ],
           "default": "object"
         },
-        "newStringsToStartOfStbl": {
+        "newStringsToStartOfStblJson": {
           "type": "boolean",
-          "description": "Whether or not to insert strings generated via commands to the beginning of the string table, rather than to the end (convenient for STBL JSONs).",
+          "description": "Whether or not to insert strings generated via commands to the beginning of string table JSONs, rather than to the end (convenient when using CodeLens).",
           "default": true
         },
         "showCopyConfirmationPopup": {

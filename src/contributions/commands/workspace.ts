@@ -1,8 +1,12 @@
+import * as path from "path";
 import * as vscode from "vscode";
+import { formatStringKey } from "@s4tk/hashing/formatting";
 import { COMMAND } from "#constants";
 import S4TKWorkspace from "#workspace/s4tk-workspace";
 import { buildProject } from "#building/builder";
 import { BuildMode, BuildSummary } from "#building/summary";
+import StringTableProxy from "#models/stbl-proxy";
+import { S4TKConfig } from "#models/s4tk-config";
 
 export default function registerWorkspaceCommands() {
   vscode.commands.registerCommand(COMMAND.workspace.build, () => {
@@ -27,6 +31,30 @@ export default function registerWorkspaceCommands() {
 
   vscode.commands.registerCommand(COMMAND.workspace.setDefaultStbl, (uri: vscode.Uri) => {
     S4TKWorkspace.setDefaultStbl(uri);
+  });
+
+  vscode.commands.registerCommand(COMMAND.workspace.addNewString, async (clickedUri?: vscode.Uri) => {
+    const uri = clickedUri ?? vscode.Uri.parse(S4TKConfig.resolvePath(S4TKWorkspace.defaultStringTable)!);
+    const bytes = await vscode.workspace.fs.readFile(uri);
+    const stbl = new StringTableProxy(bytes);
+
+    const input = await vscode.window.showInputBox({
+      title: "Enter String Text",
+      prompt: "A random FNV32 will be generated for the key.",
+    });
+
+    if (!input) return;
+    const key = stbl.addValue(input);
+    await vscode.workspace.fs.writeFile(uri, stbl.serialize());
+
+    const clickToCopy = "Copy as XML";
+    vscode.window.showInformationMessage(
+      `Added new string to ${path.basename(uri.fsPath)}`,
+      clickToCopy,
+    ).then(value => {
+      if (value === clickToCopy)
+        vscode.env.clipboard.writeText(`${formatStringKey(key)}<!--${input}-->`);
+    });
   });
 }
 

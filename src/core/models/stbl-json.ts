@@ -150,23 +150,26 @@ export default class StringTableJson {
   //#region Public Methods
 
   /**
-   * Adds an entry to this string table with a random FNV32 hash.
+   * Adds an entry to this string table with a random FNV32 hash, and then
+   * returns the key that was generated.
    */
   addEntry({ value = "", position = "end" }: {
     value?: string;
     position?: "start" | "end";
-  } = {}) {
+  } = {}): number {
+    const key = randomFnv32();
     if (position === "start") {
       this._entries.unshift({
-        key: formatStringKey(randomFnv32()),
+        key: formatStringKey(key),
         value: value
       });
     } else {
       this._entries.push({
-        key: formatStringKey(randomFnv32()),
+        key: formatStringKey(key),
         value: value
       });
     }
+    return key;
   }
 
   /**

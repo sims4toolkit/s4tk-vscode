@@ -37,8 +37,8 @@ export interface S4TKConfig {
   workspaceSettings: {
     defaultLocale: StringTableLocaleName;
     defaultStringTable: string;
-    newStringsToStartOfStbl: boolean;
     defaultStringTableJsonType: "array" | "object";
+    newStringsToStartOfStblJson: boolean;
     showCopyConfirmationPopup: boolean;
     spacesPerIndent: number;
   };
@@ -74,8 +74,8 @@ const _CONFIG_TRANSFORMER: ConfigTransformer = {
     defaults: {
       defaultLocale: "English",
       defaultStringTable: "",
-      newStringsToStartOfStbl: true,
       defaultStringTableJsonType: "object",
+      newStringsToStartOfStblJson: true,
       showCopyConfirmationPopup: true,
       spacesPerIndent: 2,
     },
