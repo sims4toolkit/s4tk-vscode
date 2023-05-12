@@ -147,7 +147,7 @@
         },
         "otherFilesToInclude": {
           "type": "array",
-          "description": "List of absolute and/or relative glob patterns that capture all additional files that should be zipped with your packages.\n\nAbsolute paths must be platform-appropriate ('\\\\' for Windows, '/' for Unix/macOS), but relative paths can use either kind of slash (they will be normalized).",
+          "description": "List of absolute and/or relative paths to all additional files that should be zipped with your packages.\n\nAbsolute paths must be platform-appropriate ('\\\\' for Windows, '/' for Unix/macOS), but relative paths can use either kind of slash (they will be normalized).",
           "items": {
             "type": "string"
           }

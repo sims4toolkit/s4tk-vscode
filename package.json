@@ -24,6 +24,7 @@
 		"@s4tk/xml-dom": "^0.2.4",
 		"glob": "^10.2.2",
 		"jsonschema": "^1.4.1",
+		"jszip": "^3.10.1",
 		"uuid": "^9.0.0"
 	},
 	"devDependencies": {

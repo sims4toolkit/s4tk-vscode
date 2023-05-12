@@ -1,5 +1,6 @@
 import * as fs from "fs";
 import * as path from "path";
+import * as JSZip from "jszip";
 import * as models from "@s4tk/models";
 import * as enums from "@s4tk/models/enums";
 import * as types from "@s4tk/models/types";
@@ -34,7 +35,7 @@ export async function buildProject(mode: BuildMode): Promise<BuildSummary> {
 
   try {
     validateBuild(summary);
-    _buildValidatedProject(summary);
+    await _buildValidatedProject(summary);
   } catch (err) {
     summary.buildInfo.success = false;
     summary.buildInfo.problems++;
@@ -48,7 +49,7 @@ export async function buildProject(mode: BuildMode): Promise<BuildSummary> {
 
 //#region Build Helpers
 
-function _buildValidatedProject(summary: BuildSummary) {
+async function _buildValidatedProject(summary: BuildSummary) {
   const builtPackages: models.Package[] = []; // only for use with release mode
   const context = BuildContext.create(summary);
 
@@ -57,6 +58,8 @@ function _buildValidatedProject(summary: BuildSummary) {
 
     if (summary.buildInfo.mode === "build") {
       summary.config.destinations.forEach(({ resolved }) => {
+        // if validation passed, we're allowed to write missing destinations
+        if (!fs.existsSync(resolved)) fs.mkdirSync(resolved, { recursive: true });
         const outPath = path.join(resolved, pkgConfig.filename);
         fs.writeFileSync(outPath, pkg.getBuffer());
       });
@@ -66,7 +69,26 @@ function _buildValidatedProject(summary: BuildSummary) {
   });
 
   if (summary.buildInfo.mode === "release") {
-    // TODO: create and write ZIP
+    const zip = new JSZip();
+
+    builtPackages.forEach((pkg, i) => {
+      const pkgConfig = summary.config.packages[i];
+      zip.file(pkgConfig.filename, pkg.getBuffer());
+    });
+
+    summary.config.zip!.otherFiles.forEach(({ resolved }) => {
+      const buffer = fs.readFileSync(resolved);
+      zip.file(path.basename(resolved), buffer);
+    });
+
+    const buffer = await zip.generateAsync({ type: "nodebuffer" });
+
+    summary.config.destinations.forEach(({ resolved }) => {
+      // if validation passed, we're allowed to write missing destinations
+      if (!fs.existsSync(resolved)) fs.mkdirSync(resolved, { recursive: true });
+      const filepath = path.join(resolved, summary.config.zip!.filename);
+      fs.writeFileSync(filepath, buffer);
+    });
   }
 }
 
