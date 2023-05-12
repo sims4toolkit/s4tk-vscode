@@ -12,8 +12,9 @@ import S4TKWorkspace from "#workspace/s4tk-workspace";
 import { FatalBuildError, addAndGetItem } from "./helpers";
 import { parseKeyFromTgi } from "./resources";
 import { BuildMode, BuildSummary } from "./summary";
-import { prevalidateBuild } from "./prevalidation";
 import { BuildContext, PackageBuildContext, StringTableReference } from "./context";
+import { prevalidateBuild } from "./prevalidation";
+import { postvalidateBuild } from "./postvalidation";
 
 //#region Exported Functions
 
@@ -36,6 +37,7 @@ export async function buildProject(mode: BuildMode): Promise<BuildSummary> {
   try {
     prevalidateBuild(summary);
     await _buildValidatedProject(summary);
+    postvalidateBuild(summary);
   } catch (err) {
     summary.buildInfo.success = false;
     summary.buildInfo.problems++;
