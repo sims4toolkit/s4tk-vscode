@@ -21,7 +21,7 @@
     "generateMissingLocales": true,
     "mergeStringTablesInSamePackage": true,
     "minifyTuning": false,
-    "outputBuildSummaryFile": true
+    "outputBuildSummary": "partial"
   },
   "releaseSettings": {
     "filename": "MyZippedModFiles",

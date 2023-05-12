@@ -31,26 +31,36 @@ export default function registerWorkspaceCommands() {
 }
 
 async function _runBuild(mode: BuildMode, readableMode: string) {
-  const summary = await buildProject(mode);
-  const buildSummaryUri = await _outputBuildSummary(summary);
+  vscode.window.withProgress({
+    location: vscode.ProgressLocation.Window,
+    cancellable: false,
+    title: `Building S4TK Project (${readableMode})`
+  }, async (progress) => {
+    progress.report({ increment: 0 });
 
-  if (summary.buildInfo.success) {
-    vscode.window.showInformationMessage(`S4TK ${readableMode} Successful`);
-  } else if (buildSummaryUri) {
-    const viewBuildSummary = 'View BuildSummary.json';
-    vscode.window.showErrorMessage(
-      `S4TK ${readableMode} Failed: ${summary.buildInfo.fatalErrorMessage}`,
-      viewBuildSummary
-    ).then((button) => {
-      if (button === viewBuildSummary) vscode.window.showTextDocument(buildSummaryUri);
-    });
-  } else {
-    vscode.window.showErrorMessage(`S4TK ${readableMode} Failed: ${summary.buildInfo.fatalErrorMessage}`);
-  }
+    const summary = await buildProject(mode);
+    const buildSummaryUri = await _outputBuildSummary(summary);
+
+    if (summary.buildInfo.success) {
+      vscode.window.showInformationMessage(`S4TK ${readableMode} Successful`);
+    } else if (buildSummaryUri) {
+      const viewBuildSummary = 'View BuildSummary.json';
+      vscode.window.showErrorMessage(
+        `S4TK ${readableMode} Failed: ${summary.buildInfo.fatalErrorMessage}`,
+        viewBuildSummary
+      ).then((button) => {
+        if (button === viewBuildSummary) vscode.window.showTextDocument(buildSummaryUri);
+      });
+    } else {
+      vscode.window.showErrorMessage(`S4TK ${readableMode} Failed: ${summary.buildInfo.fatalErrorMessage}`);
+    }
+
+    progress.report({ increment: 100 });
+  });
 }
 
 async function _outputBuildSummary(summary: BuildSummary): Promise<vscode.Uri | undefined> {
-  if (!S4TKWorkspace.config.buildSettings.outputBuildSummaryFile) return;
+  if (S4TKWorkspace.config.buildSettings.outputBuildSummary === "none") return;
   const uri = BuildSummary.getUri();
   if (!uri) return;
   const content = JSON.stringify(summary, null, S4TKWorkspace.spacesPerIndent);

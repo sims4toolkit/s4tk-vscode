@@ -1,12 +1,15 @@
 import * as vscode from "vscode";
+import S4TKWorkspace from "#workspace/s4tk-workspace";
 
 //#region Types
 
 export type BuildMode = "build" | "dryrun" | "release";
+export type SummaryType = "none" | "partial" | "full";
 
 export interface BuildSummary {
   buildInfo: {
     mode: BuildMode;
+    summary: SummaryType;
     success: boolean;
     problems: number;
     fatalErrorMessage?: string;
@@ -55,7 +58,7 @@ export interface WrittenFileInfo {
 
 export interface WrittenPackageInfo {
   filename: string;
-  resources: WrittenResourceInfo[];
+  resources?: WrittenResourceInfo[];
 }
 
 export interface WrittenResourceInfo {
@@ -75,6 +78,7 @@ export namespace BuildSummary {
     return {
       buildInfo: {
         mode: mode,
+        summary: S4TKWorkspace.config.buildSettings.outputBuildSummary,
         success: true,
         problems: 0,
       },

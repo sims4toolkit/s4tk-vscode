@@ -26,7 +26,7 @@ export interface S4TKConfig {
     generateMissingLocales: boolean;
     minifyTuning: boolean;
     mergeStringTablesInSamePackage: boolean;
-    outputBuildSummaryFile: boolean;
+    outputBuildSummary: "none" | "partial" | "full";
   };
 
   releaseSettings: {
@@ -64,7 +64,7 @@ const _CONFIG_TRANSFORMER: ConfigTransformer = {
       generateMissingLocales: true,
       mergeStringTablesInSamePackage: true,
       minifyTuning: false,
-      outputBuildSummaryFile: true,
+      outputBuildSummary: "partial",
     },
   },
   releaseSettings: {

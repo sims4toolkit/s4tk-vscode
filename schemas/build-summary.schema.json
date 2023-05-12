@@ -38,6 +38,14 @@
             "release"
           ]
         },
+        "summary": {
+          "type": "string",
+          "description": "Which kind of summary this is. If you're debugging your config, consider setting `buildSettings.outputBuildSummary` to \"full\" to see the full report of which resources are written to which packages.",
+          "enum": [
+            "partial",
+            "full"
+          ]
+        },
         "success": {
           "type": "boolean",
           "description": "Whether or not this build was successful."

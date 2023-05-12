@@ -128,10 +128,15 @@
           "description": "Whether or not to minify tuning (i.e. remove all whitespace, comments, and processing instructions).",
           "default": false
         },
-        "outputBuildSummaryFile": {
-          "type": "boolean",
-          "description": "Whether or not the `BuildSummary.json` file should be generated after each build. Useful for debugging issues with your config.",
-          "default": true
+        "outputBuildSummary": {
+          "type": "string",
+          "description": "Whether or not the `BuildSummary.json` file should be generated, and what information it should contain.\n\nFull build summaries are useful for debugging because they include information about every single resource that is written to every single package, but this can make it lengthy.\n\nPartial build summaries exclude this information and only show how the config was interpreted and what warnings were found, if any.",
+          "default": "partial",
+          "enum": [
+            "none",
+            "partial",
+            "full"
+          ]
         }
       }
     },

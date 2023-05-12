@@ -387,13 +387,15 @@ function _addToPackageInfo(
   kwargs?: {
     inPackageName?: string;
   }) {
-  let filename = BuildSummary.makeRelative(context.summary, filepath);
-  if (kwargs?.inPackageName) filename += `[${kwargs.inPackageName}]`;
-  context.pkgInfo.resources.push({
-    filename: filename,
-    key: hashFormat.formatResourceKey(key, "-"),
-    type: _getFileTypeString(key),
-  });
+  if (S4TKWorkspace.config.buildSettings.outputBuildSummary === "full") {
+    let filename = BuildSummary.makeRelative(context.summary, filepath);
+    if (kwargs?.inPackageName) filename += `[${kwargs.inPackageName}]`;
+    context.pkgInfo.resources?.push({
+      filename: filename,
+      key: hashFormat.formatResourceKey(key, "-"),
+      type: _getFileTypeString(key),
+    });
+  }
 }
 
 function _getFileTypeString(key: types.ResourceKey): string {

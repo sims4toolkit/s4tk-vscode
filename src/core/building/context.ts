@@ -1,5 +1,6 @@
 import { Package, StringTableResource } from "@s4tk/models";
 import { ResourceKey, ResourceKeyPair } from "@s4tk/models/types";
+import S4TKWorkspace from "#workspace/s4tk-workspace";
 import { BuildSummary, ValidatedPackageInfo, WrittenPackageInfo } from "./summary";
 import { findGlobMatches } from "./resources";
 import { addAndGetItem } from "./helpers";
@@ -64,7 +65,9 @@ export namespace BuildContext {
       pkg: new Package(),
       pkgInfo: addAndGetItem(context.summary.written.packages, {
         filename: pkgConfig.filename,
-        resources: []
+        resources: S4TKWorkspace.config.buildSettings.outputBuildSummary === "full"
+          ? []
+          : undefined,
       }),
       stbls: [],
     }
