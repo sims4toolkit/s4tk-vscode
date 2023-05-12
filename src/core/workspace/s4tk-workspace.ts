@@ -21,8 +21,6 @@ class _S4TKWorkspace {
   get newStringTableJsonType() { return this.config.workspaceSettings.newStringTableJsonType; };
   get newStringsToStartOfTable() { return this.config.workspaceSettings.newStringsToStartOfTable; };
   get showCopyConfirmationPopup() { return this.config.workspaceSettings.showCopyConfirmationPopup; };
-  get showStblJsonMetaDataButton() { return this.config.workspaceSettings.showStblJsonMetaDataButton; };
-  get showXmlKeyOverrideButtons() { return this.config.workspaceSettings.showXmlKeyOverrideButtons; };
   get spacesPerIndent() { return this.config.workspaceSettings.spacesPerIndent; };
 
   //#endregion

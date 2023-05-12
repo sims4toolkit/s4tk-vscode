@@ -47,7 +47,6 @@ export default class TuningCodeLensProvider extends BaseCodeLensProvider {
   }
 
   private _addKeyOverrideCodeLenses(editor: vscode.TextEditor) {
-    if (!S4TKWorkspace.showXmlKeyOverrideButtons) return;
     const metadata = inferXmlMetaData(editor.document);
     if (metadata.root === "unknown") return;
     const overrides = getXmlKeyOverrides(editor.document);

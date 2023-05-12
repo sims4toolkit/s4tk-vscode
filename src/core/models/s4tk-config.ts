@@ -24,7 +24,6 @@ export interface S4TKConfig {
     allowMissingSourceFiles: boolean;
     allowPackageOverlap: boolean;
     generateMissingLocales: boolean;
-    minifyTuning: boolean;
     mergeStringTablesInSamePackage: boolean;
     outputBuildSummary: "none" | "partial" | "full";
   };
@@ -41,8 +40,6 @@ export interface S4TKConfig {
     newStringsToStartOfTable: boolean;
     newStringTableJsonType: "array" | "object";
     showCopyConfirmationPopup: boolean;
-    showStblJsonMetaDataButton: boolean;
-    showXmlKeyOverrideButtons: boolean;
     spacesPerIndent: number;
   };
 }
@@ -63,7 +60,6 @@ const _CONFIG_TRANSFORMER: ConfigTransformer = {
       allowPackageOverlap: false,
       generateMissingLocales: true,
       mergeStringTablesInSamePackage: true,
-      minifyTuning: false,
       outputBuildSummary: "partial",
     },
   },
@@ -81,8 +77,6 @@ const _CONFIG_TRANSFORMER: ConfigTransformer = {
       newStringsToStartOfTable: true,
       newStringTableJsonType: "object",
       showCopyConfirmationPopup: true,
-      showStblJsonMetaDataButton: true,
-      showXmlKeyOverrideButtons: true,
       spacesPerIndent: 2,
     },
   },

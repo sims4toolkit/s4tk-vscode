@@ -9,7 +9,8 @@
         "filename": "MyPackage",
         "include": [
           "**/*"
-        ]
+        ],
+        "exclude": []
       }
     ]
   },
@@ -20,7 +21,6 @@
     "allowPackageOverlap": false,
     "generateMissingLocales": true,
     "mergeStringTablesInSamePackage": true,
-    "minifyTuning": false,
     "outputBuildSummary": "partial"
   },
   "releaseSettings": {
@@ -34,8 +34,6 @@
     "newStringsToStartOfTable": true,
     "newStringTableJsonType": "object",
     "showCopyConfirmationPopup": true,
-    "showStblJsonMetaDataButton": true,
-    "showXmlKeyOverrideButtons": true,
     "spacesPerIndent": 2
   }
 }

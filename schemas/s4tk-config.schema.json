@@ -123,11 +123,6 @@
           "description": "Whether or not all of the string tables of the same locale being written to the same package should be merged.",
           "default": true
         },
-        "minifyTuning": {
-          "type": "boolean",
-          "description": "Whether or not to minify tuning (i.e. remove all whitespace, comments, and processing instructions).",
-          "default": false
-        },
         "outputBuildSummary": {
           "type": "string",
           "description": "Whether or not the `BuildSummary.json` file should be generated, and what information it should contain.\n\nFull build summaries are useful for debugging because they include information about every single resource that is written to every single package, but this can make it lengthy.\n\nPartial build summaries exclude this information and only show how the config was interpreted and what warnings were found, if any.",
@@ -197,16 +192,6 @@
         "showCopyConfirmationPopup": {
           "type": "boolean",
           "description": "Whether or not to show a popup to confirm when something has been copied to your clipboard.",
-          "default": true
-        },
-        "showStblJsonMetaDataButton": {
-          "type": "boolean",
-          "description": "Whether or not to show the button in array-based STBL JSONs that adds meta data, converting it to an object-based STBL JSON.",
-          "default": true
-        },
-        "showXmlKeyOverrideButtons": {
-          "type": "boolean",
-          "description": "Whether or not to show the Type/Group/Instance override buttons within XML files. If the buttons are hidden, you can still add the comments to override them manually.",
           "default": true
         },
         "spacesPerIndent": {

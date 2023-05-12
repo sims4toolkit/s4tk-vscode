@@ -65,7 +65,7 @@ export default class StringTableJsonCodeLensProvider extends BaseCodeLensProvide
         );
       }
 
-      if (S4TKWorkspace.showStblJsonMetaDataButton && !stblJson.hasMetaData) {
+      if (!stblJson.hasMetaData) {
         this._codeLenses.push(
           new vscode.CodeLens(new vscode.Range(0, 0, 0, 0), {
             title: "Insert Metadata",
