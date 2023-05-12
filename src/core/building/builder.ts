@@ -141,7 +141,7 @@ function _tryAddPackage(context: PackageBuildContext, filepath: string, buffer: 
     return true;
   } catch (e) {
     throw FatalBuildError(
-      `Failed to extract resources from Package (${BuildSummary.makeRelative(context.summary, filepath)}) [${e}]`
+      `Failed to extract resources from package (${BuildSummary.makeRelative(context.summary, filepath)}) [${e}]`
     );
   }
 }
@@ -175,7 +175,7 @@ function _tryAddTgiFile(context: PackageBuildContext, filepath: string, buffer: 
     return true;
   } catch (e) {
     throw FatalBuildError(
-      `Failed to parse ${fileType} (${BuildSummary.makeRelative(context.summary, filepath)}) [${e}]`
+      `Failed to add ${fileType} to package (${BuildSummary.makeRelative(context.summary, filepath)}) [${e}]`
     );
   }
 }
@@ -207,7 +207,7 @@ function _tryAddSupportedFile(context: PackageBuildContext, filepath: string, bu
     return true;
   } catch (e) {
     throw FatalBuildError(
-      `Failed to parse file as ${filetype} (${BuildSummary.makeRelative(context.summary, filepath)}) [${e}]`
+      `Failed to add ${filetype} to package (${BuildSummary.makeRelative(context.summary, filepath)}) [${e}]`
     );
   }
 }
