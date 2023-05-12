@@ -62,16 +62,19 @@
 
     _renderEntry(entry) {
       const linked = entry.linked?.length
-        ? entry.linked?.map((e) => {
+        ? entry.linked?.map((e, i) => {
             return createElement("div", {
               cls: "linked",
-              children: [
-                createElement("span", {
-                  cls: "arrow",
-                  innerText: "↘",
-                }),
-                this._renderEntry(e),
-              ],
+              children:
+                i === 0
+                  ? [
+                      createElement("span", {
+                        cls: "arrow",
+                        innerText: "↘",
+                      }),
+                      this._renderEntry(e),
+                    ]
+                  : [this._renderEntry(e)],
             });
           })
         : [];
