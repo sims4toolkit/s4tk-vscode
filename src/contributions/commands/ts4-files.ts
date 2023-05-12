@@ -24,7 +24,7 @@ export default function registerTS4FilesCommands() {
       promptTitle: "Name of New String Table (JSON)",
       fileExtension: ".stbl.json",
       contentGenerator: () => StringTableJson.generateBuffer(
-        S4TKWorkspace.newStringTableJsonType,
+        S4TKWorkspace.defaultStringTableJsonType,
         S4TKWorkspace.defaultLocale,
         S4TKWorkspace.spacesPerIndent
       ),

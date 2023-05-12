@@ -9,7 +9,7 @@ export default function registerStblJsonCommands() {
   vscode.commands.registerCommand(COMMAND.stblJson.addEntry,
     async (editor: vscode.TextEditor | undefined, stblJson: StringTableJson) => {
       if (editor) {
-        const start = S4TKWorkspace.newStringsToStartOfTable;
+        const start = S4TKWorkspace.newStringsToStartOfStbl;
         stblJson.addEntry({ position: start ? "start" : "end" });
         const content = stblJson.stringify(S4TKWorkspace.spacesPerIndent);
         if (await replaceEntireDocument(editor, content)) return;

@@ -31,8 +31,8 @@
   "workspaceSettings": {
     "defaultLocale": "English",
     "defaultStringTable": "src/strings/default.stbl.json",
-    "newStringsToStartOfTable": true,
-    "newStringTableJsonType": "object",
+    "defaultStringTableJsonType": "object",
+    "newStringsToStartOfStbl": true,
     "showCopyConfirmationPopup": true,
     "spacesPerIndent": 2
   }

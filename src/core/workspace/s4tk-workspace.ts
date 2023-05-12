@@ -18,8 +18,8 @@ class _S4TKWorkspace {
   // aliases for workspace settings
   get defaultLocale() { return this.config.workspaceSettings.defaultLocale; };
   get defaultStringTable() { return this.config.workspaceSettings.defaultStringTable; };
-  get newStringTableJsonType() { return this.config.workspaceSettings.newStringTableJsonType; };
-  get newStringsToStartOfTable() { return this.config.workspaceSettings.newStringsToStartOfTable; };
+  get defaultStringTableJsonType() { return this.config.workspaceSettings.defaultStringTableJsonType; };
+  get newStringsToStartOfStbl() { return this.config.workspaceSettings.newStringsToStartOfStbl; };
   get showCopyConfirmationPopup() { return this.config.workspaceSettings.showCopyConfirmationPopup; };
   get spacesPerIndent() { return this.config.workspaceSettings.spacesPerIndent; };
 
@@ -135,7 +135,7 @@ class _S4TKWorkspace {
     createFile(
       vscode.Uri.joinPath(rootUri, "src", "strings", "default.stbl.json"),
       StringTableJson.generateBuffer(
-        this.newStringTableJsonType,
+        this.defaultStringTableJsonType,
         this.defaultLocale,
         this.spacesPerIndent,
       )
