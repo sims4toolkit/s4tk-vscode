@@ -14,7 +14,7 @@ import { BuildSummary } from "./summary";
  * 
  * @param summary BuildSummary to update during validation
  */
-export function validateBuild(summary: BuildSummary) {
+export function prevalidateBuild(summary: BuildSummary) {
   _validateBuildSource(summary);
   _validateBuildDestinations(summary);
   _validateBuildPackages(summary);
