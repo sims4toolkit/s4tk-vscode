@@ -145,6 +145,11 @@
           "description": "Name of the ZIP file that contains all of your mod files.",
           "default": ""
         },
+        "internalFolder": {
+          "type": "string",
+          "description": "Leave blank if you want your files to be loose within the ZIP. If you want them bundled within a folder, set a name here.",
+          "default": ""
+        },
         "otherFiles": {
           "type": "object",
           "description": "Glob patterns that specify other files to include in the ZIP.",

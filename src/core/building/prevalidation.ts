@@ -195,6 +195,7 @@ function _validateBuildRelease(summary: BuildSummary) {
 
   summary.config.zip = {
     filename: _guaranteeExtension(releaseSettings.filename, ".zip"),
+    internalFolder: releaseSettings.internalFolder,
     otherFiles: []
   };
 

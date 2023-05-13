@@ -360,16 +360,25 @@ function _generateStringTables(context: PackageBuildContext) {
 }
 
 async function _zipPackagesAndWrite(context: BuildContext, buffers: Buffer[]) {
+  const zipConfig = context.summary.config.zip!;
   const zip = new JSZip();
+
+  const resolveWithFolder = (filename: string) => {
+    return zipConfig.internalFolder
+      ? path.join(zipConfig.internalFolder, filename)
+      : filename;
+  }
+
+  if (zipConfig.internalFolder) zip.folder(zipConfig.internalFolder);
 
   buffers.forEach((buffer, i) => {
     const pkgConfig = context.summary.config.packages[i];
-    zip.file(pkgConfig.filename, buffer);
+    zip.file(resolveWithFolder(pkgConfig.filename), buffer);
   });
 
   context.summary.config.zip!.otherFiles.forEach(filepath => {
     const buffer = fs.readFileSync(filepath);
-    zip.file(path.basename(filepath), buffer);
+    zip.file(resolveWithFolder(path.basename(filepath)), buffer);
   });
 
   const buffer = await zip.generateAsync({ type: "nodebuffer" });

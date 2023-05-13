@@ -114,6 +114,10 @@
               "type": "string",
               "description": "The name of the ZIP file that contains all of the packages."
             },
+            "internalFolder": {
+              "type": "string",
+              "description": "The name of the folder within this ZIP, if there is one."
+            },
             "otherFiles": {
               "type": "array",
               "description": "List of paths to other files to include in the ZIP, based on the include/exclude patterns in the config.",

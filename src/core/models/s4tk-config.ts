@@ -30,6 +30,7 @@ export interface S4TKConfig {
 
   releaseSettings: {
     filename: string;
+    internalFolder?: string;
     otherFiles: {
       include?: string[];
       exclude?: string[];

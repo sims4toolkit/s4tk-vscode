@@ -44,6 +44,7 @@ export interface ValidatedPath extends Warnable {
 
 export interface ValidatedZipInfo extends Warnable {
   filename: string;
+  internalFolder?: string;
   otherFiles: string[];
 }
 
