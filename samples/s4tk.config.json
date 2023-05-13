@@ -25,7 +25,11 @@
   },
   "releaseSettings": {
     "filename": "MyZippedModFiles",
-    "otherFilesToInclude": [],
+    "internalFolder": "",
+    "otherFiles": {
+      "include": [],
+      "exclude": []
+    },
     "overrideDestinations": []
   },
   "workspaceSettings": {
