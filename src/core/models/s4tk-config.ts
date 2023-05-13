@@ -30,7 +30,10 @@ export interface S4TKConfig {
 
   releaseSettings: {
     filename: string;
-    otherFilesToInclude: string[];
+    otherFiles: {
+      include?: string[];
+      exclude?: string[];
+    };
     overrideDestinations: string[];
   };
 
@@ -66,7 +69,7 @@ const _CONFIG_TRANSFORMER: ConfigTransformer = {
   releaseSettings: {
     defaults: {
       filename: "",
-      otherFilesToInclude: [],
+      otherFiles: {},
       overrideDestinations: [],
     },
   },

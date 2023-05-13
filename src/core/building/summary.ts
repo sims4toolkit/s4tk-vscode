@@ -44,7 +44,7 @@ export interface ValidatedPath extends Warnable {
 
 export interface ValidatedZipInfo extends Warnable {
   filename: string;
-  otherFiles: ValidatedPath[];
+  otherFiles: string[];
 }
 
 export interface Warnable {
@@ -74,6 +74,11 @@ export interface WrittenResourceInfo {
 export namespace BuildSummary {
   const _BUILD_SUMMARY_FILENAME = "BuildSummary.json";
 
+  /**
+   * Returns a new BuildSummary object for the given mode.
+   * 
+   * @param mode Mode for build
+   */
   export function create(mode: BuildMode): BuildSummary {
     return {
       buildInfo: {
@@ -89,10 +94,6 @@ export namespace BuildSummary {
         },
         destinations: [],
         packages: [],
-        zip: mode !== "release" ? undefined : {
-          filename: "",
-          otherFiles: [],
-        },
       },
       written: {
         fileWarnings: [],
@@ -103,12 +104,21 @@ export namespace BuildSummary {
     };
   }
 
+  /**
+   * Returns the URI at which to write the BuildSummary.json file.
+   */
   export function getUri(): vscode.Uri | undefined {
     const rootDir = vscode.workspace.workspaceFolders?.[0]?.uri;
     if (!rootDir) return;
     return vscode.Uri.joinPath(rootDir, _BUILD_SUMMARY_FILENAME);
   }
 
+  /**
+   * Returns the given path as relative to the source folder in the build.
+   * 
+   * @param summary Summary that contains build info
+   * @param filepath Path to make relative
+   */
   export function makeRelative(summary: BuildSummary, filepath: string): string {
     // easier / more efficient that using path lib
     return filepath.replace(summary.config.source.resolved, "");

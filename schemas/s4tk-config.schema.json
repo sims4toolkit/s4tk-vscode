@@ -43,11 +43,11 @@
       "properties": {
         "source": {
           "type": "string",
-          "description": "Absolute or relative path to the folder that contains all of the resources for this project.\n\nAbsolute paths must be platform-appropriate ('\\\\' for Windows, '/' for Unix/macOS), but relative paths can use either kind of slash (they will be normalized)."
+          "description": "Absolute or relative path to the folder that contains all of the resources for this project.\n\n[If path is relative, it is relative to the folder that contains your `s4tk.config.json`]"
         },
         "destinations": {
           "type": "array",
-          "description": "List of absolute and/or relative paths to folders where all built packages should be output to.\n\nAbsolute paths must be platform-appropriate ('\\\\' for Windows, '/' for Unix/macOS), but relative paths can use either kind of slash (they will be normalized).",
+          "description": "List of absolute and/or relative paths to folders where all built packages should be output to.\n\n[If paths are relative, they are relative to the folder that contains your `s4tk.config.json`]",
           "minItems": 1,
           "items": {
             "type": "string"
@@ -55,7 +55,7 @@
         },
         "packages": {
           "type": "array",
-          "description": "List of packages to build to each folder within `destinations`.",
+          "description": "List of packages to build to each folder within `buildInstructions.destinations`.",
           "minItems": 1,
           "items": {
             "type": "object",
@@ -71,14 +71,14 @@
               },
               "include": {
                 "type": "array",
-                "description": "List of glob patterns (relative to the source folder) that capture all files that should be built into this package.\n\nBoth Windows and Unix/macOS paths are accepted; they will be automatically converted as needed.",
+                "description": "List of relative glob patterns that capture all files that should be built into this package.\n\n[These glob patterns are relative to the source folder set in `buildInstructions.source`]",
                 "items": {
                   "type": "string"
                 }
               },
               "exclude": {
                 "type": "array",
-                "description": "List of glob patterns (relative to the source folder) of files that should be excluded, even if they pass one of the `include` patterns.\n\nBoth Windows and Unix/macOS paths are accepted; they will be automatically converted as needed.",
+                "description": "List of relative glob patterns of files that should be excluded, even if they pass one of the `include` patterns.\n\n[These glob patterns are relative to the source folder set in `buildInstructions.source`]",
                 "items": {
                   "type": "string"
                 }
@@ -137,7 +137,7 @@
     },
     "releaseSettings": {
       "type": "object",
-      "description": "Settings that affect builds made for release (i.e. a zipped version of all of your packages).",
+      "description": "Settings that affect builds made for release (i.e. your packages and other miscellaneous files bundled together in a ZIP).",
       "additionalProperties": false,
       "properties": {
         "filename": {
@@ -145,16 +145,30 @@
           "description": "Name of the ZIP file that contains all of your mod files.",
           "default": ""
         },
-        "otherFilesToInclude": {
-          "type": "array",
-          "description": "List of absolute and/or relative paths to all additional files that should be zipped with your packages.\n\nAbsolute paths must be platform-appropriate ('\\\\' for Windows, '/' for Unix/macOS), but relative paths can use either kind of slash (they will be normalized).",
-          "items": {
-            "type": "string"
+        "otherFiles": {
+          "type": "object",
+          "description": "Glob patterns that specify other files to include in the ZIP.",
+          "additionalProperties": false,
+          "properties": {
+            "include": {
+              "type": "array",
+              "description": "List of absolute and/or relative glob patterns that capture all non-source files that should be added to the ZIP, such as READMEs or ts4scripts.\n\n[If paths are relative, they are relative to the folder that contains your `s4tk.config.json`]",
+              "items": {
+                "type": "string"
+              }
+            },
+            "exclude": {
+              "type": "array",
+              "description": "List of absolute and/or relative glob patterns of files that should be excluded, even if they pass one of the `include` patterns.\n\n[If paths are relative, they are relative to the folder that contains your `s4tk.config.json`]",
+              "items": {
+                "type": "string"
+              }
+            }
           }
         },
         "overrideDestinations": {
           "type": "array",
-          "description": "List of absolute and/or relative paths to folders where the ZIP file should be output to. If omitted or empty, then `buildInstructions.destinations` will be used.\n\nAbsolute paths must be platform-appropriate ('\\\\' for Windows, '/' for Unix/macOS), but relative paths can use either kind of slash (they will be normalized).",
+          "description": "List of absolute and/or relative paths to folders where the ZIP file should be output to. If omitted or empty, then `buildInstructions.destinations` will be used.\n\n[If paths are relative, they are relative to the folder that contains your `s4tk.config.json`]",
           "items": {
             "type": "string"
           }
@@ -173,7 +187,7 @@
         },
         "defaultStringTable": {
           "type": "string",
-          "description": "Absolute or relative path to the string table (binary or JSON) that serves as the default for this project. Any strings generated via commands will be added to this string table.\n\nAbsolute paths must be platform-appropriate ('\\\\' for Windows, '/' for Unix/macOS), but relative paths can use either kind of slash (they will be normalized).",
+          "description": "Absolute or relative path to the string table (binary or JSON) that serves as the default for this project. Any strings generated via commands will be added to this string table.\n\n[If path is relative, it is relative to the folder that contains your `s4tk.config.json`]",
           "pattern": "\\.stbl(\\.json)?$"
         },
         "defaultStringTableJsonType": {

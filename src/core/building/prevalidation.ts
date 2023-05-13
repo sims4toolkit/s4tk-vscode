@@ -137,7 +137,7 @@ function _validateBuildPackages(summary: BuildSummary) {
 
     pkg.include.forEach(resolveGlobArray("include"));
     pkg.exclude?.forEach(resolveGlobArray("exclude"));
-    const matches = findGlobMatches(validatedPkg.include, validatedPkg.exclude);
+    const matches = findGlobMatches(validatedPkg.include, validatedPkg.exclude, "supported");
 
     if (matches.length < 1) {
       if (buildSettings.allowEmptyPackages) {
@@ -170,12 +170,12 @@ function _validateBuildPackages(summary: BuildSummary) {
   })!;
 
   summary.written.ignoredSourceFiles.push(
-    ...findGlobMatches([allGlob], undefined, true)
+    ...findGlobMatches([allGlob], undefined, "unsupported")
       .filter(_isExistingFile)
       .map(fp => fp.replace(summary.config.source.resolved, ""))
   );
 
-  const allMatches = findGlobMatches([allGlob], undefined);
+  const allMatches = findGlobMatches([allGlob], undefined, "supported");
   const numMissingFiles = allMatches.length - seenGlobMatches.size;
   if (numMissingFiles > 0) {
     allMatches.forEach(match => {
@@ -203,21 +203,31 @@ function _validateBuildRelease(summary: BuildSummary) {
     addWarning: summary.config.zip
   });
 
-  releaseSettings.otherFilesToInclude.forEach((original, i) => {
-    const resolved = S4TKConfig.resolvePath(original) ?? '';
-    const propName = `releaseSettings.otherFilesToInclude[${i}]`;
-    const otherFile = addAndGetItem(summary.config.zip!.otherFiles, { original, resolved });
+  function resolveGlobs(arrName: "include" | "exclude"): string[] {
+    if (!releaseSettings.otherFiles[arrName]?.length) return [];
 
-    if (!resolved) throw FatalBuildError(
-      `${propName} could not be resolved as a valid path (${original})`, {
-      addWarning: otherFile
-    });
+    return releaseSettings.otherFiles[arrName]!.map((original, i) => {
+      const resolved = S4TKConfig.resolvePath(original, { isGlob: true }) ?? '';
 
-    if (!_isExistingFile(resolved)) throw FatalBuildError(
-      `${propName} does not lead to an existing file (${original})`, {
-      addWarning: otherFile
+      if (!resolved) throw FatalBuildError(
+        `releaseSettings.otherFiles.${arrName}[${i}] could not be resolved as a valid path (${original})`, {
+        addWarning: summary.config.zip,
+      });
+
+      return resolved;
     });
-  });
+  }
+
+  const resolvedIncludes = resolveGlobs("include");
+  if (resolvedIncludes.length) {
+    const resolvedExcludes = resolveGlobs("exclude");
+    const matches = findGlobMatches(resolvedIncludes, resolvedExcludes, "all");
+    if (!matches.length) throw FatalBuildError(
+      `releaseSettings.otherFiles.include has at least one item, but no files were matched by the include/exclude patterns`, {
+      addWarning: summary.config.zip!
+    });
+    summary.config.zip.otherFiles = matches;
+  }
 }
 
 //#endregion

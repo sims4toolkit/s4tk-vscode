@@ -116,9 +116,9 @@
             },
             "otherFiles": {
               "type": "array",
-              "description": "List of paths to other files to include in the ZIP.",
+              "description": "List of paths to other files to include in the ZIP, based on the include/exclude patterns in the config.",
               "items": {
-                "$ref": "#/definitions/validatedPath"
+                "type": "string"
               }
             },
             "warning": {

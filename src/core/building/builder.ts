@@ -367,9 +367,9 @@ async function _zipPackagesAndWrite(context: BuildContext, buffers: Buffer[]) {
     zip.file(pkgConfig.filename, buffer);
   });
 
-  context.summary.config.zip!.otherFiles.forEach(({ resolved }) => {
-    const buffer = fs.readFileSync(resolved);
-    zip.file(path.basename(resolved), buffer);
+  context.summary.config.zip!.otherFiles.forEach(filepath => {
+    const buffer = fs.readFileSync(filepath);
+    zip.file(path.basename(filepath), buffer);
   });
 
   const buffer = await zip.generateAsync({ type: "nodebuffer" });

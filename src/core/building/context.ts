@@ -61,7 +61,7 @@ export namespace BuildContext {
       summary: context.summary,
       stringKeys: context.stringKeys,
       tuningKeys: context.tuningKeys,
-      filepaths: findGlobMatches(pkgConfig.include, pkgConfig.exclude),
+      filepaths: findGlobMatches(pkgConfig.include, pkgConfig.exclude, "supported"),
       pkg: new Package(),
       pkgInfo: addAndGetItem(context.summary.written.packages, {
         filename: pkgConfig.filename,
