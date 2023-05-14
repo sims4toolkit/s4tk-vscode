@@ -172,7 +172,7 @@ export namespace S4TKConfig {
         const baseUri = vscode.workspace.workspaceFolders?.[0]?.uri
         if (!baseUri) return;
         // HACK: for relative ignored globs to work on windows
-        if (isGlob && process.platform === "win32") {
+        if (process.platform === "win32") {
           const [drive, filepath] = baseUri.fsPath.split(":", 2);
           absPath = `${drive.toUpperCase()}:${filepath}`;
         } else {
