@@ -165,9 +165,15 @@ export namespace S4TKConfig {
   } = {}): string | undefined {
     let absPath = original;
     if (!path.isAbsolute(original)) {
-      const basePath = relativeTo ?? vscode.workspace.workspaceFolders?.[0]?.uri?.fsPath;
-      if (!basePath) return;
-      absPath = path.resolve(basePath, original);
+      if (relativeTo) {
+        absPath = path.resolve(relativeTo, original);
+      } else {
+        const baseUri = vscode.workspace.workspaceFolders?.[0]?.uri
+        if (!baseUri) return;
+        // HACK: for relative ignored globs to work on windows
+        const basePath = baseUri.with({ scheme: baseUri.scheme.toUpperCase() }).fsPath;
+        absPath = path.resolve(basePath, original);
+      }
     }
     return isGlob ? absPath.replace(/\\/g, "/") : absPath;
   }
