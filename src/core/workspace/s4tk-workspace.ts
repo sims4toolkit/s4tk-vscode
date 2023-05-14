@@ -61,6 +61,7 @@ class _S4TKWorkspace {
       config.buildInstructions.packages.push({
         filename: `MyPackage${config.buildInstructions.packages.length + 1}`,
         include: ["**/*"],
+        exclude: [],
       });
     });
   }
