@@ -53,10 +53,14 @@ const _SIMDATA_HEADER_REGEX = /^\s*<SimData/;
  * @param xml XML content to analyze
  * @param override Type of override to add
  */
-export function getNewXmlContentWithOverride(xml: string | vscode.TextDocument, override: KeyOverrideType): string | undefined {
+export function getNewXmlContentWithOverride(
+  xml: string | vscode.TextDocument,
+  override: KeyOverrideType,
+  value?: number | bigint
+): string | undefined {
   const existingOverrides = getXmlKeyOverrides(xml);
   if (existingOverrides?.[override] != undefined) return;
-  const inferredValue = inferXmlMetaData(xml).key[override];
+  const inferredValue = value ?? inferXmlMetaData(xml).key[override];
   const newOverrides = [];
 
   if (existingOverrides?.type != undefined) {

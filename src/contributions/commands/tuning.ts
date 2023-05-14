@@ -21,27 +21,27 @@ export default function registerTuningCommands() {
   );
 
   vscode.commands.registerCommand(COMMAND.tuning.overrideGroup,
-    (editor: vscode.TextEditor | undefined) => {
+    (editor: vscode.TextEditor | undefined, value?: number) => {
       if (!editor?.document) return;
-      const newContent = getNewXmlContentWithOverride(editor.document, "group");
+      const newContent = getNewXmlContentWithOverride(editor.document, "group", value);
       if (!newContent) return;
       replaceEntireDocument(editor, newContent, false);
     }
   );
 
   vscode.commands.registerCommand(COMMAND.tuning.overrideInstance,
-    (editor: vscode.TextEditor | undefined) => {
+    (editor: vscode.TextEditor | undefined, value?: bigint) => {
       if (!editor?.document) return;
-      const newContent = getNewXmlContentWithOverride(editor.document, "instance");
+      const newContent = getNewXmlContentWithOverride(editor.document, "instance", value);
       if (!newContent) return;
       replaceEntireDocument(editor, newContent, false);
     }
   );
 
   vscode.commands.registerCommand(COMMAND.tuning.overrideType,
-    (editor: vscode.TextEditor | undefined) => {
+    (editor: vscode.TextEditor | undefined, value?: number) => {
       if (!editor?.document) return;
-      const newContent = getNewXmlContentWithOverride(editor.document, "type");
+      const newContent = getNewXmlContentWithOverride(editor.document, "type", value);
       if (!newContent) return;
       replaceEntireDocument(editor, newContent, false);
     }
