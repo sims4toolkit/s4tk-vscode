@@ -174,7 +174,7 @@ export namespace S4TKConfig {
         // HACK: for relative ignored globs to work on windows
         if (process.platform === "win32") {
           const [drive, filepath] = baseUri.fsPath.split(":", 2);
-          absPath = `${drive.toUpperCase()}:${filepath}`;
+          absPath = path.resolve(`${drive.toUpperCase()}:${filepath}`, original);
         } else {
           absPath = path.resolve(baseUri.fsPath, original);
         }
