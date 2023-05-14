@@ -205,7 +205,7 @@ function _addStringTable(context: PackageBuildContext, filepath: string, buffer:
       });
 
       if (stblJson.instanceBase == undefined) {
-        fileWarnings.warnings.push("No instance is set in this STBL's meta data; using a random FNV56.");
+        fileWarnings.warnings.push("No instance is set in this STBL's meta data; using a random FNV56. This may cause problems if you are attempting to build the same STBL in multiple languages.");
         context.summary.buildInfo.problems++;
       }
 
@@ -226,7 +226,7 @@ function _addStringTable(context: PackageBuildContext, filepath: string, buffer:
     context.summary.written.fileWarnings.push({
       file: BuildSummary.makeRelative(context.summary, filepath),
       warnings: [
-        "Binary STBLs without TGI in filename have no known instance; using a random FNV56.",
+        "Binary STBLs without TGI in filename have no known instance; using a random FNV56. This may cause problems if you are attempting to build the same STBL in multiple languages.",
         `Binary STBLs without TGI in filename have no known locale; assuming default of '${S4TKWorkspace.defaultLocale}'.`
       ]
     });
