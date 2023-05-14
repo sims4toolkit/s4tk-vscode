@@ -202,11 +202,6 @@
 				},
 				{
 					"when": "explorerResourceIsFolder",
-					"command": "s4tk.ts4Files.createStblBinary",
-					"group": "S4TK"
-				},
-				{
-					"when": "explorerResourceIsFolder",
 					"command": "s4tk.ts4Files.createStblJson",
 					"group": "S4TK"
 				},
@@ -217,17 +212,7 @@
 				},
 				{
 					"when": "resourceFilename === 's4tk.config.json'",
-					"command": "s4tk.workspace.buildDryRun",
-					"group": "S4TK"
-				},
-				{
-					"when": "resourceFilename === 's4tk.config.json'",
 					"command": "s4tk.workspace.buildRelease",
-					"group": "S4TK"
-				},
-				{
-					"when": "resourceFilename === 's4tk.config.json'",
-					"command": "s4tk.workspace.reloadConfig",
 					"group": "S4TK"
 				},
 				{
@@ -249,17 +234,7 @@
 				},
 				{
 					"when": "resourceFilename === 's4tk.config.json'",
-					"command": "s4tk.workspace.buildDryRun",
-					"group": "S4TK"
-				},
-				{
-					"when": "resourceFilename === 's4tk.config.json'",
 					"command": "s4tk.workspace.buildRelease",
-					"group": "S4TK"
-				},
-				{
-					"when": "resourceFilename === 's4tk.config.json'",
-					"command": "s4tk.workspace.reloadConfig",
 					"group": "S4TK"
 				},
 				{
