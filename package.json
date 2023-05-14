@@ -3,11 +3,15 @@
 	"version": "0.1.0-alpha.1",
 	"displayName": "Sims 4 Toolkit",
 	"description": "Sims 4 Toolkit support for VS Code.",
+	"icon": "media/assets/s4tk-icon.png",
 	"private": true,
 	"license": "MIT",
 	"author": "frankkulak",
 	"publisher": "sims4toolkit",
-	"repository": "https://github.com/sims4toolkit/s4tk-vscode",
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/sims4toolkit/s4tk-vscode"
+	},
 	"homepage": "https://vscode.sims4toolkit.com/",
 	"bugs": {
 		"url": "https://github.com/sims4toolkit/s4tk-vscode/issues"
