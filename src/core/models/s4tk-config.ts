@@ -1,4 +1,5 @@
 import * as path from "path";
+import * as process from "process";
 import * as vscode from "vscode";
 import { SCHEMAS } from "#assets";
 import { FILENAME } from "#constants";
@@ -171,8 +172,12 @@ export namespace S4TKConfig {
         const baseUri = vscode.workspace.workspaceFolders?.[0]?.uri
         if (!baseUri) return;
         // HACK: for relative ignored globs to work on windows
-        const basePath = baseUri.with({ scheme: baseUri.scheme.toUpperCase() }).fsPath;
-        absPath = path.resolve(basePath, original);
+        if ( process.platform === "win32") {
+          let [drive, filepath] = baseUri.fsPath.split(":", 2);
+          absPath = `${drive.toUpperCase()}:${filepath}`;
+        } else {
+          absPath = path.resolve(baseUri.fsPath, original);
+        }
       }
     }
     return isGlob ? absPath.replace(/\\/g, "/") : absPath;
