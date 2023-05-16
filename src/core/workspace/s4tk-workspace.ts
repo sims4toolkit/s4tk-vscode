@@ -99,61 +99,45 @@ class _S4TKWorkspace {
   async createDefaultWorkspace() {
     if (!(await this.createConfig(false))) return;
 
+    const fs = vscode.workspace.fs;
     const rootUri = vscode.workspace.workspaceFolders?.[0]?.uri as vscode.Uri;
-    vscode.workspace.fs.createDirectory(vscode.Uri.joinPath(rootUri, "out"));
-    vscode.workspace.fs.createDirectory(vscode.Uri.joinPath(rootUri, "src"));
-    vscode.workspace.fs.createDirectory(vscode.Uri.joinPath(rootUri, "src", "strings"));
-    vscode.workspace.fs.createDirectory(vscode.Uri.joinPath(rootUri, "src", "tuning"));
-    vscode.workspace.fs.createDirectory(vscode.Uri.joinPath(rootUri, "src", "packages"));
 
-    const createFile = async (uri: vscode.Uri, contentSource: vscode.Uri | Buffer) => {
+    fs.createDirectory(vscode.Uri.joinPath(rootUri, "out"));
+    fs.createDirectory(vscode.Uri.joinPath(rootUri, "src"));
+    fs.createDirectory(vscode.Uri.joinPath(rootUri, "src", "strings"));
+    fs.createDirectory(vscode.Uri.joinPath(rootUri, "src", "tuning"));
+    fs.createDirectory(vscode.Uri.joinPath(rootUri, "src", "packages"));
+
+    const createFile = async (contentSource: vscode.Uri | Buffer, ...destination: string[]) => {
+      const uri = vscode.Uri.joinPath(rootUri, ...destination);
       if (!(await fileExists(uri))) {
         const content = contentSource instanceof Buffer
           ? contentSource
-          : await vscode.workspace.fs.readFile(contentSource);
-
-        await vscode.workspace.fs.writeFile(uri, content);
+          : await fs.readFile(contentSource);
+        await fs.writeFile(uri, content);
       }
+      return uri;
     };
 
-    const readmeUri = vscode.Uri.joinPath(rootUri, "HowToUseS4TK.md");
-    createFile(readmeUri, SAMPLES.readme).then(() => {
-      vscode.window.showTextDocument(readmeUri);
+    createFile(SAMPLES.readme, "HowToUseS4TK.md").then((uri) => {
+      vscode.window.showTextDocument(uri);
     });
 
-    createFile(
-      vscode.Uri.joinPath(rootUri, ".gitignore"),
-      SAMPLES.gitignore
+    createFile(SAMPLES.gitignore, ".gitignore");
+    createFile(SAMPLES.package, "src", "packages", "sample.package");
+    createFile(SAMPLES.tuning, "src", "tuning", "buff_Example.xml");
+    createFile(SAMPLES.simdata, "src", "tuning", "buff_Example.SimData.xml");
+    createFile(SAMPLES.stbl, "src", "strings", "sample.stbl");
+
+    const stblJsonBuffer = StringTableJson.generateBuffer(
+      this.defaultStringTableJsonType === "array"
+        ? "array-metadata"
+        : "object-metadata",
+      this.defaultLocale,
+      this.spacesPerIndent,
     );
 
-    createFile(
-      vscode.Uri.joinPath(rootUri, "src", "packages", "Sample.package"),
-      SAMPLES.package
-    );
-
-    createFile(
-      vscode.Uri.joinPath(rootUri, "src", "tuning", "buff_Example.xml"),
-      SAMPLES.tuning
-    );
-
-    createFile(
-      vscode.Uri.joinPath(rootUri, "src", "tuning", "buff_Example.SimData.xml"),
-      SAMPLES.simdata
-    );
-
-    createFile(
-      vscode.Uri.joinPath(rootUri, "src", "strings", "sample.stbl"),
-      SAMPLES.stbl
-    );
-
-    createFile(
-      vscode.Uri.joinPath(rootUri, "src", "strings", "default.stbl.json"),
-      StringTableJson.generateBuffer(
-        this.defaultStringTableJsonType,
-        this.defaultLocale,
-        this.spacesPerIndent,
-      )
-    );
+    createFile(stblJsonBuffer, "src", "strings", "default.stbl.json");
   }
 
   /**
