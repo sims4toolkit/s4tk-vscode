@@ -30,9 +30,19 @@ __src/__
   to include any other resources, they either must be in a package, or must be
   using the S4S file naming convention (T!G!I).
 
+__src/packages/__
+  It's recommended to keep any resources that aren't tuning, SimData, or string
+  tables within packages - this is a folder where you can keep them, and they
+  can be merged in to your final builds. Feel free to rename or delete.
+
+__src/packages/sample.package__
+  A sample package file, which is view-only. This is here to demonstrate two
+  things: what the package viewer looks like, and how packages can be included
+  in your source files and merged into your built ones.
+
 __src/strings/__
   A folder where you can keep all of your string tables. If you want to put them
-  somewhere else, feel free to rename or delete this folder.
+  somewhere else, feel free to rename or delete.
 
 __src/strings/default.stbl.json__
   A sample JSON string table that is set as the default string table in your
