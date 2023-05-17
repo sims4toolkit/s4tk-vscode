@@ -33,7 +33,8 @@ class _S4TKWorkspace {
       if (!this.active) return;
       if (e.files.some(uri => uri.path.endsWith(FILENAME.config))) {
         this._setConfig();
-        vscode.window.showWarningMessage("S4TK config has been unloaded.");
+        if (S4TKSettings.get("showConfigUnloadedMessage"))
+          vscode.window.showWarningMessage("S4TK config has been unloaded.");
       }
     });
 
@@ -166,7 +167,8 @@ class _S4TKWorkspace {
     try {
       const content = await vscode.workspace.fs.readFile(configInfo.uri!);
       const config = S4TKConfig.parse(content.toString());
-      vscode.window.showInformationMessage('Successfully loaded S4TK config.');
+      if (S4TKSettings.get("showConfigLoadedMessage"))
+        vscode.window.showInformationMessage('Successfully loaded S4TK config.');
       this._setConfig(config);
     } catch (e) {
       vscode.window.showErrorMessage(
