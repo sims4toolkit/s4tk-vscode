@@ -7,9 +7,7 @@
       <T name="buff_description">0x00000000<!--What's this???--></T>
       <T name="buff_name">0x00000000<!--Comments in SimData???--></T>
       <!--
-        Yes! With S4TK, you can keep comments in your SimDatas. The reason they
-        disappear in S4S is because they are stored in a binary format, but with
-        this setup, it's just a plain text XML file.
+        Yes! With S4TK, you can keep comments in your SimDatas.
 
         Just like tuning, you can hover over the Type, Group, and Instance
         buttons at the top of this file to see how S4TK will infer those values.
