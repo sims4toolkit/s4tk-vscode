@@ -129,15 +129,18 @@ class _S4TKWorkspace {
     createFile(SAMPLES.simdata, "src", "tuning", "buff_Example.SimData.xml");
     createFile(SAMPLES.stbl, "src", "strings", "sample.stbl");
 
-    const stblJsonBuffer = StringTableJson.generateBuffer(
-      this.defaultStringTableJsonType === "array"
-        ? "array-metadata"
-        : "object-metadata",
-      this.defaultLocale,
-      this.spacesPerIndent,
+    const stblJson = StringTableJson.generate(
+      S4TKWorkspace.defaultStringTableJsonType,
+      S4TKWorkspace.defaultLocale
     );
 
-    createFile(stblJsonBuffer, "src", "strings", "default.stbl.json");
+    JSON.parse((await fs.readFile(SAMPLES.stblJsonStrings)).toString()
+    ).forEach((value: string) => stblJson.addEntry({ value }));
+
+    stblJson.insertDefaultMetadata(S4TKWorkspace.defaultLocale);
+
+    const stblBuffer = Buffer.from(stblJson.stringify(S4TKWorkspace.spacesPerIndent));
+    createFile(stblBuffer, "src", "strings", "default.stbl.json");
   }
 
   /**

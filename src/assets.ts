@@ -33,9 +33,10 @@ export const SCHEMAS = _uriResolver("schemas", {
 export const SAMPLES = _uriResolver("samples", {
   config: ["s4tk.config.json"],
   gitignore: ["gitignore.txt"],
-  package: ["Sample.package"],
+  package: ["sample.package"],
   readme: ["HowToUseS4TK.md"],
   simdata: ["buff_Example.SimData.xml"],
   stbl: ["sample.stbl"],
+  stblJsonStrings: ["default-stbl-strings.json"],
   tuning: ["buff_Example.xml"],
 });

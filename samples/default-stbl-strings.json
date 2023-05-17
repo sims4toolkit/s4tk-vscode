@@ -1,0 +1,6 @@
+[
+  "This is your default string table. You can add strings to it from anywhere with the 'Add New String' command, or by right-clicking this stbl in the file explorer.",
+  "You can also press the 'New Entry' button in this JSON file, and a new entry will be added with a unique hash. For the string, just type right here in the JSON (remember to escape special characters, such as \", \\, and \\n).",
+  "While working on tuning, you can press 'Copy as XML' to quickly paste this string's key and comment into XML.",
+  "Finally, VS Code tip: You can press ALT + Z (Windows) or OPTION + Z (macOS) to toggle line wrapping. This may make editing JSONs with long lines easier for you."
+]
