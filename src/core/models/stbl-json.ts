@@ -4,6 +4,7 @@ import { StringTableLocale, BinaryResourceType } from "@s4tk/models/enums";
 import { formatAsHexString, formatStringKey } from "@s4tk/hashing/formatting";
 import { randomFnv32, randomFnv64 } from "#helpers/hashing";
 import { parseAndValidateJson } from "#helpers/schemas";
+import { S4TKSettings } from "#helpers/settings";
 import { SCHEMAS } from "#assets";
 
 type StringTableJsonFormat = "array" | "object" | "array-metadata" | "object-metadata";
@@ -111,38 +112,15 @@ export default class StringTableJson {
    * will be filled in with defaults (instanceBase will use random FNV56).
    * 
    * @param format Format to use for JSON
-   * @param defaultLocale Locale to use if format is object
    */
-  static generate(
-    format: StringTableJsonFormat,
-    defaultLocale: StringTableLocaleName
-  ): StringTableJson {
+  static generate(format: StringTableJsonFormat): StringTableJson {
     return (format === "array" || format === "object")
       ? new StringTableJson(format, [])
       : new StringTableJson(format, [], {
-        locale: defaultLocale,
+        locale: S4TKSettings.get("defaultStringTableLocale"),
         group: StringTableJson._DEFAULT_GROUP_STRING,
         instanceBase: formatAsHexString(randomFnv64(56), 14, true),
       });
-  }
-
-  /**
-   * Generates a Buffer containing StringTableJson data. If using a "metadata"
-   * format, all metadata will be filled in with defaults (instanceBase will use
-   * random FNV56).
-   * 
-   * @param format Format to use for JSON
-   * @param defaultLocale Locale to use if format is object
-   * @param spaces Number of spaces to use while formatting
-   */
-  static generateBuffer(
-    format: StringTableJsonFormat,
-    defaultLocale: StringTableLocaleName,
-    spaces: number
-  ): Buffer {
-    return Buffer.from(
-      StringTableJson.generate(format, defaultLocale).stringify(spaces)
-    );
   }
 
   //#endregion
@@ -186,17 +164,15 @@ export default class StringTableJson {
    * Returns a resource key to use for a binary STBL created from this JSON. If
    * any metadata is missing, it will be filled in with default values (or a
    * random FNV56 in the case of the instance base).
-   * 
-   * @param defaultLocale Locale to use if one is not set
    */
-  getResourceKey(defaultLocale: StringTableLocaleName): ResourceKey {
+  getResourceKey(): ResourceKey {
     return {
       type: BinaryResourceType.StringTable,
       group: this._group
         ? parseInt(this._group, 16)
         : StringTableJson._DEFAULT_GROUP_INT,
       instance: StringTableLocale.setHighByte(
-        StringTableLocale[this._locale ?? defaultLocale],
+        StringTableLocale[this._locale ?? S4TKSettings.get("defaultStringTableLocale")],
         this._instanceBase
           ? BigInt(this._instanceBase)
           : randomFnv64()
@@ -210,8 +186,8 @@ export default class StringTableJson {
    * 
    * @param defaultLocale Locale to insert if it is missing
    */
-  insertDefaultMetadata(defaultLocale: StringTableLocaleName) {
-    this._locale ??= defaultLocale;
+  insertDefaultMetadata() {
+    this._locale ??= S4TKSettings.get("defaultStringTableLocale");
     this._group ??= StringTableJson._DEFAULT_GROUP_STRING;
     this._instanceBase ??= formatAsHexString(randomFnv64(56), 14, true);
     if (this._format === "object") this._format = "object-metadata";
@@ -220,10 +196,8 @@ export default class StringTableJson {
 
   /**
    * Writes this STBL JSON to a string.
-   * 
-   * @param spaces Number of spaces to use while formatting
    */
-  stringify(spaces: number): string {
+  stringify(): string {
 
     let entries: RawStringTableJsonEntries = this._entries;
     if (this.isObject) {
@@ -239,9 +213,9 @@ export default class StringTableJson {
         group: this._group,
         instanceBase: this._instanceBase,
         entries: entries,
-      }, null, spaces);
+      }, null, S4TKSettings.getSpacesPerIndent());
     } else {
-      return JSON.stringify(entries, null, spaces);
+      return JSON.stringify(entries, null, S4TKSettings.getSpacesPerIndent());
     }
   }
 

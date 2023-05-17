@@ -15,6 +15,7 @@ import { BuildMode, BuildSummary } from "./summary";
 import { BuildContext, PackageBuildContext, StringTableReference } from "./context";
 import { prevalidateBuild } from "./prevalidation";
 import { postvalidateBuild } from "./postvalidation";
+import { S4TKSettings } from "#helpers/settings";
 
 //#region Exported Functions
 
@@ -210,7 +211,7 @@ function _addStringTable(context: PackageBuildContext, filepath: string, buffer:
       }
 
       if (stblJson.locale == undefined) {
-        fileWarnings.warnings.push(`No locale is set in this STBL's meta data; assuming default of '${S4TKWorkspace.defaultLocale}'.`);
+        fileWarnings.warnings.push(`No locale is set in this STBL's meta data; assuming default of '${S4TKSettings.get("defaultStringTableLocale")}'.`);
         context.summary.buildInfo.problems++;
       }
     }
@@ -218,7 +219,7 @@ function _addStringTable(context: PackageBuildContext, filepath: string, buffer:
     context.stbls.push({
       filepath,
       stbl: {
-        key: stblJson.getResourceKey(S4TKWorkspace.defaultLocale),
+        key: stblJson.getResourceKey(),
         value: stblJson.toBinaryResource()
       }
     });
@@ -227,7 +228,7 @@ function _addStringTable(context: PackageBuildContext, filepath: string, buffer:
       file: BuildSummary.makeRelative(context.summary, filepath),
       warnings: [
         "Binary STBLs without TGI in filename have no known instance; using a random FNV56. This may cause problems if you are attempting to build the same STBL in multiple languages.",
-        `Binary STBLs without TGI in filename have no known locale; assuming default of '${S4TKWorkspace.defaultLocale}'.`
+        `Binary STBLs without TGI in filename have no known locale; assuming default of '${S4TKSettings.get("defaultStringTableLocale")}'.`
       ]
     });
 
@@ -238,7 +239,7 @@ function _addStringTable(context: PackageBuildContext, filepath: string, buffer:
           type: enums.BinaryResourceType.StringTable,
           group: 0x80000000,
           instance: enums.StringTableLocale.setHighByte(
-            enums.StringTableLocale[S4TKWorkspace.defaultLocale],
+            enums.StringTableLocale[S4TKSettings.get("defaultStringTableLocale")],
             randomFnv64()
           )
         },
@@ -278,10 +279,10 @@ function _resolveStringTables(context: PackageBuildContext) {
     });
   });
 
-  if (S4TKWorkspace.config.buildSettings.generateMissingLocales)
+  if (S4TKWorkspace.config.stringTableSettings.generateMissingLocales)
     _generateStringTables(context);
 
-  if (S4TKWorkspace.config.buildSettings.mergeStringTablesInSamePackage)
+  if (S4TKWorkspace.config.stringTableSettings.mergeStringTablesInSamePackage)
     _mergeStringTables(context);
 
   context.stbls.forEach(stblRef => {
@@ -311,7 +312,7 @@ function _mergeStringTables(context: PackageBuildContext) {
 
 function _generateStringTables(context: PackageBuildContext) {
   const stblsByLocale = _orderStblsByLocale(context.stbls);
-  const primaryLocale = enums.StringTableLocale[S4TKWorkspace.defaultLocale];
+  const primaryLocale = enums.StringTableLocale[S4TKSettings.get("defaultStringTableLocale")];
   const primaryStbls = stblsByLocale.get(primaryLocale);
   if (!primaryStbls) return; // can't generate if no primary
   stblsByLocale.delete(primaryLocale);

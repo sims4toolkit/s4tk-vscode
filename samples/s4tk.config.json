@@ -19,8 +19,6 @@
     "allowFolderCreation": false,
     "allowMissingSourceFiles": false,
     "allowPackageOverlap": false,
-    "generateMissingLocales": true,
-    "mergeStringTablesInSamePackage": true,
     "outputBuildSummary": "partial"
   },
   "releaseSettings": {
@@ -32,12 +30,9 @@
     },
     "overrideDestinations": []
   },
-  "workspaceSettings": {
-    "defaultLocale": "English",
+  "stringTableSettings": {
     "defaultStringTable": "src/strings/default.stbl.json",
-    "defaultStringTableJsonType": "object",
-    "newStringsToStartOfStblJson": true,
-    "showCopyConfirmationPopup": true,
-    "spacesPerIndent": 2
+    "generateMissingLocales": true,
+    "mergeStringTablesInSamePackage": true
   }
 }

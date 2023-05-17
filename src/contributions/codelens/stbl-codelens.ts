@@ -2,7 +2,6 @@ import * as vscode from 'vscode';
 import { COMMAND } from '#constants';
 import StringTableJson from '#models/stbl-json';
 import BaseCodeLensProvider from './base-codelens';
-import S4TKWorkspace from '#workspace/s4tk-workspace';
 
 /**
  * Provides CodeLenses for STBL JSON files, including:

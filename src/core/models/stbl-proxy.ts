@@ -1,6 +1,6 @@
 import { StringTableResource } from "@s4tk/models";
 import { randomFnv32 } from "#helpers/hashing";
-import S4TKWorkspace from "#workspace/s4tk-workspace";
+import { S4TKSettings } from "#helpers/settings";
 import StringTableJson from "./stbl-json";
 
 /**
@@ -31,7 +31,7 @@ export default class StringTableProxy {
       (this._stbl as StringTableResource).add(key, value);
       return key;
     } else {
-      const position = S4TKWorkspace.newStringsToStartOfStblJson ? "start" : "end";
+      const position = S4TKSettings.get("newStringsToStartOfStringTable") ? "start" : "end";
       return (this._stbl as StringTableJson).addEntry({ value, position });
     }
   }
@@ -43,7 +43,7 @@ export default class StringTableProxy {
     if (this._type === "binary") {
       return (this._stbl as StringTableResource).getBuffer();
     } else {
-      return Buffer.from((this._stbl as StringTableJson).stringify(S4TKWorkspace.spacesPerIndent));
+      return Buffer.from((this._stbl as StringTableJson).stringify());
     }
   }
 }

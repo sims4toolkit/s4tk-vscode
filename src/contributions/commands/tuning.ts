@@ -2,8 +2,8 @@ import * as vscode from "vscode";
 import { XmlDocumentNode } from "@s4tk/xml-dom";
 import { COMMAND } from "#constants";
 import { replaceEntireDocument } from "#helpers/fs";
+import { S4TKSettings } from "#helpers/settings";
 import { getNewXmlContentWithOverride, getXmlKeyOverrides, inferXmlMetaData } from "#helpers/xml";
-import S4TKWorkspace from "#workspace/s4tk-workspace";
 
 export default function registerTuningCommands() {
   vscode.commands.registerCommand(COMMAND.tuning.format,
@@ -12,7 +12,7 @@ export default function registerTuningCommands() {
       try {
         const doc = XmlDocumentNode.from(editor.document.getText());
         replaceEntireDocument(editor, doc.toXml({
-          spacesPerIndent: S4TKWorkspace.spacesPerIndent,
+          spacesPerIndent: S4TKSettings.getSpacesPerIndent(),
         }));
       } catch (_) {
         vscode.window.showWarningMessage('Could not format this XML document. There is probably a syntax error.');
@@ -65,7 +65,7 @@ export default function registerTuningCommands() {
 
         vscode.env.clipboard.writeText(toCopy);
 
-        if (S4TKWorkspace.showCopyConfirmationPopup)
+        if (S4TKSettings.get("showCopyConfirmMessage"))
           vscode.window.showInformationMessage(`Copied: ${toCopy}`);
       }
     }

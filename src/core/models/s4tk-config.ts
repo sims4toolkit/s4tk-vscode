@@ -5,6 +5,7 @@ import { SCHEMAS } from "#assets";
 import { FILENAME } from "#constants";
 import { fileExists } from "#helpers/fs";
 import { parseAndValidateJson } from "#helpers/schemas";
+import { S4TKSettings } from "#helpers/settings";
 
 //#region Types
 
@@ -24,8 +25,6 @@ export interface S4TKConfig {
     allowFolderCreation: boolean;
     allowMissingSourceFiles: boolean;
     allowPackageOverlap: boolean;
-    generateMissingLocales: boolean;
-    mergeStringTablesInSamePackage: boolean;
     outputBuildSummary: "none" | "partial" | "full";
   };
 
@@ -39,13 +38,10 @@ export interface S4TKConfig {
     overrideDestinations: string[];
   };
 
-  workspaceSettings: {
-    defaultLocale: StringTableLocaleName;
+  stringTableSettings: {
     defaultStringTable: string;
-    defaultStringTableJsonType: "array" | "object";
-    newStringsToStartOfStblJson: boolean;
-    showCopyConfirmationPopup: boolean;
-    spacesPerIndent: number;
+    generateMissingLocales: boolean;
+    mergeStringTablesInSamePackage: boolean;
   };
 }
 
@@ -63,8 +59,6 @@ const _CONFIG_TRANSFORMER: ConfigTransformer = {
       allowFolderCreation: false,
       allowMissingSourceFiles: false,
       allowPackageOverlap: false,
-      generateMissingLocales: true,
-      mergeStringTablesInSamePackage: true,
       outputBuildSummary: "partial",
     },
   },
@@ -75,14 +69,11 @@ const _CONFIG_TRANSFORMER: ConfigTransformer = {
       overrideDestinations: [],
     },
   },
-  workspaceSettings: {
+  stringTableSettings: {
     defaults: {
-      defaultLocale: "English",
       defaultStringTable: "",
-      defaultStringTableJsonType: "object",
-      newStringsToStartOfStblJson: true,
-      showCopyConfirmationPopup: true,
-      spacesPerIndent: 2,
+      generateMissingLocales: true,
+      mergeStringTablesInSamePackage: true,
     },
   },
 };
@@ -143,11 +134,7 @@ export namespace S4TKConfig {
    * @param config Config to stringify
    */
   export function stringify(config: S4TKConfig): string {
-    return JSON.stringify(
-      config,
-      null,
-      config.workspaceSettings.spacesPerIndent
-    );
+    return JSON.stringify(config, null, S4TKSettings.getSpacesPerIndent());
   }
 
   /**

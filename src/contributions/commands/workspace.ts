@@ -7,6 +7,7 @@ import { buildProject } from "#building/builder";
 import { BuildMode, BuildSummary } from "#building/summary";
 import StringTableProxy from "#models/stbl-proxy";
 import { S4TKConfig } from "#models/s4tk-config";
+import { S4TKSettings } from "#helpers/settings";
 
 export default function registerWorkspaceCommands() {
   vscode.commands.registerCommand(COMMAND.workspace.build, () => {
@@ -83,7 +84,7 @@ async function _outputBuildSummary(summary: BuildSummary): Promise<vscode.Uri | 
   if (S4TKWorkspace.config.buildSettings.outputBuildSummary === "none") return;
   const uri = BuildSummary.getUri();
   if (!uri) return;
-  const content = JSON.stringify(summary, null, S4TKWorkspace.spacesPerIndent);
+  const content = JSON.stringify(summary, null, S4TKSettings.getSpacesPerIndent());
   await vscode.workspace.fs.writeFile(uri, Buffer.from(content));
   return uri;
 }
@@ -92,12 +93,14 @@ async function _addNewString(clickedUri?: vscode.Uri) {
   try {
     let uri = clickedUri;
     if (!uri) {
-      if (!S4TKWorkspace.defaultStringTable) {
+      const defaultStringTable = S4TKWorkspace.config.stringTableSettings.defaultStringTable;
+
+      if (!defaultStringTable) {
         vscode.window.showWarningMessage("Cannot add string because no default string table is set in s4tk.config.json.");
         return;
       }
 
-      uri = vscode.Uri.parse(S4TKConfig.resolvePath(S4TKWorkspace.defaultStringTable)!);
+      uri = vscode.Uri.parse(S4TKConfig.resolvePath(defaultStringTable)!);
     }
 
     try {

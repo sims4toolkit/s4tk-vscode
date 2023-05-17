@@ -3,7 +3,7 @@ import { StringTableResource } from "@s4tk/models";
 import { COMMAND, EDITOR } from "#constants";
 import StringTableJson from "#models/stbl-json";
 import { tryCreateCustomFile } from "#helpers/fs";
-import S4TKWorkspace from "#workspace/s4tk-workspace";
+import { S4TKSettings } from "#helpers/settings";
 
 export default function registerTS4FilesCommands() {
   vscode.commands.registerCommand(COMMAND.ts4Files.createStblBinary, (folderUri?: vscode.Uri) => {
@@ -25,11 +25,9 @@ export default function registerTS4FilesCommands() {
       promptTitle: "Name of String Table (JSON)",
       fileExtension: ".stbl.json",
       folderUri: folderUri,
-      contentGenerator: () => StringTableJson.generateBuffer(
-        S4TKWorkspace.defaultStringTableJsonType,
-        S4TKWorkspace.defaultLocale,
-        S4TKWorkspace.spacesPerIndent
-      ),
+      contentGenerator: () => Buffer.from(StringTableJson.generate(
+        S4TKSettings.get("defaultStringTableJsonType")
+      ).stringify()),
       launchFile: (uri) => vscode.window.showTextDocument(uri),
     });
   });

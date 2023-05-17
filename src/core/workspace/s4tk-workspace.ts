@@ -5,6 +5,7 @@ import { fileExists, findOpenDocument, getRelativeToRoot, replaceEntireDocument 
 import { S4TKConfig } from "#models/s4tk-config";
 import StringTableJson from "#models/stbl-json";
 import { MessageButton, handleMessageButtonClick } from "./messaging";
+import { S4TKSettings } from "#helpers/settings";
 
 class _S4TKWorkspace {
   //#region Properties
@@ -14,14 +15,6 @@ class _S4TKWorkspace {
   private _blankConfig: S4TKConfig = S4TKConfig.blankProxy();
   get config(): S4TKConfig { return this._activeConfig ?? this._blankConfig; }
   get active() { return Boolean(this._activeConfig); }
-
-  // aliases for workspace settings
-  get defaultLocale() { return this.config.workspaceSettings.defaultLocale; };
-  get defaultStringTable() { return this.config.workspaceSettings.defaultStringTable; };
-  get defaultStringTableJsonType() { return this.config.workspaceSettings.defaultStringTableJsonType; };
-  get newStringsToStartOfStblJson() { return this.config.workspaceSettings.newStringsToStartOfStblJson; };
-  get showCopyConfirmationPopup() { return this.config.workspaceSettings.showCopyConfirmationPopup; };
-  get spacesPerIndent() { return this.config.workspaceSettings.spacesPerIndent; };
 
   //#endregion
 
@@ -129,17 +122,11 @@ class _S4TKWorkspace {
     createFile(SAMPLES.simdata, "src", "tuning", "buff_Example.SimData.xml");
     createFile(SAMPLES.stbl, "src", "strings", "sample.stbl");
 
-    const stblJson = StringTableJson.generate(
-      S4TKWorkspace.defaultStringTableJsonType,
-      S4TKWorkspace.defaultLocale
-    );
-
+    const stblJson = StringTableJson.generate(S4TKSettings.get("defaultStringTableJsonType"));
     JSON.parse((await fs.readFile(SAMPLES.stblJsonStrings)).toString()
     ).forEach((value: string) => stblJson.addEntry({ value }));
-
-    stblJson.insertDefaultMetadata(S4TKWorkspace.defaultLocale);
-
-    const stblBuffer = Buffer.from(stblJson.stringify(S4TKWorkspace.spacesPerIndent));
+    stblJson.insertDefaultMetadata();
+    const stblBuffer = Buffer.from(stblJson.stringify());
     createFile(stblBuffer, "src", "strings", "default.stbl.json");
   }
 
@@ -197,7 +184,7 @@ class _S4TKWorkspace {
    */
   async setDefaultStbl(stblUri: vscode.Uri) {
     await this._tryEditAndSaveConfig("Set Default STBL", null, (config) => {
-      config.workspaceSettings.defaultStringTable =
+      config.stringTableSettings.defaultStringTable =
         getRelativeToRoot(stblUri) ?? stblUri.fsPath;
     });
   }

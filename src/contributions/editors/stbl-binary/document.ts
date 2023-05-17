@@ -1,9 +1,9 @@
 import * as vscode from 'vscode';
 import { StringTableResource } from '@s4tk/models';
 import { fileExists } from '#helpers/fs';
-import ViewOnlyDocument from '../view-only/document';
-import S4TKWorkspace from '#workspace/s4tk-workspace';
+import { S4TKSettings } from '#helpers/settings';
 import StringTableJson from '#models/stbl-json';
+import ViewOnlyDocument from '../view-only/document';
 
 /**
  * Document containing binary STBL data.
@@ -47,11 +47,11 @@ export default class StringTableDocument extends ViewOnlyDocument {
       vscode.window.showTextDocument(uri);
     } else {
       const stblJson = new StringTableJson(
-        S4TKWorkspace.defaultStringTableJsonType,
+        S4TKSettings.get("defaultStringTableJsonType"),
         this._stbl.toJsonObject(true) as { key: string; value: string; }[],
       );
 
-      const stblJsonContent = stblJson.stringify(S4TKWorkspace.spacesPerIndent);
+      const stblJsonContent = stblJson.stringify();
 
       vscode.workspace.fs.writeFile(uri, Buffer.from(stblJsonContent)).then(() => {
         vscode.window.showTextDocument(uri);

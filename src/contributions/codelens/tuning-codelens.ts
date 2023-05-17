@@ -1,10 +1,10 @@
 import * as vscode from 'vscode';
-import { COMMAND } from '#constants';
-import S4TKWorkspace from '#workspace/s4tk-workspace';
-import BaseCodeLensProvider from './base-codelens';
-import { XmlMetaData, getXmlKeyOverrides, inferXmlMetaData } from '#helpers/xml';
 import { formatAsHexString } from '@s4tk/hashing/formatting';
 import { SimDataGroup, TuningResourceType } from '@s4tk/models/enums';
+import { COMMAND } from '#constants';
+import S4TKWorkspace from '#workspace/s4tk-workspace';
+import { XmlMetaData, getXmlKeyOverrides, inferXmlMetaData } from '#helpers/xml';
+import BaseCodeLensProvider from './base-codelens';
 
 /**
  * Provides CodeLenses for XML files, including:

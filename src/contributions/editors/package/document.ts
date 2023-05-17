@@ -1,13 +1,13 @@
 import * as vscode from 'vscode';
-import { Resource, ResourceEntry, ResourceKeyPair } from '@s4tk/models/types';
 import * as models from '@s4tk/models';
 import * as enums from '@s4tk/models/enums';
+import { ResourceEntry, ResourceKeyPair } from '@s4tk/models/types';
 import { formatResourceKey } from '@s4tk/hashing/formatting';
 import { inferXmlMetaData } from '#helpers/xml';
-import S4TKWorkspace from '#workspace/s4tk-workspace';
 import ViewOnlyDocument from '../view-only/document';
 import { PackageIndex, PackageIndexEntry, PackageIndexGroup } from './types';
 import PackageResourceContentProvider from './package-fs';
+import { S4TKSettings } from '#helpers/settings';
 
 /**
  * Document containing binary DBPF data.
@@ -200,7 +200,7 @@ function _getVirtualContent(entry: ResourceKeyPair): string {
     return JSON.stringify(
       entry.value.toJsonObject(true),
       null,
-      S4TKWorkspace.spacesPerIndent
+      S4TKSettings.getSpacesPerIndent()
     );
   } else {
     return entry.value.getBuffer().toString();
