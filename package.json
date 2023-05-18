@@ -261,11 +261,6 @@
 					"group": "S4TK"
 				},
 				{
-					"when": "explorerResourceIsFolder && !s4tk.workspace.active",
-					"command": "s4tk.workspace.createWorkspace",
-					"group": "S4TK"
-				},
-				{
 					"when": "explorerResourceIsFolder",
 					"command": "s4tk.ts4Files.createStblJson",
 					"group": "S4TK"
