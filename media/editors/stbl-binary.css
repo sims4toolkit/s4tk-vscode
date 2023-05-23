@@ -9,12 +9,12 @@
   opacity: 0.8;
 }
 
-#convert-to-json-btn {
+.link-button {
   color: var(--vscode-textLink-foreground);
   text-decoration: underline;
 }
 
-#convert-to-json-btn:hover {
+.link-button:hover {
   cursor: pointer;
   text-decoration: none;
 }

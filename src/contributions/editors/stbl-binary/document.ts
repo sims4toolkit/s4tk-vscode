@@ -35,10 +35,6 @@ export default class StringTableDocument extends ViewOnlyDocument {
 
   //#region Public Methods
 
-  /**
-   * Converts this STBL to a JSON and writes it to the same directory that this
-   * one is in. If the STBL JSON already exists, a warning is shown.
-   */
   async convertToJson() {
     const uri = vscode.Uri.parse(this.uri.fsPath + ".json");
 
@@ -65,6 +61,11 @@ export default class StringTableDocument extends ViewOnlyDocument {
         });
       });
     }
+  }
+
+  async reload() {
+    const data = await vscode.workspace.fs.readFile(this.uri);
+    this._stbl = StringTableResource.from(Buffer.from(data));
   }
 
   //#endregion

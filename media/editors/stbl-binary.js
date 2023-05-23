@@ -83,6 +83,11 @@
     vscode.postMessage({ type: "convertToJson" });
   };
 
+  const reloadBtn = document.getElementById("reload-btn");
+  reloadBtn.onclick = () => {
+    vscode.postMessage({ type: "reload" });
+  };
+
   window.addEventListener("message", async (e) => {
     const { type, body } = e.data;
     switch (type) {

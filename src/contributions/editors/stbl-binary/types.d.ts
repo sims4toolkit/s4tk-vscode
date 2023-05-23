@@ -2,7 +2,7 @@
  * Messages sent from the renderer to the provider.
  */
 export type StringTableInMessage = {
-  readonly type: 'ready' | 'convertToJson';
+  readonly type: 'ready' | 'convertToJson' | 'reload';
 };
 
 /**
