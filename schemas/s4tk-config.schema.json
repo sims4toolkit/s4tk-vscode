@@ -153,7 +153,14 @@
         "defaultStringTable": {
           "type": "string",
           "description": "Absolute or relative path to the string table (binary or JSON) that serves as the default for this project. Any strings generated via commands will be added to this string table.\n\n[If path is relative, it is relative to the folder that contains your `s4tk.config.json`]",
-          "pattern": "\\.stbl(\\.json)?$"
+          "anyOf": [
+            {
+              "pattern": "\\.stbl(\\.json)?$"
+            },
+            {
+              "pattern": "220557DA.[0-9A-Fa-f]{8}.[0-9A-Fa-f]{16}\\.binary$"
+            }
+          ]
         },
         "generateMissingLocales": {
           "type": "boolean",

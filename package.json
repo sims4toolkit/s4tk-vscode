@@ -114,8 +114,7 @@
 			{
 				"command": "s4tk.workspace.setDefaultStbl",
 				"title": "Set STBL as Default",
-				"category": "S4TK Workspace",
-				"enablement": "resourceFilename =~ /\\.stbl(\\.json)?$/"
+				"category": "S4TK Workspace"
 			},
 			{
 				"command": "s4tk.workspace.addNewString",
@@ -205,6 +204,9 @@
 				"selector": [
 					{
 						"filenamePattern": "*.stbl"
+					},
+					{
+						"filenamePattern": "220557DA*.binary"
 					}
 				]
 			},
@@ -286,7 +288,17 @@
 					"group": "S4TK"
 				},
 				{
+					"when": "resourceFilename =~ /220557DA.[0-9A-Fa-f]{8}.[0-9A-Fa-f]{16}\\.binary$/",
+					"command": "s4tk.workspace.setDefaultStbl",
+					"group": "S4TK"
+				},
+				{
 					"when": "resourceFilename =~ /\\.stbl(\\.json)?$/",
+					"command": "s4tk.workspace.addNewString",
+					"group": "S4TK"
+				},
+				{
+					"when": "resourceFilename =~ /220557DA.[0-9A-Fa-f]{8}.[0-9A-Fa-f]{16}\\.binary$/",
 					"command": "s4tk.workspace.addNewString",
 					"group": "S4TK"
 				}
@@ -313,7 +325,17 @@
 					"group": "S4TK"
 				},
 				{
+					"when": "resourceFilename =~ /220557DA.[0-9A-Fa-f]{8}.[0-9A-Fa-f]{16}\\.binary$/",
+					"command": "s4tk.workspace.setDefaultStbl",
+					"group": "S4TK"
+				},
+				{
 					"when": "resourceFilename =~ /\\.stbl(\\.json)?$/",
+					"command": "s4tk.workspace.addNewString",
+					"group": "S4TK"
+				},
+				{
+					"when": "resourceFilename =~ /220557DA.[0-9A-Fa-f]{8}.[0-9A-Fa-f]{16}\\.binary$/",
 					"command": "s4tk.workspace.addNewString",
 					"group": "S4TK"
 				}

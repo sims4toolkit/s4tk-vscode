@@ -54,7 +54,6 @@ export default function registerStblJsonCommands() {
 
       if (editor) {
         stblJson.toArray();
-        stblJson.insertDefaultMetadata();
         const content = stblJson.stringify();
         if (await replaceEntireDocument(editor, content)) return;
       }

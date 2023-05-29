@@ -3,7 +3,10 @@ import { StringTableResource } from '@s4tk/models';
 import { fileExists } from '#helpers/fs';
 import { S4TKSettings } from '#helpers/settings';
 import StringTableJson from '#models/stbl-json';
+import { parseKeyFromTgi } from '#building/resources';
 import ViewOnlyDocument from '../view-only/document';
+import { StringTableLocale } from '@s4tk/models/enums';
+import { formatAsHexString } from '@s4tk/hashing/formatting';
 
 /**
  * Document containing binary STBL data.
@@ -36,16 +39,33 @@ export default class StringTableDocument extends ViewOnlyDocument {
   //#region Public Methods
 
   async convertToJson() {
-    const uri = vscode.Uri.parse(this.uri.fsPath + ".json");
+    const uri = vscode.Uri.parse(
+      this.uri.fsPath.replace(/\.((stbl)|(binary))$/, ".stbl.json")
+    );
 
     if (await fileExists(uri)) {
       vscode.window.showWarningMessage(`STBL JSON already exists at ${uri.path}`);
       vscode.window.showTextDocument(uri);
     } else {
+      const tgi = parseKeyFromTgi(this.uri.fsPath);
+
       const stblJson = new StringTableJson(
         S4TKSettings.get("defaultStringTableJsonType"),
         this._stbl.toJsonObject(true) as { key: string; value: string; }[],
+        {
+          group: tgi
+            ? formatAsHexString(tgi.group, 8, true)
+            : undefined,
+          locale: (tgi
+            ? StringTableLocale[StringTableLocale.getLocale(tgi.instance)]
+            : undefined) as StringTableLocaleName,
+          instanceBase: tgi
+            ? formatAsHexString(StringTableLocale.getInstanceBase(tgi.instance), 14, true)
+            : undefined,
+        }
       );
+
+      if (tgi) stblJson.insertDefaultMetadata();
 
       const stblJsonContent = stblJson.stringify();
 
