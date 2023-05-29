@@ -1,7 +1,7 @@
 # Sims 4 Toolkit - VS Code
 
 Sims 4 Toolkit support for VS Code. Take control of your mod's file structure,
-use Git, and view your built packages.
+use Git, and view your built packages - without writing a single S4TK script.
 
 ![](https://raw.githubusercontent.com/sims4toolkit/s4tk-vscode/main/screenshots/preview.png)
 
