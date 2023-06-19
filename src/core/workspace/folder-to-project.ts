@@ -72,7 +72,7 @@ function _getDestFilename(destFolder: string, filename: string, ext: string): st
   const baseDestPath = path.join(
     destFolder,
     filename.includes(":")
-      ? filename.split(":")[1]
+      ? filename.split(":").slice(1).join(":")
       : filename
   );
 
