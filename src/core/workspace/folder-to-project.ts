@@ -27,7 +27,7 @@ export async function convertFolderToProject() {
   });
 
   if (!destFolderUri) return;
-  if (fs.readdirSync(destFolderUri.fsPath).length > 0) {
+  if (fs.readdirSync(destFolderUri.fsPath).some(dirent => !dirent.startsWith("."))) {
     const selected = await vscode.window.showWarningMessage(
       "The chosen output directory is not empty. Are you sure you want to generate your project files here?",
       "Yes",
