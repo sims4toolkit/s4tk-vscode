@@ -23,7 +23,7 @@ export const TGI_REGEX = /(?<t>[0-9a-f]{8}).(?<g>[0-9a-f]{8}).(?<i>[0-9a-f]{16})
  * 
  * @param include Patterns to include in search
  * @param exclude Patterns to exclude from search
- * @param unsupported If true, then inverts the supported filter
+ * @param searchType Which files to match
  */
 export function findGlobMatches(
   include: ValidatedPath[] | string[],
@@ -55,7 +55,7 @@ export function isSupportedFileType(filepath: string): boolean {
 }
 
 /**
- * Parses a ResourceKry from a TGI filename, if possible. Returns undefined if
+ * Parses a ResourceKey from a TGI filename, if possible. Returns undefined if
  * the filename does not pass the TGI regex.
  * 
  * @param filename Name of file to parse TGI from

@@ -8,6 +8,7 @@ import { BuildMode, BuildSummary } from "#building/summary";
 import StringTableProxy from "#models/stbl-proxy";
 import { S4TKConfig } from "#models/s4tk-config";
 import { S4TKSettings } from "#helpers/settings";
+import { convertFolderToProject } from "#workspace/folder-to-project";
 
 export default function registerWorkspaceCommands() {
   vscode.commands.registerCommand(COMMAND.workspace.build, () => {
@@ -41,6 +42,8 @@ export default function registerWorkspaceCommands() {
   vscode.commands.registerCommand(COMMAND.workspace.addNewString, (clickedUri?: vscode.Uri) => {
     _addNewString(clickedUri);
   });
+
+  vscode.commands.registerCommand(COMMAND.workspace.folderToProject, convertFolderToProject);
 }
 
 async function _runBuild(mode: BuildMode, readableMode: string) {
