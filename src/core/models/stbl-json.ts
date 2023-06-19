@@ -123,6 +123,26 @@ export default class StringTableJson {
       });
   }
 
+  /**
+   * Converts a binary string table to a StringTableJson.
+   * 
+   * @param key Meta data to use for STBL JSON
+   * @param stbl Binary STBL resource to convert
+   */
+  static fromBinary(key: ResourceKey, stbl: StringTableResource): StringTableJson {
+    const group = formatAsHexString(key.group, 8, true);
+    const locale = (StringTableLocale[StringTableLocale.getLocale(key.instance)]
+      ?? S4TKSettings.get("defaultStringTableLocale")) as StringTableLocaleName;
+    const instanceBase = formatAsHexString(StringTableLocale.getInstanceBase(key.instance), 14, true);
+    return new StringTableJson(
+      S4TKSettings.get("defaultStringTableJsonType") === "array"
+        ? "array-metadata"
+        : "object-metadata",
+      stbl.toJsonObject(true, false) as StringTableJsonEntry[],
+      { group, locale, instanceBase }
+    );
+  }
+
   //#endregion
 
   //#region Public Methods

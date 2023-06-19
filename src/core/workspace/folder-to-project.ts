@@ -2,11 +2,12 @@ import * as fs from "fs";
 import * as path from "path";
 import * as vscode from "vscode";
 import { ResourceKey } from "@s4tk/models/types";
-import { Package, RawResource, SimDataResource } from "@s4tk/models";
 import { BinaryResourceType, SimDataGroup, TuningResourceType } from "@s4tk/models/enums";
+import { Package, RawResource, SimDataResource, StringTableResource } from "@s4tk/models";
 import { formatResourceType, formatResourceKey } from "@s4tk/hashing/formatting";
-import { findGlobMatches, parseKeyFromTgi } from "#building/resources";
 import { getNewXmlContentWithOverride, inferXmlMetaData } from "#helpers/xml";
+import { findGlobMatches, parseKeyFromTgi } from "#building/resources";
+import StringTableJson from "#models/stbl-json";
 
 /**
  * Prompts the user for a folder containing packages and/or loose TGI files and
@@ -83,7 +84,7 @@ function _processSourceFile(sourcePath: string, destFolder: string) {
 
   if (sourceName.endsWith(".package")) {
     const packageName = sourceName.replace(/\.package/g, "");
-    const packageDest = _appendFolder(destFolder, packageName);
+    const packageDest = _appendFolder(destFolder, "Packages", packageName);
     const buffer = fs.readFileSync(sourcePath);
     Package.extractResources<RawResource>(buffer, {
       loadRaw: true,
@@ -95,7 +96,7 @@ function _processSourceFile(sourcePath: string, destFolder: string) {
     const key = parseKeyFromTgi(sourceName);
     if (!key) return;
     const buffer = fs.readFileSync(sourcePath);
-    const resourceDest = _appendFolder(destFolder, "Packageless");
+    const resourceDest = _appendFolder(destFolder, "Loose Files");
     _processResource(key, buffer, resourceDest);
   }
 }
@@ -120,31 +121,51 @@ function _processResource(key: ResourceKey, buffer: Buffer, destFolder: string) 
     );
   } else if (key.type in BinaryResourceType) {
     if (key.type === BinaryResourceType.SimData) {
-      const xmlContent = buffer.slice(0, 4).toString() === "DATA"
-        ? SimDataResource.from(buffer).toXmlDocument().toXml()
-        : buffer.toString();
+      const subfolder = key.group in SimDataGroup
+        ? getSubfolder(SimDataGroup[key.group])
+        : getSubfolder("SimData", formatResourceType(key.group));
 
-      if (key.group in SimDataGroup) {
-        const subfolder = getSubfolder(SimDataGroup[key.group]);
-        // TODO: if inference != key, then insert S4TK comment
-        // TODO: check if file exists, if so, insert number until it doesn't
-        // TODO: write to subfolder
-      } else {
-        const subfolder = getSubfolder("Unbound SimData", formatResourceType(key.group));
-        // TODO: insert S4TK comment
-        // TODO: check if file exists, if so, insert number until it doesn't
-        // TODO: write to subfolder
-      }
+      const simdata = buffer.slice(0, 4).toString() === "DATA"
+        ? SimDataResource.from(buffer)
+        : SimDataResource.fromXml(buffer);
+
+      const xmlContent = simdata.toXmlDocument().toXml();
+
+      // FIXME: insert instance override if tuning not found
+
+      fs.writeFileSync(
+        _getDestFilename(subfolder, simdata.instance.name, "SimData.xml"),
+        xmlContent
+      );
     } else if (key.type === BinaryResourceType.StringTable) {
       const subfolder = getSubfolder("StringTable");
-      // TODO: write as STBL JSON with metadata
-      // TODO: write as "strings_#.Language" with number that doesn't exist
+      const stbl = StringTableResource.from(buffer);
+      const stblJson = StringTableJson.fromBinary(key, stbl);
+
+      fs.writeFileSync(
+        _getDestFilename(subfolder, stblJson.locale!, "stbl.json"),
+        stblJson.stringify()
+      );
     } else {
-      const subfolder = getSubfolder("Raw TGI Files");
-      // TODO: write as TGI file or keep in package?
+      fs.writeFileSync(
+        _getDestFilename(
+          getSubfolder(BinaryResourceType[key.type]),
+          formatResourceKey(key, "_"),
+          key.type === BinaryResourceType.DdsImage || key.type === BinaryResourceType.DstImage
+            ? "dds"
+            : "binary"
+        ),
+        buffer
+      );
     }
   } else {
-    const subfolder = formatResourceType(key.type);
-    // TODO: write as TGI file or keep in package?
+    fs.writeFileSync(
+      _getDestFilename(
+        getSubfolder("Unsupported", formatResourceType(key.type)),
+        formatResourceKey(key, "_"),
+        "binary"
+      ),
+      buffer
+    );
   }
 }
