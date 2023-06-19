@@ -2,10 +2,10 @@ import * as fs from "fs";
 import * as path from "path";
 import * as vscode from "vscode";
 import { ResourceKey } from "@s4tk/models/types";
-import { BinaryResourceType, SimDataGroup, TuningResourceType } from "@s4tk/models/enums";
-import { findGlobMatches, parseKeyFromTgi } from "#building/resources";
 import { Package, RawResource, SimDataResource } from "@s4tk/models";
-import { formatResourceType } from "@s4tk/hashing/formatting";
+import { BinaryResourceType, SimDataGroup, TuningResourceType } from "@s4tk/models/enums";
+import { formatResourceType, formatResourceKey } from "@s4tk/hashing/formatting";
+import { findGlobMatches, parseKeyFromTgi } from "#building/resources";
 
 /**
  * Prompts the user for a folder containing packages and/or loose TGI files and
@@ -86,6 +86,7 @@ function _processResource(key: ResourceKey, buffer: Buffer, destFolder: string) 
   if (key.type in TuningResourceType) {
     const subfolder = getSubfolder(TuningResourceType[key.type]);
     // TODO: if inference != key, then insert S4TK comment
+    // TODO: check if file exists, if so, insert number until it doesn't
     // TODO: write to subfolder
   } else if (key.type in BinaryResourceType) {
     if (key.type === BinaryResourceType.SimData) {
@@ -96,21 +97,24 @@ function _processResource(key: ResourceKey, buffer: Buffer, destFolder: string) 
       if (key.group in SimDataGroup) {
         const subfolder = getSubfolder(SimDataGroup[key.group]);
         // TODO: if inference != key, then insert S4TK comment
+        // TODO: check if file exists, if so, insert number until it doesn't
         // TODO: write to subfolder
       } else {
         const subfolder = getSubfolder("Unbound SimData", formatResourceType(key.group));
         // TODO: insert S4TK comment
+        // TODO: check if file exists, if so, insert number until it doesn't
         // TODO: write to subfolder
       }
     } else if (key.type === BinaryResourceType.StringTable) {
       const subfolder = getSubfolder("StringTable");
       // TODO: write as STBL JSON with metadata
+      // TODO: write as "strings_#.Language" with number that doesn't exist
     } else {
       const subfolder = getSubfolder("Raw TGI Files");
-      // TODO: write as TGI file
+      // TODO: write as TGI file or keep in package?
     }
   } else {
     const subfolder = formatResourceType(key.type);
-    // TODO: write as TGI file
+    // TODO: write as TGI file or keep in package?
   }
 }
