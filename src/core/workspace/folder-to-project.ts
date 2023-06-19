@@ -1,33 +1,39 @@
+import * as fs from "fs";
 import * as path from "path";
 import * as vscode from "vscode";
-import { findGlobMatches, parseKeyFromTgi } from "#building/resources";
+import { ResourceKey } from "@s4tk/models/types";
 import { BinaryResourceType, SimDataGroup, TuningResourceType } from "@s4tk/models/enums";
+import { findGlobMatches, parseKeyFromTgi } from "#building/resources";
+import { Package, RawResource, SimDataResource } from "@s4tk/models";
+import { formatResourceType } from "@s4tk/hashing/formatting";
 
 /**
- * Prompts the user for a source folder that contains TS4 files, converts them
- * to a valid S4TK project setup, and writes those new files to a prompted
- * destination folder.
+ * Prompts the user for a folder containing packages and/or loose TGI files and
+ * turns them into a structure that is easier to use with the S4TK extension.
  */
 export async function convertFolderToProject() {
-  const sourceFolder = await _promptForFolder({
+  const sourceFolderUri = await _promptForFolder({
     title: "Folder Containing TS4 Resources",
     openLabel: "Use as Source"
   });
 
-  if (!sourceFolder) return;
+  if (!sourceFolderUri) return;
 
-  const destFolder = await _promptForFolder({
+  const destFolderUri = await _promptForFolder({
     title: "Folder to Use for S4TK Project",
     openLabel: "Create S4TK Project"
   });
 
-  if (!destFolder) return;
+  if (!destFolderUri) return;
   // TODO: check that destination folder is empty, if not, ask to confirm
 
   // FIXME: make sure paths work on Windows
-  const sourcePattern = path.join(sourceFolder.fsPath, "**/*");
+  const sourcePattern = path.join(sourceFolderUri.fsPath, "**/*");
   const matches = findGlobMatches([sourcePattern], undefined, "supported");
-  matches.forEach(_processSourceFile);
+
+  matches.forEach((sourcePath: string) => {
+    _processSourceFile(sourcePath, destFolderUri.fsPath);
+  });
 }
 
 async function _promptForFolder({ title, openLabel }: {
@@ -46,36 +52,65 @@ async function _promptForFolder({ title, openLabel }: {
   return uris?.[0];
 }
 
-function _processSourceFile(filepath: string) {
-  const filename = path.basename(filepath);
-  const key = parseKeyFromTgi(filename);
+function _appendFolder(basepath: string, ...toAppend: string[]): string {
+  const folder = path.join(basepath, ...toAppend);
+  if (!fs.existsSync(folder)) fs.mkdirSync(folder, { recursive: true });
+  return folder;
+}
 
-  if (key) {
-    if (key.type in TuningResourceType) {
-      // TODO: write to folder for tuning type, insert S4TK key comment if there
-      // are any discrepancies between inference and TGI
-    } else if (key.type in BinaryResourceType) {
-      if (key.type === BinaryResourceType.StringTable) {
-        // TODO: write to string tables folder
-      } else if (key.type === BinaryResourceType.SimData) {
-        if (key.group in SimDataGroup) {
-          // TODO: write to folder for tuning type, do not rely on name, find
-          // matching tunig from instance ID
-        } else {
-          // TODO: see if there is a matching tuning with same instance, if so,
-          // use its type if known, else write to an "unknown" folder
-        }
+function _processSourceFile(sourcePath: string, destFolder: string) {
+  const sourceName = path.basename(sourcePath);
+
+  if (sourceName.endsWith(".package")) {
+    const packageName = sourceName.replace(/\.package/g, "");
+    const packageDest = _appendFolder(destFolder, packageName);
+    const buffer = fs.readFileSync(sourcePath);
+    Package.extractResources<RawResource>(buffer, {
+      loadRaw: true,
+      decompressBuffers: true,
+    }).forEach(entry => {
+      _processResource(entry.key, entry.value.buffer, packageDest);
+    });
+  } else {
+    const key = parseKeyFromTgi(sourceName);
+    if (!key) return;
+    const buffer = fs.readFileSync(sourcePath);
+    const resourceDest = _appendFolder(destFolder, "Packageless");
+    _processResource(key, buffer, resourceDest);
+  }
+}
+
+function _processResource(key: ResourceKey, buffer: Buffer, destFolder: string) {
+  const getSubfolder = (...args: string[]) => _appendFolder(destFolder, ...args);
+
+  if (key.type in TuningResourceType) {
+    const subfolder = getSubfolder(TuningResourceType[key.type]);
+    // TODO: if inference != key, then insert S4TK comment
+    // TODO: write to subfolder
+  } else if (key.type in BinaryResourceType) {
+    if (key.type === BinaryResourceType.SimData) {
+      const xmlContent = buffer.slice(0, 4).toString() === "DATA"
+        ? SimDataResource.from(buffer).toXmlDocument().toXml()
+        : buffer.toString();
+
+      if (key.group in SimDataGroup) {
+        const subfolder = getSubfolder(SimDataGroup[key.group]);
+        // TODO: if inference != key, then insert S4TK comment
+        // TODO: write to subfolder
       } else {
-        // TODO: write as-is
+        const subfolder = getSubfolder("Unbound SimData", formatResourceType(key.group));
+        // TODO: insert S4TK comment
+        // TODO: write to subfolder
       }
+    } else if (key.type === BinaryResourceType.StringTable) {
+      const subfolder = getSubfolder("StringTable");
+      // TODO: write as STBL JSON with metadata
     } else {
-      // TODO: write as-is
+      const subfolder = getSubfolder("Raw TGI Files");
+      // TODO: write as TGI file
     }
-  } else if (filename.endsWith(".package")) {
-    // TODO:
-  } else if (filename.endsWith(".xml")) {
-    // TODO:
-  } else if (filename.endsWith(".stbl.json")) {
-    // TODO:
+  } else {
+    const subfolder = formatResourceType(key.type);
+    // TODO: write as TGI file
   }
 }
