@@ -6,6 +6,7 @@ import { Package, RawResource, SimDataResource } from "@s4tk/models";
 import { BinaryResourceType, SimDataGroup, TuningResourceType } from "@s4tk/models/enums";
 import { formatResourceType, formatResourceKey } from "@s4tk/hashing/formatting";
 import { findGlobMatches, parseKeyFromTgi } from "#building/resources";
+import { getNewXmlContentWithOverride, inferXmlMetaData } from "#helpers/xml";
 
 /**
  * Prompts the user for a folder containing packages and/or loose TGI files and
@@ -25,7 +26,9 @@ export async function convertFolderToProject() {
   });
 
   if (!destFolderUri) return;
-  // TODO: check that destination folder is empty, if not, ask to confirm
+  if (fs.readdirSync(destFolderUri.fsPath).length > 0) {
+    // TODO: ask to confirm since dir isn't empty
+  }
 
   // FIXME: make sure paths work on Windows
   const sourcePattern = path.join(sourceFolderUri.fsPath, "**/*");
@@ -58,6 +61,23 @@ function _appendFolder(basepath: string, ...toAppend: string[]): string {
   return folder;
 }
 
+function _getDestFilename(destFolder: string, filename: string, ext: string): string {
+  const baseDestPath = path.join(
+    destFolder,
+    filename.includes(":")
+      ? filename.split(":")[1]
+      : filename
+  );
+
+  let index = 0;
+  let destPath = baseDestPath;
+  while (fs.existsSync(`${destPath}.${ext}`)) {
+    destPath = `${baseDestPath}_${index++}`;
+  }
+
+  return `${destPath}.${ext}`;
+}
+
 function _processSourceFile(sourcePath: string, destFolder: string) {
   const sourceName = path.basename(sourcePath);
 
@@ -85,9 +105,19 @@ function _processResource(key: ResourceKey, buffer: Buffer, destFolder: string) 
 
   if (key.type in TuningResourceType) {
     const subfolder = getSubfolder(TuningResourceType[key.type]);
-    // TODO: if inference != key, then insert S4TK comment
-    // TODO: check if file exists, if so, insert number until it doesn't
-    // TODO: write to subfolder
+    let xmlContent = buffer.toString();
+    const metadata = inferXmlMetaData(buffer.toString());
+    if (key.group !== 0)
+      xmlContent = getNewXmlContentWithOverride(xmlContent, "group", key.group) ?? xmlContent;
+    if (key.type !== metadata.key.type)
+      xmlContent = getNewXmlContentWithOverride(xmlContent, "type", key.type) ?? xmlContent;
+    if (key.instance !== metadata.key.instance)
+      xmlContent = getNewXmlContentWithOverride(xmlContent, "instance", key.instance) ?? xmlContent;
+
+    fs.writeFileSync(
+      _getDestFilename(subfolder, metadata.filename ?? "UnnamedTuning", "xml"),
+      xmlContent
+    );
   } else if (key.type in BinaryResourceType) {
     if (key.type === BinaryResourceType.SimData) {
       const xmlContent = buffer.slice(0, 4).toString() === "DATA"
