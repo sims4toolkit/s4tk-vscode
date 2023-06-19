@@ -28,7 +28,13 @@ export async function convertFolderToProject() {
 
   if (!destFolderUri) return;
   if (fs.readdirSync(destFolderUri.fsPath).length > 0) {
-    // TODO: ask to confirm since dir isn't empty
+    const selected = await vscode.window.showWarningMessage(
+      "The chosen output directory is not empty. Are you sure you want to generate your project files here?",
+      "Yes",
+      "Cancel"
+    );
+
+    if (selected === "Cancel") return;
   }
 
   // FIXME: make sure paths work on Windows
@@ -131,7 +137,7 @@ function _processResource(key: ResourceKey, buffer: Buffer, destFolder: string) 
 
       const xmlContent = simdata.toXmlDocument().toXml();
 
-      // FIXME: insert instance override if tuning not found
+      // FIXME: insert group and instance override if tuning not found
 
       fs.writeFileSync(
         _getDestFilename(subfolder, simdata.instance.name, "SimData.xml"),
