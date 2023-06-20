@@ -33,6 +33,7 @@ export const COMMAND = {
   },
   tuning: {
     copyAsXml: "s4tk.tuning.copyAsXml",
+    cloneNewName: "s4tk.tuning.cloneNewName",
     format: "s4tk.tuning.format",
     overrideGroup: "s4tk.tuning.overrideGroup",
     overrideInstance: "s4tk.tuning.overrideInstance",

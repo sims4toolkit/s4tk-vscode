@@ -87,6 +87,12 @@
 				"enablement": "resourceFilename =~ /[^(\\.SimData)]\\.xml$/"
 			},
 			{
+				"command": "s4tk.tuning.cloneNewName",
+				"title": "Clone With New Name",
+				"category": "TS4 Tuning",
+				"enablement": "resourceFilename =~ /[^(\\.SimData)]\\.xml$/"
+			},
+			{
 				"command": "s4tk.ts4Files.createStblBinary",
 				"title": "Create String Table (Binary)",
 				"category": "TS4 Files"
@@ -288,6 +294,11 @@
 					"group": "S4TK"
 				},
 				{
+					"when": "resourceFilename =~ /[^(\\.SimData)]\\.xml$/",
+					"command": "s4tk.tuning.cloneNewName",
+					"group": "S4TK"
+				},
+				{
 					"when": "resourceFilename =~ /\\.stbl(\\.json)?$/",
 					"command": "s4tk.workspace.setDefaultStbl",
 					"group": "S4TK"
@@ -322,6 +333,11 @@
 				{
 					"when": "resourceFilename =~ /[^(\\.SimData)]\\.xml$/",
 					"command": "s4tk.tuning.copyAsXml",
+					"group": "S4TK"
+				},
+				{
+					"when": "resourceFilename =~ /[^(\\.SimData)]\\.xml$/",
+					"command": "s4tk.tuning.cloneNewName",
 					"group": "S4TK"
 				},
 				{
