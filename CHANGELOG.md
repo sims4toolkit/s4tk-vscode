@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added "Convert Folder to S4TK Project" palette command.
 - Added "Clone With New Name" context menu command.
 - Added link to TDESC when hovering the class name in tuning.
+- Added jump-to-definitions for tuning references.
 ### Fixed
 - Fixed issue with regex that activates the "Copy XML Reference" command.
 

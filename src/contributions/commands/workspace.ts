@@ -9,7 +9,7 @@ import StringTableProxy from "#models/stbl-proxy";
 import { S4TKConfig } from "#models/s4tk-config";
 import { S4TKSettings } from "#helpers/settings";
 import { convertFolderToProject } from "#workspace/folder-to-project";
-import { indexWorkspace } from "#workspace/indexing";
+import S4TKIndex from "#workspace/indexing";
 
 export default function registerWorkspaceCommands() {
   vscode.commands.registerCommand(COMMAND.workspace.build, () => {
@@ -46,7 +46,9 @@ export default function registerWorkspaceCommands() {
 
   vscode.commands.registerCommand(COMMAND.workspace.folderToProject, convertFolderToProject);
 
-  vscode.commands.registerCommand(COMMAND.workspace.refreshIndex, indexWorkspace);
+  vscode.commands.registerCommand(COMMAND.workspace.refreshIndex, () => {
+    S4TKIndex.refresh();
+  });
 }
 
 async function _runBuild(mode: BuildMode, readableMode: string) {

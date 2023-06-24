@@ -4,8 +4,9 @@ import { CONTEXT, FILENAME } from "#constants";
 import { fileExists, findOpenDocument, getRelativeToRoot, replaceEntireDocument } from "#helpers/fs";
 import { S4TKConfig } from "#models/s4tk-config";
 import StringTableJson from "#models/stbl-json";
-import { MessageButton, handleMessageButtonClick } from "./messaging";
 import { S4TKSettings } from "#helpers/settings";
+import { MessageButton, handleMessageButtonClick } from "./messaging";
+import S4TKIndex from "./indexing";
 
 class _S4TKWorkspace {
   //#region Properties
@@ -24,18 +25,31 @@ class _S4TKWorkspace {
    * Does setup work for the S4TK workspace.
    */
   activate() {
+    S4TKIndex.refresh();
+
     vscode.workspace.onDidSaveTextDocument((document) => {
+      if (document.fileName.endsWith(".xml") && !document.fileName.endsWith(".SimData.xml"))
+        S4TKIndex.onSaveDocument(document);
       if (this._isSavingDocument) return;
       if (document.fileName.endsWith(FILENAME.config)) this.loadConfig();
     });
 
     vscode.workspace.onDidDeleteFiles((e) => {
       if (!this.active) return;
+
+      e.files.forEach(file => {
+        S4TKIndex.onDeleteFile(file.fsPath);
+      });
+
       if (e.files.some(uri => uri.path.endsWith(FILENAME.config))) {
         this._setConfig();
         if (S4TKSettings.get("showConfigUnloadedMessage"))
           vscode.window.showWarningMessage("S4TK config has been unloaded.");
       }
+    });
+
+    vscode.workspace.onDidCreateFiles((e) => {
+      e;
     });
 
     this.loadConfig();

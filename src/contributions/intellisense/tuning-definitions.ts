@@ -1,5 +1,5 @@
 import * as vscode from "vscode";
-import { getDefinition } from "#workspace/indexing";
+import S4TKIndex from "#workspace/indexing";
 
 export default class TuningDefinitionProvider implements vscode.DefinitionProvider {
   static register() {
@@ -24,6 +24,6 @@ export default class TuningDefinitionProvider implements vscode.DefinitionProvid
     ));
     if (prefix === 's="') return;
     const word = document.getText(range);
-    return getDefinition(word);
+    return S4TKIndex.getDefinition(word);
   }
 }

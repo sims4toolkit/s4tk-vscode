@@ -8,6 +8,7 @@ import { COMMAND } from "#constants";
 import { replaceEntireDocument } from "#helpers/fs";
 import { S4TKSettings } from "#helpers/settings";
 import { getNewXmlContentWithOverride, getXmlKeyOverrides, inferXmlMetaData } from "#helpers/xml";
+import S4TKIndex from "#workspace/indexing";
 
 export default function registerTuningCommands() {
   vscode.commands.registerCommand(COMMAND.tuning.format,
@@ -118,13 +119,21 @@ export default function registerTuningCommands() {
         root.name = newFilename;
         root.id = fnv64(newFilename);
       });
-      fs.writeFileSync(tuningFsPath, tuning.getBuffer());
+
+      await vscode.workspace.fs.writeFile(
+        vscode.Uri.file(tuningFsPath),
+        tuning.getBuffer()
+      );
+      // TODO: add to index
 
       if (hasSimdata) {
         const simdataFsPath = tuningFsPath.replace(/\.xml$/, ".SimData.xml");
         const simdata = SimDataResource.fromXml(fs.readFileSync(simdataSrc));
         simdata.instance.name = newFilename;
-        fs.writeFileSync(simdataFsPath, simdata.toXmlDocument().toXml());
+        await vscode.workspace.fs.writeFile(
+          vscode.Uri.file(simdataFsPath),
+          Buffer.from(simdata.toXmlDocument().toXml()),
+        );
       }
     }
   );
