@@ -1,6 +1,6 @@
 {
 	"name": "s4tk-vscode",
-	"version": "0.1.0",
+	"version": "0.2.0",
 	"displayName": "Sims 4 Toolkit",
 	"description": "Sims 4 Toolkit support for VS Code.",
 	"icon": "media/assets/s4tk-icon.png",
@@ -84,13 +84,13 @@
 				"command": "s4tk.tuning.copyAsXml",
 				"title": "Copy as XML Reference",
 				"category": "TS4 Tuning",
-				"enablement": "resourceFilename =~ /[^(\\.SimData)]\\.xml$/"
+				"enablement": "resourceFilename =~ /^((?!\\.SimData).)*\\.xml$/"
 			},
 			{
 				"command": "s4tk.tuning.cloneNewName",
 				"title": "Clone With New Name",
 				"category": "TS4 Tuning",
-				"enablement": "resourceFilename =~ /[^(\\.SimData)]\\.xml$/"
+				"enablement": "resourceFilename =~ /^((?!\\.SimData).)*\\.xml$/"
 			},
 			{
 				"command": "s4tk.ts4Files.createStblBinary",
@@ -289,12 +289,12 @@
 					"group": "S4TK"
 				},
 				{
-					"when": "resourceFilename =~ /[^(\\.SimData)]\\.xml$/",
+					"when": "resourceFilename =~ /^((?!\\.SimData).)*\\.xml$/",
 					"command": "s4tk.tuning.copyAsXml",
 					"group": "S4TK"
 				},
 				{
-					"when": "resourceFilename =~ /[^(\\.SimData)]\\.xml$/",
+					"when": "resourceFilename =~ /^((?!\\.SimData).)*\\.xml$/",
 					"command": "s4tk.tuning.cloneNewName",
 					"group": "S4TK"
 				},
@@ -331,12 +331,12 @@
 					"group": "S4TK"
 				},
 				{
-					"when": "resourceFilename =~ /[^(\\.SimData)]\\.xml$/",
+					"when": "resourceFilename =~ /^((?!\\.SimData).)*\\.xml$/",
 					"command": "s4tk.tuning.copyAsXml",
 					"group": "S4TK"
 				},
 				{
-					"when": "resourceFilename =~ /[^(\\.SimData)]\\.xml$/",
+					"when": "resourceFilename =~ /^((?!\\.SimData).)*\\.xml$/",
 					"command": "s4tk.tuning.cloneNewName",
 					"group": "S4TK"
 				},

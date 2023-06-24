@@ -22,6 +22,7 @@ export type XmlMetaData = {
   root: XmlRootType;
   filename?: string;
   key: Partial<ResourceKey>;
+  tuningClass?: string;
 };
 
 //#endregion
@@ -182,18 +183,23 @@ function _inferXmlStringMetaData(content: string): XmlMetaData {
 
 function _parseAttributes(metaData: XmlMetaData, header: string) {
   try {
-    const i = /i="(?<i>[^"]+)"/.exec(header)?.groups?.i;
-    const s = /s="(?<s>[^"]+)"/.exec(header)?.groups?.s;
-    const n = /n="(?<n>[^"]+)"/.exec(header)?.groups?.n;
+    const attrs: { [key: string]: string } = {};
+    const regex = /\s(?<key>[a-z])="(?<value>[^"]+)"/g;
+    let match: RegExpExecArray | null;
 
-    if (i) {
-      const type = TuningResourceType.parseAttr(i);
+    do {
+      match = regex.exec(header);
+      if (match?.groups) attrs[match.groups.key] = match.groups.value;
+    } while (match);
+
+    if (attrs.i) {
+      const type = TuningResourceType.parseAttr(attrs.i);
       if (type !== TuningResourceType.Tuning) metaData.key.type = type;
     }
 
-    if (s) metaData.key.instance = s ? BigInt(s) : 0n;
-
-    if (n) metaData.filename = n;
+    if (attrs.s) metaData.key.instance = attrs.s ? BigInt(attrs.s) : 0n;
+    if (attrs.n) metaData.filename = attrs.n;
+    if (attrs.c) metaData.tuningClass = attrs.c;
   } catch (_) { }
 }
 
