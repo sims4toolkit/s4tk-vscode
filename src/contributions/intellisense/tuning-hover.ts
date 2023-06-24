@@ -18,6 +18,14 @@ export default class TuningHoverProvider implements vscode.HoverProvider {
     token: vscode.CancellationToken
   ): vscode.ProviderResult<vscode.Hover> {
     const range = document.getWordRangeAtPosition(position);
+    if (!range) return;
+    const prefix = document.getText(new vscode.Range(
+      range.start.line,
+      range.start.character - 3,
+      range.start.line,
+      range.start.character,
+    ));
+    if (prefix !== 'c="') return;
     const tuningClass = document.getText(range);
     if (!tuningClass) return;
     const metadata = inferXmlMetaData(document);

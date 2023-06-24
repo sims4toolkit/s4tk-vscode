@@ -146,6 +146,11 @@
 				"command": "s4tk.workspace.folderToProject",
 				"title": "Convert Folder to S4TK Project",
 				"category": "S4TK Workspace"
+			},
+			{
+				"command": "s4tk.workspace.refreshIndex",
+				"title": "Refresh Project Index",
+				"category": "S4TK Workspace"
 			}
 		],
 		"configuration": {

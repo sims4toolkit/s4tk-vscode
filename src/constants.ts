@@ -49,6 +49,7 @@ export const COMMAND = {
     setDefaultStbl: "s4tk.workspace.setDefaultStbl",
     addNewString: "s4tk.workspace.addNewString",
     folderToProject: "s4tk.workspace.folderToProject",
+    refreshIndex: "s4tk.workspace.refreshIndex",
   },
 };
 
