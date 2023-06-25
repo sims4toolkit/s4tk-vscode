@@ -293,8 +293,9 @@ function _resolveStringTables(context: PackageBuildContext) {
 
     if (!allowStringKeyOverrides) {
       const repeatedKeys = stblRef.stbl.value.findRepeatedKeys();
-      if (repeatedKeys.length === 0) return;
-      throw FatalBuildError(`STBL at '${stblRef.filepath}' has ${repeatedKeys.length} repeated key(s): [${repeatedKeys.map(key => hashFormat.formatStringKey(key)).join(", ")}], and stringTableSettings.allowStringKeyOverrides is false`);
+      if (repeatedKeys.length > 0) throw FatalBuildError(
+        `STBL at '${stblRef.filepath}' has ${repeatedKeys.length} repeated key(s): [${repeatedKeys.map(key => hashFormat.formatStringKey(key)).join(", ")}], and stringTableSettings.allowStringKeyOverrides is false`
+      );
       // TODO: associate with file?
     }
 
@@ -307,8 +308,11 @@ function _mergeStringTables(context: PackageBuildContext) {
   const mergedStbls: StringTableReference[] = [];
 
   stblsByLocale.forEach((stbls) => {
-    const filenames = "Merged: " + stbls.map(({ filepath }) =>
-      BuildSummary.makeRelative(context.summary, filepath)).join(" | ");
+    const filenames = stbls.length === 1
+      ? stbls[0].filepath
+      : ("Merged: " + stbls
+        .map(({ filepath }) => `(${BuildSummary.makeRelative(context.summary, filepath)})`)
+        .join(" | "));
 
     const merged = stbls.pop()!;
     merged.filepath = filenames;
