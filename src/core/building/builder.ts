@@ -106,6 +106,7 @@ function _tryAddPackage(context: PackageBuildContext, filepath: string, buffer: 
       if (entry.key.type === enums.BinaryResourceType.StringTable) {
         context.stbls.push({
           filepath: `${filepath}[${inPackageName}]`,
+          fragment: false,
           stbl: entry as types.ResourceKeyPair<models.StringTableResource>
         });
       } else {
@@ -149,7 +150,7 @@ function _tryAddTgiFile(context: PackageBuildContext, filepath: string, buffer: 
       const resource = (buffer.slice(0, 4).toString() === "STBL")
         ? models.StringTableResource.from(buffer)
         : StringTableJson.parse(buffer.toString()).toBinaryResource();
-      context.stbls.push({ filepath, stbl: { key: tgiKey, value: resource } });
+      context.stbls.push({ filepath, fragment: false, stbl: { key: tgiKey, value: resource } });
     } else {
       _addToPackageInfo(context, filepath, tgiKey);
       _addOrReplaceInPackage(context, tgiKey, models.RawResource.from(buffer));
@@ -199,8 +200,6 @@ function _addStringTable(context: PackageBuildContext, filepath: string, buffer:
   if (json) {
     const stblJson = StringTableJson.parse(buffer.toString());
 
-    // TODO: check if fragment, if so, merge with existing stbl
-
     if (stblJson.instanceBase == undefined || stblJson.locale == undefined) {
       const fileWarnings = addAndGetItem(context.summary.written.fileWarnings, {
         file: BuildSummary.makeRelative(context.summary, filepath),
@@ -216,10 +215,17 @@ function _addStringTable(context: PackageBuildContext, filepath: string, buffer:
         fileWarnings.warnings.push(`No locale is set in this STBL's meta data; assuming default of '${S4TKSettings.get("defaultStringTableLocale")}'.`);
         context.summary.buildInfo.problems++;
       }
+
+      if (stblJson.fragment) {
+        const warning = "STBL is a fragment, but is missing either a locale or instance base. Fragments require both values to be explicitly set in order to know which STBL they are a part of.";
+        fileWarnings.warnings.push(warning);
+        throw FatalBuildError(warning);
+      }
     }
 
     context.stbls.push({
       filepath,
+      fragment: Boolean(stblJson.fragment),
       stbl: {
         key: stblJson.getResourceKey(),
         value: stblJson.toBinaryResource()
@@ -236,6 +242,7 @@ function _addStringTable(context: PackageBuildContext, filepath: string, buffer:
 
     context.stbls.push({
       filepath,
+      fragment: false,
       stbl: {
         key: {
           type: enums.BinaryResourceType.StringTable,
@@ -271,8 +278,7 @@ function _addXmlTuning(context: PackageBuildContext, filepath: string, buffer: B
 function _resolveStringTables(context: PackageBuildContext) {
   if (context.stbls.length < 1) return;
 
-  // TODO: find string tables with same instance in same locale, and flatten
-  // them (merge them and remove any entries with keys that are the same)
+  _flattenStringTables(context);
 
   if (S4TKWorkspace.config.stringTableSettings.generateMissingLocales)
     _generateStringTables(context);
@@ -280,7 +286,6 @@ function _resolveStringTables(context: PackageBuildContext) {
   if (S4TKWorkspace.config.stringTableSettings.mergeStringTablesInSamePackage)
     _mergeStringTables(context);
 
-  // const localeToSeenKeys = new Map<enums.StringTableLocale, Set<number>>();
   context.stbls.forEach(stblRef => {
     _addToPackageInfo(context, stblRef.filepath, stblRef.stbl.key);
 
@@ -319,8 +324,8 @@ function _mergeStringTables(context: PackageBuildContext) {
     mergedStbls.push(merged);
   });
 
-  //@ts-expect-error It's readonly, but this is the one and only spot that is
-  // allowed to reset it - don't wanna get rid of the readonly for intellisense
+  //@ts-expect-error It's readonly, but this is one of only two spots where this
+  // value can be set, the other is in _flattenStringTables()
   context.stbls = mergedStbls;
 }
 
@@ -338,6 +343,7 @@ function _generateStringTables(context: PackageBuildContext) {
     function pushClonedStbl(primaryStbl: StringTableReference) {
       context.stbls.push({
         filepath: `Generated from: ${primaryStbl.filepath}`,
+        fragment: false,
         stbl: {
           key: {
             type: primaryStbl.stbl.key.type,
@@ -374,43 +380,50 @@ function _generateStringTables(context: PackageBuildContext) {
   });
 }
 
-// function _flattenStringTables(context: PackageBuildContext) {
-//   const isOverriding = context.pkgConfig.duplicateFilesFrom.length > 0;
-//   const { allowStringKeyOverrides } = S4TKWorkspace.config.stringTableSettings;
+function _flattenStringTables(context: PackageBuildContext) {
+  // FIXME: logic is off here, it's possible we're in an override context, but
+  // that doesn't mean that stbls with repeated res keys are always able to be
+  // overridden, i.e. if they are both in the new `include` list, so this will
+  // not catch all possible errors
+  const isInOverrideContext = context.pkgConfig.duplicateFilesFrom.length > 0;
+  const { allowResourceKeyOverrides } = S4TKWorkspace.config.buildSettings;
+  const overridesAllowed = isInOverrideContext || allowResourceKeyOverrides;
 
-//   context.stbls.forEach(stblInfo => {
-//     const repeatedKeys = stblInfo.stbl.value.findRepeatedKeys();
-//     if (repeatedKeys.length === 0) return;
+  const baseStbls = context.stbls.filter(stbl => !stbl.fragment);
+  const fragmentStbls = context.stbls.filter(stbl => stbl.fragment);
 
-//     // FIXME: this logic isn't quite right, because you don't know for sure if
-//     // the keys are 
-//     if (!isOverriding) {
-//       let warning = `STBL at '${stblInfo.filepath}' has ${repeatedKeys.length} repeated key(s): [${repeatedKeys.map(key => hashFormat.formatStringKey(key)).join(", ")}]`;
+  // mapping of stringified res keys to stbls to use for them
+  const flattenedStbls = new Map<string, StringTableReference>();
+  baseStbls.forEach(baseStbl => {
+    const keyString = hashFormat.formatResourceKey(baseStbl.stbl.key, "-");
 
-//       if (!allowStringKeyOverrides) {
-//         warning = `${warning}, and stringTableSettings.allowStringKeyOverrides is false.`;
-//         context.summary.written.fileWarnings.push({
-//           file: stblInfo.filepath,
-//           warnings: [warning]
-//         });
-//         throw FatalBuildError(warning);
-//       } else {
-//         context.summary.buildInfo.problems++;
-//         context.summary.written.fileWarnings.push({
-//           file: stblInfo.filepath,
-//           warnings: [warning]
-//         });
-//       }
-//     }
+    if (flattenedStbls.has(keyString) && !overridesAllowed) {
+      throw FatalBuildError(`More than one STBL is using the resource key ${keyString} in package '${context.pkgInfo.filename}', and buildSettings.allowResourceKeyOverrides is false. If you're trying to edit or add values to a base string table, you must set the other one(s) as fragments, otherwise they will override the entire string table resource.`);
+    }
 
-//     repeatedKeys.forEach(key => {
-//       const ids = stblInfo.stbl.value.getIdsForKey(key);
-//       // intentionally off by 1 so we keep the last entry
-//       for (let i = 0; i < ids.length - 1; ++i)
-//         stblInfo.stbl.value.delete(ids[i]);
-//     });
-//   });
-// }
+    flattenedStbls.set(keyString, baseStbl);
+  });
+
+  fragmentStbls.forEach(fragmentStbl => {
+    const keyString = hashFormat.formatResourceKey(fragmentStbl.stbl.key, "-");
+    if (flattenedStbls.has(keyString)) {
+      const baseStbl = flattenedStbls.get(keyString)!.stbl.value;
+      fragmentStbl.stbl.value.entries.forEach(entry => {
+        if (baseStbl.hasKey(entry.key)) {
+          baseStbl.getByKey(entry.key).value = entry.value;
+        } else {
+          baseStbl.add(entry.key, entry.value);
+        }
+      });
+    } else {
+      flattenedStbls.set(keyString, fragmentStbl);
+    }
+  });
+
+  //@ts-expect-error It's readonly, but this is one of only two spots where this
+  // value can be set, the other is in _mergeStringTables()
+  context.stbls = [...flattenedStbls.values()];
+}
 
 async function _zipPackagesAndWrite(context: BuildContext, buffers: Buffer[]) {
   const zipConfig = context.summary.config.zip!;

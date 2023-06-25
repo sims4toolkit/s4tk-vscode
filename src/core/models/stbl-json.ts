@@ -19,6 +19,7 @@ interface RawStringTableJsonMetaData {
   locale?: StringTableLocaleName;
   group?: string;
   instanceBase?: string;
+  fragment?: boolean;
   entries: RawStringTableJsonEntries;
 }
 
@@ -47,6 +48,9 @@ export default class StringTableJson {
   private _instanceBase?: string;
   public get instanceBase() { return this._instanceBase; }
 
+  private _fragment?: boolean;
+  public get fragment() { return this._fragment; }
+
   //#endregion
 
   //#region Lifecycle
@@ -58,10 +62,12 @@ export default class StringTableJson {
       locale?: StringTableLocaleName;
       group?: string;
       instanceBase?: string;
+      fragment?: boolean;
     }) {
     this._locale = metadata?.locale;
     this._group = metadata?.group;
     this._instanceBase = metadata?.instanceBase;
+    this._fragment = metadata?.fragment;
   }
 
   /**
@@ -85,6 +91,7 @@ export default class StringTableJson {
             locale: metadata.locale,
             group: metadata.group,
             instanceBase: metadata.instanceBase,
+            fragment: metadata.fragment,
           });
         } else {
           const entriesObj = metadata.entries as RawStringTableJsonObject;
@@ -94,6 +101,7 @@ export default class StringTableJson {
             locale: metadata.locale,
             group: metadata.group,
             instanceBase: metadata.instanceBase,
+            fragment: metadata.fragment,
           });
         }
       } else {
@@ -232,6 +240,7 @@ export default class StringTableJson {
         locale: this._locale,
         group: this._group,
         instanceBase: this._instanceBase,
+        fragment: this._fragment,
         entries: entries,
       }, null, S4TKSettings.getSpacesPerIndent());
     } else {

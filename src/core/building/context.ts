@@ -32,6 +32,7 @@ export interface PackageBuildContext extends BuildContext {
 
 export interface StringTableReference {
   filepath: string;
+  fragment: boolean;
   stbl: ResourceKeyPair<StringTableResource>;
 }
 
