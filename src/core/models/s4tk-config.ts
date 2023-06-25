@@ -1,5 +1,4 @@
 import * as path from "path";
-import * as process from "process";
 import * as vscode from "vscode";
 import { SCHEMAS } from "#assets";
 import { FILENAME } from "#constants";
@@ -15,6 +14,7 @@ export interface S4TKConfig {
     destinations: string[];
     packages: {
       filename: string;
+      duplicateFilesFrom?: string[];
       include: string[];
       exclude?: string[];
     }[];
@@ -25,6 +25,7 @@ export interface S4TKConfig {
     allowFolderCreation: boolean;
     allowMissingSourceFiles: boolean;
     allowPackageOverlap: boolean;
+    allowResourceKeyOverrides: boolean;
     outputBuildSummary: "none" | "partial" | "full";
   };
 
@@ -39,6 +40,7 @@ export interface S4TKConfig {
   };
 
   stringTableSettings: {
+    allowStringKeyOverrides: boolean;
     defaultStringTable: string;
     generateMissingLocales: boolean;
     mergeStringTablesInSamePackage: boolean;
@@ -59,6 +61,7 @@ const _CONFIG_TRANSFORMER: ConfigTransformer = {
       allowFolderCreation: false,
       allowMissingSourceFiles: false,
       allowPackageOverlap: false,
+      allowResourceKeyOverrides: false,
       outputBuildSummary: "partial",
     },
   },
@@ -71,6 +74,7 @@ const _CONFIG_TRANSFORMER: ConfigTransformer = {
   },
   stringTableSettings: {
     defaults: {
+      allowStringKeyOverrides: false,
       defaultStringTable: "",
       generateMissingLocales: true,
       mergeStringTablesInSamePackage: true,
@@ -158,13 +162,7 @@ export namespace S4TKConfig {
       } else {
         const baseUri = vscode.workspace.workspaceFolders?.[0]?.uri
         if (!baseUri) return;
-        // HACK: for relative ignored globs to work on windows
-        if (process.platform === "win32") {
-          const [drive, filepath] = baseUri.fsPath.split(":", 2);
-          absPath = path.resolve(`${drive.toUpperCase()}:${filepath}`, original);
-        } else {
-          absPath = path.resolve(baseUri.fsPath, original);
-        }
+        absPath = path.resolve(baseUri.fsPath, original);
       }
     }
     return isGlob ? absPath.replace(/\\/g, "/") : absPath;

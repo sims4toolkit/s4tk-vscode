@@ -44,6 +44,13 @@
                 "type": "string",
                 "description": "What to name the built package file."
               },
+              "duplicateFilesFrom": {
+                "type": "array",
+                "description": "List of previously-built packages to base this new package on. Files from these packages will be copied over, in order, overriding each other if the resource keys are the same. The values in this list must match the filenames of packages that precede this one in the `packages` list.",
+                "items": {
+                  "type": "string"
+                }
+              },
               "include": {
                 "type": "array",
                 "description": "List of relative glob patterns that capture all files that should be built into this package.\n\n[These glob patterns are relative to the source folder set in `buildInstructions.source`]",
@@ -86,6 +93,11 @@
         "allowPackageOverlap": {
           "type": "boolean",
           "description": "Whether or not packages are allowed to contain the same resources. If false, then packages with overlapping glob patterns will cause the build process to fail. You should not set this to true unless you have a legitimate reason for doing so, as this setting will help you catch common bugs with glob patterns.",
+          "default": false
+        },
+        "allowResourceKeyOverrides": {
+          "type": "boolean",
+          "description": "Whether or not packages with no items in `duplicateFilesFrom` are allowed to contain resources that override each other. If false, then attempting to write more than one resource with the same key to a package will cause the build script to fail. You should not set this to true unless you have a legitimate reason for doing so, as this setting will help you catch common bugs with resource keys.",
           "default": false
         },
         "outputBuildSummary": {
@@ -150,6 +162,11 @@
       "description": "Settings that affect your string tables.",
       "additionalProperties": false,
       "properties": {
+        "allowStringKeyOverrides": {
+          "type": "boolean",
+          "description": "Whether or not string tables are allowed to contain entries that override each other. If false, then two strings with the same key in the same locale will cause the build script to fail. You should not set this to true unless you have a legitimate reason for doing so, as this setting will help you catch common bugs with strings.",
+          "default": false
+        },
         "defaultStringTable": {
           "type": "string",
           "description": "Absolute or relative path to the string table (binary or JSON) that serves as the default for this project. Any strings generated via commands will be added to this string table.\n\n[If path is relative, it is relative to the folder that contains your `s4tk.config.json`]",

@@ -117,7 +117,7 @@ function _tryAddPackage(context: PackageBuildContext, filepath: string, buffer: 
         }
 
         _addToPackageInfo(context, filepath, entry.key, { inPackageName });
-        context.pkg.add(entry.key, entry.value);
+        _addOrReplaceInPackage(context, entry.key, entry.value);
       }
     });
 
@@ -143,7 +143,7 @@ function _tryAddTgiFile(context: PackageBuildContext, filepath: string, buffer: 
         ? models.RawResource.from(buffer)
         : models.SimDataResource.fromXml(buffer);
       resource.getBuffer(true); // just to catch serialization errors
-      context.pkg.add(tgiKey, resource);
+      _addOrReplaceInPackage(context, tgiKey, resource);
     } else if (tgiKey.type === enums.BinaryResourceType.StringTable) {
       fileType = "string table";
       const resource = (buffer.slice(0, 4).toString() === "STBL")
@@ -152,7 +152,7 @@ function _tryAddTgiFile(context: PackageBuildContext, filepath: string, buffer: 
       context.stbls.push({ filepath, stbl: { key: tgiKey, value: resource } });
     } else {
       _addToPackageInfo(context, filepath, tgiKey);
-      context.pkg.add(tgiKey, models.RawResource.from(buffer));
+      _addOrReplaceInPackage(context, tgiKey, models.RawResource.from(buffer));
     }
 
     return true;
@@ -198,6 +198,8 @@ function _tryAddSupportedFile(context: PackageBuildContext, filepath: string, bu
 function _addStringTable(context: PackageBuildContext, filepath: string, buffer: Buffer, json: boolean) {
   if (json) {
     const stblJson = StringTableJson.parse(buffer.toString());
+
+    // TODO: check if fragment, if so, merge with existing stbl
 
     if (stblJson.instanceBase == undefined || stblJson.locale == undefined) {
       const fileWarnings = addAndGetItem(context.summary.written.fileWarnings, {
@@ -255,7 +257,7 @@ function _addXmlSimData(context: PackageBuildContext, filepath: string, buffer: 
   _addToPackageInfo(context, filepath, key);
   const simdata = models.SimDataResource.fromXml(content);
   simdata.getBuffer(true); // just to catch serialization errors
-  context.pkg.add(key, simdata);
+  _addOrReplaceInPackage(context, key, simdata);
 }
 
 function _addXmlTuning(context: PackageBuildContext, filepath: string, buffer: Buffer) {
@@ -263,21 +265,14 @@ function _addXmlTuning(context: PackageBuildContext, filepath: string, buffer: B
   const key = _getTuningKey(context, filepath, content);
   _addToPackageInfo(context, filepath, key);
   // raw is more memory efficient than XML, just stores a buffer
-  context.pkg.add(key, models.RawResource.from(buffer));
+  _addOrReplaceInPackage(context, key, models.RawResource.from(buffer));
 }
 
 function _resolveStringTables(context: PackageBuildContext) {
   if (context.stbls.length < 1) return;
 
-  context.stbls.forEach(({ stbl }) => {
-    stbl.value.entries.forEach(({ key }) => {
-      if (context.stringKeys.has(key)) {
-        // TODO: record repeated key
-      } else {
-        context.stringKeys.add(key);
-      }
-    });
-  });
+  // TODO: find string tables with same instance in same locale, and flatten
+  // them (merge them and remove any entries with keys that are the same)
 
   if (S4TKWorkspace.config.stringTableSettings.generateMissingLocales)
     _generateStringTables(context);
@@ -285,9 +280,28 @@ function _resolveStringTables(context: PackageBuildContext) {
   if (S4TKWorkspace.config.stringTableSettings.mergeStringTablesInSamePackage)
     _mergeStringTables(context);
 
+  // const localeToSeenKeys = new Map<enums.StringTableLocale, Set<number>>();
   context.stbls.forEach(stblRef => {
     _addToPackageInfo(context, stblRef.filepath, stblRef.stbl.key);
-    context.pkg.add(stblRef.stbl.key, stblRef.stbl.value);
+
+    // const locale = enums.StringTableLocale.getLocale(stblRef.stbl.key.instance);
+    // if (!localeToSeenKeys.has(locale)) localeToSeenKeys.set(locale, new Set());
+    // const seenKeys = localeToSeenKeys.get(locale)!;
+
+    // stblRef.stbl.value.entries.forEach(entry => {
+    //   if (seenKeys.has(entry.key)) {
+    //     if (allowStringKeyOverrides) {
+    //       // TODO:
+    //       stblRef.stbl.value.getIdsForKey(entry.key);
+    //     } else {
+    //       // TODO:
+    //     }
+    //   } else {
+    //     seenKeys.add(entry.key);
+    //   }
+    // });
+
+    _addOrReplaceInPackage(context, stblRef.stbl.key, stblRef.stbl.value);
   });
 }
 
@@ -360,6 +374,44 @@ function _generateStringTables(context: PackageBuildContext) {
   });
 }
 
+// function _flattenStringTables(context: PackageBuildContext) {
+//   const isOverriding = context.pkgConfig.duplicateFilesFrom.length > 0;
+//   const { allowStringKeyOverrides } = S4TKWorkspace.config.stringTableSettings;
+
+//   context.stbls.forEach(stblInfo => {
+//     const repeatedKeys = stblInfo.stbl.value.findRepeatedKeys();
+//     if (repeatedKeys.length === 0) return;
+
+//     // FIXME: this logic isn't quite right, because you don't know for sure if
+//     // the keys are 
+//     if (!isOverriding) {
+//       let warning = `STBL at '${stblInfo.filepath}' has ${repeatedKeys.length} repeated key(s): [${repeatedKeys.map(key => hashFormat.formatStringKey(key)).join(", ")}]`;
+
+//       if (!allowStringKeyOverrides) {
+//         warning = `${warning}, and stringTableSettings.allowStringKeyOverrides is false.`;
+//         context.summary.written.fileWarnings.push({
+//           file: stblInfo.filepath,
+//           warnings: [warning]
+//         });
+//         throw FatalBuildError(warning);
+//       } else {
+//         context.summary.buildInfo.problems++;
+//         context.summary.written.fileWarnings.push({
+//           file: stblInfo.filepath,
+//           warnings: [warning]
+//         });
+//       }
+//     }
+
+//     repeatedKeys.forEach(key => {
+//       const ids = stblInfo.stbl.value.getIdsForKey(key);
+//       // intentionally off by 1 so we keep the last entry
+//       for (let i = 0; i < ids.length - 1; ++i)
+//         stblInfo.stbl.value.delete(ids[i]);
+//     });
+//   });
+// }
+
 async function _zipPackagesAndWrite(context: BuildContext, buffers: Buffer[]) {
   const zipConfig = context.summary.config.zip!;
   const zip = new JSZip();
@@ -411,6 +463,28 @@ function _addToPackageInfo(
       key: hashFormat.formatResourceKey(key, "-"),
       type: _getFileTypeString(key),
     });
+  }
+}
+
+function _addOrReplaceInPackage(context: PackageBuildContext, key: types.ResourceKey, value: types.Resource) {
+  if (context.pkg.hasKey(key)) {
+    // FIXME: potential issue with this logic, since it's possible that we are
+    // in an override context, but the file being overridden right now was not
+    // declared in one of the base packages, and even if it was, it's possible
+    // that it's being overridden more than once by files in `include`, in which
+    // case a fatal error should also be reported
+    if (context.pkgConfig.duplicateFilesFrom.length < 1) {
+      if (!S4TKWorkspace.config.buildSettings.allowResourceKeyOverrides) {
+        throw FatalBuildError(`More than one file is using the resource key ${hashFormat.formatResourceKey(key, "-")} in package '${context.pkgInfo.filename}', and buildSettings.allowResourceKeyOverrides is false. To see which files have the same keys, make sure your build summary type is set to "full".`, {
+          addWarning: context.pkgConfig
+        });
+      }
+    }
+
+    const entry = context.pkg.getByKey(key);
+    entry.value = value;
+  } else {
+    context.pkg.add(key, value);
   }
 }
 

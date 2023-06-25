@@ -98,6 +98,7 @@ function _validateBuildPackages(summary: BuildSummary) {
   const seenGlobMatches = new Set<string>();
   packages.forEach((pkg, i) => {
     const validatedPkg = addAndGetItem(summary.config.packages, {
+      duplicateFilesFrom: pkg.duplicateFilesFrom?.map(name => _guaranteeExtension(name, ".package")) ?? [],
       filename: _guaranteeExtension(pkg.filename, ".package"),
       include: [],
       exclude: [],
@@ -107,6 +108,14 @@ function _validateBuildPackages(summary: BuildSummary) {
       `${propName}[${i}].filename cannot be empty`, {
       addWarning: validatedPkg
     });
+
+    for (let j = 0; j < validatedPkg.duplicateFilesFrom.length; ++j) {
+      const name = validatedPkg.duplicateFilesFrom[j];
+      if (!seenFilenames.has(name)) throw FatalBuildError(
+        `${propName}[${i}].duplicateFilesFrom[${j}] is "${name}", but no package with this filename exists yet; perhaps this is a typo, or you have ordered your ${propName} incorrectly?`, {
+        addWarning: validatedPkg
+      });
+    }
 
     if (seenFilenames.has(validatedPkg.filename)) throw FatalBuildError(
       `${propName}[${i}].filename is already in use by another package`, {

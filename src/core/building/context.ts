@@ -9,9 +9,6 @@ export interface BuildContext {
   /** Summary of the build process. */
   readonly summary: BuildSummary;
 
-  /** Set of string keys that are already in use (all packages). */
-  readonly stringKeys: Set<number>;
-
   /** Cache that maps tuning filenames (on disk) to their keys. */
   readonly tuningKeys: Map<string, ResourceKey>;
 }
@@ -22,6 +19,9 @@ export interface PackageBuildContext extends BuildContext {
 
   /** Package that the source file is being written to. */
   readonly pkg: Package;
+
+  /** Package config item for the package being written. */
+  readonly pkgConfig: ValidatedPackageInfo;
 
   /** Information about the package in the BuildSummary. */
   readonly pkgInfo: WrittenPackageInfo;
@@ -44,7 +44,6 @@ export namespace BuildContext {
   export function create(summary: BuildSummary): BuildContext {
     return {
       summary,
-      stringKeys: new Set(),
       tuningKeys: new Map(),
     };
   }
@@ -59,10 +58,10 @@ export namespace BuildContext {
   export function forPackage(context: BuildContext, pkgConfig: ValidatedPackageInfo): PackageBuildContext {
     return {
       summary: context.summary,
-      stringKeys: context.stringKeys,
       tuningKeys: context.tuningKeys,
       filepaths: findGlobMatches(pkgConfig.include, pkgConfig.exclude, "supported"),
       pkg: new Package(),
+      pkgConfig: pkgConfig,
       pkgInfo: addAndGetItem(context.summary.written.packages, {
         filename: pkgConfig.filename,
         resources: S4TKWorkspace.config.buildSettings.outputBuildSummary === "full"

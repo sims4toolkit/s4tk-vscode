@@ -19,6 +19,7 @@
     "allowFolderCreation": false,
     "allowMissingSourceFiles": false,
     "allowPackageOverlap": false,
+    "allowResourceKeyOverrides": false,
     "outputBuildSummary": "partial"
   },
   "releaseSettings": {
@@ -31,6 +32,7 @@
     "overrideDestinations": []
   },
   "stringTableSettings": {
+    "allowStringKeyOverrides": false,
     "defaultStringTable": "src/strings/default.stbl.json",
     "generateMissingLocales": true,
     "mergeStringTablesInSamePackage": true

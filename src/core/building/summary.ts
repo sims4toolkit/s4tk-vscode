@@ -32,6 +32,7 @@ export interface BuildSummary {
 
 export interface ValidatedPackageInfo extends Warnable {
   filename: string;
+  duplicateFilesFrom: string[];
   include: ValidatedPath[];
   exclude: ValidatedPath[];
 }
