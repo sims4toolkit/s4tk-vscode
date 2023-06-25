@@ -6,6 +6,7 @@ import * as enums from "@s4tk/models/enums";
 import * as types from "@s4tk/models/types";
 import * as hashFormat from "@s4tk/hashing/formatting";
 import { randomFnv64 } from "#helpers/hashing";
+import { S4TKSettings } from "#helpers/settings";
 import { getXmlKeyOverrides, inferXmlMetaData } from "#helpers/xml";
 import StringTableJson from "#models/stbl-json";
 import S4TKWorkspace from "#workspace/s4tk-workspace";
@@ -15,7 +16,6 @@ import { BuildMode, BuildSummary } from "./summary";
 import { BuildContext, PackageBuildContext, StringTableReference } from "./context";
 import { prevalidateBuild } from "./prevalidation";
 import { postvalidateBuild } from "./postvalidation";
-import { S4TKSettings } from "#helpers/settings";
 
 //#region Exported Functions
 
@@ -286,25 +286,17 @@ function _resolveStringTables(context: PackageBuildContext) {
   if (S4TKWorkspace.config.stringTableSettings.mergeStringTablesInSamePackage)
     _mergeStringTables(context);
 
+  const { allowStringKeyOverrides } = S4TKWorkspace.config.stringTableSettings;
+
   context.stbls.forEach(stblRef => {
     _addToPackageInfo(context, stblRef.filepath, stblRef.stbl.key);
 
-    // const locale = enums.StringTableLocale.getLocale(stblRef.stbl.key.instance);
-    // if (!localeToSeenKeys.has(locale)) localeToSeenKeys.set(locale, new Set());
-    // const seenKeys = localeToSeenKeys.get(locale)!;
-
-    // stblRef.stbl.value.entries.forEach(entry => {
-    //   if (seenKeys.has(entry.key)) {
-    //     if (allowStringKeyOverrides) {
-    //       // TODO:
-    //       stblRef.stbl.value.getIdsForKey(entry.key);
-    //     } else {
-    //       // TODO:
-    //     }
-    //   } else {
-    //     seenKeys.add(entry.key);
-    //   }
-    // });
+    if (!allowStringKeyOverrides) {
+      const repeatedKeys = stblRef.stbl.value.findRepeatedKeys();
+      if (repeatedKeys.length === 0) return;
+      throw FatalBuildError(`STBL at '${stblRef.filepath}' has ${repeatedKeys.length} repeated key(s): [${repeatedKeys.map(key => hashFormat.formatStringKey(key)).join(", ")}], and stringTableSettings.allowStringKeyOverrides is false`);
+      // TODO: associate with file?
+    }
 
     _addOrReplaceInPackage(context, stblRef.stbl.key, stblRef.stbl.value);
   });
@@ -399,6 +391,7 @@ function _flattenStringTables(context: PackageBuildContext) {
 
     if (flattenedStbls.has(keyString) && !overridesAllowed) {
       throw FatalBuildError(`More than one STBL is using the resource key ${keyString} in package '${context.pkgInfo.filename}', and buildSettings.allowResourceKeyOverrides is false. If you're trying to edit or add values to a base string table, you must set the other one(s) as fragments, otherwise they will override the entire string table resource.`);
+      // TODO: associate with a file?
     }
 
     flattenedStbls.set(keyString, baseStbl);
