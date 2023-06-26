@@ -87,6 +87,11 @@ async function _buildValidatedProject(summary: BuildSummary) {
 }
 
 function _insertDuplicatedFiles(context: PackageBuildContext, existingPackages: Map<string, models.Package>) {
+  // FIXME: if a stbl has the same ID as another stbl in the base package and is
+  // not marked as a fragment, it will replace the base stbl in that locale only,
+  // but all other locales generated in the first package will not be overridden,
+  // they will be added to. this is technically a non-issue as it will never
+  // actually cause a problem, but it is unexpected behavior
   context.pkgConfig.duplicateFilesFrom.forEach(pkgName => {
     const pkg = existingPackages.get(pkgName);
     if (!pkg) throw FatalBuildError(`${context.pkgInfo.filename} depends on ${pkgName}, but ${pkgName} was not found at runtime. This error should never occur; please report this immediately (${LINK.issues}).`);
