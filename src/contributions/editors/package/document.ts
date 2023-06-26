@@ -198,24 +198,7 @@ function _getVirtualContent(entry: ResourceKeyPair): string {
   } else if (entry.value instanceof models.SimDataResource) {
     return entry.value.toXmlDocument().toXml();
   } else if (entry.value instanceof models.StringTableResource) {
-    const group = formatAsHexString(entry.key.group, 8, true);
-
-    const locale: StringTableLocaleName = enums.StringTableLocale[
-      enums.StringTableLocale.getLocale(entry.key.instance)
-    ] as StringTableLocaleName;
-
-    const instanceBase = formatAsHexString(
-      enums.StringTableLocale.getInstanceBase(entry.key.instance),
-      14,
-      true
-    );
-
-    const json = new StringTableJson(
-      "object-metadata",
-      entry.value.toJsonObject(true, false) as { key: string; value: string; }[],
-      { group, locale, instanceBase }
-    );
-
+    const json = StringTableJson.fromBinary(entry.key, entry.value);
     return json.stringify();
   } else {
     return entry.value.getBuffer().toString();
