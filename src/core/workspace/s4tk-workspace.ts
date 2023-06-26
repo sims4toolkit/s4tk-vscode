@@ -1,5 +1,5 @@
 import * as vscode from "vscode";
-import { SAMPLES } from "#assets";
+import S4TKAssets from "#assets";
 import { CONTEXT, FILENAME } from "#constants";
 import { fileExists, findOpenDocument, getRelativeToRoot, replaceEntireDocument } from "#helpers/fs";
 import { S4TKConfig } from "#models/s4tk-config";
@@ -8,7 +8,8 @@ import { S4TKSettings } from "#helpers/settings";
 import { MessageButton, handleMessageButtonClick } from "./messaging";
 import S4TKIndex from "./indexing";
 
-class _S4TKWorkspace {
+// FIXME: remove _ prefix and no longer use singleton
+export class _S4TKWorkspace {
   //#region Properties
 
   private _isSavingDocument: boolean = false;
@@ -91,7 +92,7 @@ class _S4TKWorkspace {
       return false;
     }
 
-    const configData = await vscode.workspace.fs.readFile(SAMPLES.config);
+    const configData = await vscode.workspace.fs.readFile(S4TKAssets.SAMPLES.config);
 
     vscode.workspace.fs.writeFile(configInfo.uri, configData).then(() => {
       this.loadConfig();
@@ -127,18 +128,18 @@ class _S4TKWorkspace {
       return uri;
     };
 
-    createFile(SAMPLES.readme, "HowToUseS4TK.md").then((uri) => {
+    createFile(S4TKAssets.SAMPLES.readme, "HowToUseS4TK.md").then((uri) => {
       vscode.window.showTextDocument(uri);
     });
 
-    createFile(SAMPLES.gitignore, ".gitignore");
-    createFile(SAMPLES.package, "src", "packages", "sample.package");
-    createFile(SAMPLES.tuning, "src", "tuning", "buff_Example.xml");
-    createFile(SAMPLES.simdata, "src", "tuning", "buff_Example.SimData.xml");
-    createFile(SAMPLES.stbl, "src", "strings", "sample.stbl");
+    createFile(S4TKAssets.SAMPLES.gitignore, ".gitignore");
+    createFile(S4TKAssets.SAMPLES.package, "src", "packages", "sample.package");
+    createFile(S4TKAssets.SAMPLES.tuning, "src", "tuning", "buff_Example.xml");
+    createFile(S4TKAssets.SAMPLES.simdata, "src", "tuning", "buff_Example.SimData.xml");
+    createFile(S4TKAssets.SAMPLES.stbl, "src", "strings", "sample.stbl");
 
     const stblJson = StringTableJson.generate(S4TKSettings.get("defaultStringTableJsonType"));
-    JSON.parse((await fs.readFile(SAMPLES.stblJsonStrings)).toString()
+    JSON.parse((await fs.readFile(S4TKAssets.SAMPLES.stblJsonStrings)).toString()
     ).forEach((value: string) => stblJson.addEntry({ value }));
     stblJson.insertDefaultMetadata();
     const stblBuffer = Buffer.from(stblJson.stringify());
