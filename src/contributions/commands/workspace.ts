@@ -10,6 +10,8 @@ import { S4TKConfig } from "#models/s4tk-config";
 import { S4TKSettings } from "#helpers/settings";
 import { convertFolderToProject } from "#workspace/folder-to-project";
 import S4TKIndex from "#workspace/indexing";
+import StringTableJson from "#models/stbl-json";
+import { fileExists } from "#helpers/fs";
 
 export default function registerWorkspaceCommands() {
   vscode.commands.registerCommand(COMMAND.workspace.build, () => {
@@ -38,6 +40,33 @@ export default function registerWorkspaceCommands() {
 
   vscode.commands.registerCommand(COMMAND.workspace.setDefaultStbl, (uri: vscode.Uri) => {
     S4TKWorkspace.setDefaultStbl(uri);
+  });
+
+  vscode.commands.registerCommand(COMMAND.workspace.createStblFragment, async (uri: vscode.Uri) => {
+    try {
+      const dirname = path.dirname(uri.fsPath);
+      const filename = path.basename(uri.fsPath);
+
+      let fragmentName = await vscode.window.showInputBox({
+        title: "Enter the name to use for the fragment.",
+        value: filename.replace(/\.stbl\.json$/, "")
+      });
+
+      if (!fragmentName) return;
+      if (!fragmentName.endsWith(".stbl.json")) fragmentName += ".stbl.json";
+      const fragmentUri = vscode.Uri.file(path.join(dirname, fragmentName));
+      if (await fileExists(fragmentUri)) {
+        vscode.window.showWarningMessage("Cannot create a fragment at the chosen location because that file already exists.");
+        return;
+      }
+
+      const content = await vscode.workspace.fs.readFile(uri);
+      const source = StringTableJson.parse(content.toString());
+      const fragment = source.toFragment();
+      vscode.workspace.fs.writeFile(fragmentUri, Buffer.from(fragment.stringify()))
+    } catch (e) {
+      vscode.window.showErrorMessage(`Failed to create fragment: ${e}`);
+    }
   });
 
   vscode.commands.registerCommand(COMMAND.workspace.addNewString, (clickedUri?: vscode.Uri) => {

@@ -248,18 +248,40 @@ export default class StringTableJson {
     }
   }
 
+  /**
+   * Converts this StringTableJson to an array in-place.
+   */
   toArray() {
     if (this._format === "object") this._format = "array";
     else if (this._format === "object-metadata") this._format = "array-metadata";
   }
 
+  /**
+   * Converts this StringTableJson to an object in-place.
+   */
   toObject() {
     if (this._format === "array") this._format = "object";
     else if (this._format === "array-metadata") this._format = "object-metadata";
   }
 
   /**
-   * Converts this STBL JSON to a binary STBL resource.
+   * Creates a new StringTableJson that is a fragment of this one.
+   */
+  toFragment(): StringTableJson {
+    if (!(this.hasMetaData && this.instanceBase && this.locale != null)) {
+      throw new Error("Cannot create a fragment for a STBL JSON that doesn't have a set locale and instance base.");
+    }
+
+    return new StringTableJson(this.format, [], {
+      locale: this.locale,
+      group: this.group,
+      instanceBase: this.instanceBase,
+      fragment: true
+    });
+  }
+
+  /**
+   * Creates a binary StringTableResource from this StringTableJson.
    */
   toBinaryResource(): StringTableResource {
     return new StringTableResource(this._entries.map(({ key, value }) => ({

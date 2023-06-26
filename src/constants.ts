@@ -47,6 +47,7 @@ export const COMMAND = {
     createWorkspace: "s4tk.workspace.createWorkspace",
     reloadConfig: "s4tk.workspace.reloadConfig",
     setDefaultStbl: "s4tk.workspace.setDefaultStbl",
+    createStblFragment: "s4tk.workspace.createStblFragment",
     addNewString: "s4tk.workspace.addNewString",
     folderToProject: "s4tk.workspace.folderToProject",
     refreshIndex: "s4tk.workspace.refreshIndex",

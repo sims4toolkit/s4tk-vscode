@@ -123,6 +123,11 @@
 				"category": "S4TK Workspace"
 			},
 			{
+				"command": "s4tk.workspace.createStblFragment",
+				"title": "Create Fragment for STBL",
+				"category": "S4TK Workspace"
+			},
+			{
 				"command": "s4tk.workspace.addNewString",
 				"title": "Add New String",
 				"category": "S4TK Workspace"
@@ -314,6 +319,11 @@
 					"group": "S4TK"
 				},
 				{
+					"when": "resourceFilename =~ /\\.stbl\\.json$/",
+					"command": "s4tk.workspace.createStblFragment",
+					"group": "S4TK"
+				},
+				{
 					"when": "resourceFilename =~ /\\.stbl(\\.json)?$/",
 					"command": "s4tk.workspace.addNewString",
 					"group": "S4TK"
@@ -353,6 +363,11 @@
 				{
 					"when": "resourceFilename =~ /220557DA.[0-9A-Fa-f]{8}.[0-9A-Fa-f]{16}\\.binary$/",
 					"command": "s4tk.workspace.setDefaultStbl",
+					"group": "S4TK"
+				},
+				{
+					"when": "resourceFilename =~ /\\.stbl\\.json$/",
+					"command": "s4tk.workspace.createStblFragment",
 					"group": "S4TK"
 				},
 				{
