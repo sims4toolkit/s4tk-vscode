@@ -16,6 +16,7 @@ import { BuildMode, BuildSummary } from "./summary";
 import { BuildContext, PackageBuildContext, StringTableReference } from "./context";
 import { prevalidateBuild } from "./prevalidation";
 import { postvalidateBuild } from "./postvalidation";
+import { LINK } from "#constants";
 
 //#region Exported Functions
 
@@ -53,11 +54,17 @@ export async function buildProject(mode: BuildMode): Promise<BuildSummary> {
 //#region Build Helpers
 
 async function _buildValidatedProject(summary: BuildSummary) {
-  const builtPackages: Buffer[] = []; // only for use with release mode
+  const existingPackages = new Map<string, models.Package>();
   const context = BuildContext.create(summary);
 
+  const shouldTrackPackages = summary.buildInfo.mode === "release"
+    || summary.config.packages.some(p => p.duplicateFilesFrom.length > 0);
+
   summary.config.packages.forEach(pkgConfig => {
-    const pkg = _buildPackage(BuildContext.forPackage(context, pkgConfig));
+    const pkgContext = BuildContext.forPackage(context, pkgConfig);
+    if (pkgConfig.duplicateFilesFrom.length > 0)
+      _insertDuplicatedFiles(pkgContext, existingPackages);
+    const pkg = _buildPackage(pkgContext);
 
     if (summary.buildInfo.mode === "build") {
       summary.config.destinations.forEach(({ resolved }) => {
@@ -66,13 +73,35 @@ async function _buildValidatedProject(summary: BuildSummary) {
         const outPath = path.join(resolved, pkgConfig.filename);
         fs.writeFileSync(outPath, pkg.getBuffer());
       });
-    } else if (summary.buildInfo.mode === "release") {
-      builtPackages.push(pkg.getBuffer());
     }
+
+    if (shouldTrackPackages) existingPackages.set(pkgConfig.filename, pkg);
   });
 
-  if (summary.buildInfo.mode === "release")
-    await _zipPackagesAndWrite(context, builtPackages);
+  if (summary.buildInfo.mode === "release") {
+    await _zipPackagesAndWrite(
+      context,
+      [...existingPackages.values()].map(pkg => pkg.getBuffer())
+    );
+  }
+}
+
+function _insertDuplicatedFiles(context: PackageBuildContext, existingPackages: Map<string, models.Package>) {
+  context.pkgConfig.duplicateFilesFrom.forEach(pkgName => {
+    const pkg = existingPackages.get(pkgName);
+    if (!pkg) throw FatalBuildError(`${context.pkgInfo.filename} depends on ${pkgName}, but ${pkgName} was not found at runtime. This error should never occur; please report this immediately (${LINK.issues}).`);
+    pkg.entries.forEach((entry, i) => {
+      if (entry.key.type === enums.BinaryResourceType.StringTable) {
+        context.stbls.push({
+          filepath: `Duplicated: ${pkgName}[${i}]`,
+          fragment: false,
+          stbl: (entry.clone() as unknown as types.ResourceKeyPair<models.StringTableResource>)
+        });
+      } else {
+        _addOrReplaceInPackage(context, entry.key, entry.value);
+      }
+    });
+  });
 }
 
 function _buildPackage(context: PackageBuildContext): models.Package {
