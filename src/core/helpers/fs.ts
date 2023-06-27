@@ -1,69 +1,4 @@
-import * as path from "path";
 import * as vscode from "vscode";
-
-/**
- * Returns an FS path that is relative to the root of the VS Code workspace.
- * 
- * @param uri URI to make relative
- */
-export function getRelativeToRoot(uri: vscode.Uri): string | undefined {
-  try {
-    const rootUri = vscode.workspace.workspaceFolders?.[0]?.uri;
-    if (!rootUri) return;
-    const relPath = path.relative(rootUri.fsPath, uri.fsPath);
-    if (relPath) return relPath;
-  } catch (_) { }
-}
-
-/**
- * Prompts the user for a file name and attempts to create it using the given
- * content generator.
- * 
- * @param options Options for prompting the user and creating the document
- */
-export async function tryCreateCustomFile(options: {
-  promptTitle: string;
-  fileExtension: string;
-  folderUri?: vscode.Uri;
-  contentGenerator: () => Uint8Array;
-  launchFile: (uri: vscode.Uri) => void;
-}) {
-  const workspaceFolders = vscode.workspace.workspaceFolders;
-  if (!workspaceFolders) {
-    vscode.window.showErrorMessage("Creating a new file requires opening a workspace.");
-    return;
-  }
-
-  let destination: vscode.Uri | undefined;
-
-  if (options.folderUri) {
-    let filename = await vscode.window.showInputBox({
-      title: options.promptTitle,
-      prompt: `File will be created in '${options.folderUri.fsPath}'`,
-    });
-
-    if (!filename) return;
-
-    destination = vscode.Uri.joinPath(options.folderUri, filename);
-  } else {
-    destination = (await vscode.window.showSaveDialog({
-      defaultUri: workspaceFolders[0]?.uri,
-      saveLabel: "Create File",
-    }));
-  }
-
-  if (!destination) return;
-
-  if (!destination.path.endsWith(options.fileExtension))
-    destination = destination.with({
-      path: destination.path + options.fileExtension,
-    });
-
-  if (!(await fileExists(destination)))
-    await vscode.workspace.fs.writeFile(destination, options.contentGenerator());
-
-  options.launchFile(destination);
-}
 
 /**
  * Returns whether or not a file exists at the given URI.
@@ -121,4 +56,54 @@ export async function replaceEntireDocument(
     await editor.document.save();
 
   return editSuccess;
+}
+
+/**
+ * Prompts the user for a file name and attempts to create it using the given
+ * content generator.
+ * 
+ * @param options Options for prompting the user and creating the document
+ */
+export async function tryCreateCustomFile(options: {
+  promptTitle: string;
+  fileExtension: string;
+  folderUri?: vscode.Uri;
+  contentGenerator: () => Uint8Array;
+  launchFile?: (uri: vscode.Uri) => void;
+}) {
+  const workspaceFolders = vscode.workspace.workspaceFolders;
+  if (!workspaceFolders) {
+    vscode.window.showErrorMessage("Creating a new file requires opening a workspace.");
+    return;
+  }
+
+  let destination: vscode.Uri | undefined;
+
+  if (options.folderUri) {
+    let filename = await vscode.window.showInputBox({
+      title: options.promptTitle,
+      prompt: `File will be created in '${options.folderUri.fsPath}'`,
+    });
+
+    if (!filename) return;
+
+    destination = vscode.Uri.joinPath(options.folderUri, filename);
+  } else {
+    destination = (await vscode.window.showSaveDialog({
+      defaultUri: workspaceFolders[0]?.uri, // FIXME: how to get current workspace?
+      saveLabel: "Create File",
+    }));
+  }
+
+  if (!destination) return;
+
+  if (!destination.path.endsWith(options.fileExtension))
+    destination = destination.with({
+      path: destination.path + options.fileExtension,
+    });
+
+  if (!(await fileExists(destination)))
+    await vscode.workspace.fs.writeFile(destination, options.contentGenerator());
+
+  options.launchFile?.(destination);
 }
