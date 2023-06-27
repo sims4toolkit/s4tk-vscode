@@ -23,13 +23,20 @@
     "outputBuildSummary": "partial"
   },
   "releaseSettings": {
-    "filename": "MyZippedModFiles",
-    "internalFolder": "",
-    "otherFiles": {
-      "include": [],
-      "exclude": []
-    },
-    "overrideDestinations": []
+    "overrideDestinations": [],
+    "zips": [
+      {
+        "filename": "MyZippedModFiles",
+        "internalFolder": "",
+        "packages": [
+          "MyPackage"
+        ],
+        "otherFiles": {
+          "include": [],
+          "exclude": []
+        }
+      }
+    ]
   },
   "stringTableSettings": {
     "allowStringKeyOverrides": false,

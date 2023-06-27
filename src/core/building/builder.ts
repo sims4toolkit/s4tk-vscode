@@ -5,6 +5,7 @@ import * as models from "@s4tk/models";
 import * as enums from "@s4tk/models/enums";
 import * as types from "@s4tk/models/types";
 import * as hashFormat from "@s4tk/hashing/formatting";
+import { LINK } from "#constants";
 import { randomFnv64 } from "#helpers/hashing";
 import { S4TKSettings } from "#helpers/settings";
 import { getXmlKeyOverrides, inferXmlMetaData } from "#helpers/xml";
@@ -15,8 +16,6 @@ import { parseKeyFromTgi } from "./resources";
 import { BuildMode, BuildSummary } from "./summary";
 import { BuildContext, PackageBuildContext, StringTableReference } from "./context";
 import { prevalidateBuild } from "./prevalidation";
-import { postvalidateBuild } from "./postvalidation";
-import { LINK } from "#constants";
 
 //#region Exported Functions
 
@@ -39,7 +38,6 @@ export async function buildProject(mode: BuildMode): Promise<BuildSummary> {
   try {
     prevalidateBuild(summary);
     await _buildValidatedProject(summary);
-    postvalidateBuild(summary);
   } catch (err) {
     summary.buildInfo.success = false;
     summary.buildInfo.problems++;
@@ -61,11 +59,15 @@ async function _buildValidatedProject(summary: BuildSummary) {
     || summary.config.packages.some(p => p.duplicateFilesFrom.length > 0);
 
   summary.config.packages.forEach(pkgConfig => {
+    if (pkgConfig.doNotGenerate) return;
+
     const pkgContext = BuildContext.forPackage(context, pkgConfig);
     if (pkgConfig.duplicateFilesFrom.length > 0)
       _insertDuplicatedFiles(pkgContext, existingPackages);
     const pkg = _buildPackage(pkgContext);
+    if (shouldTrackPackages) existingPackages.set(pkgConfig.filename, pkg);
 
+    if (pkgConfig.doNotWrite) return;
     if (summary.buildInfo.mode === "build") {
       summary.config.destinations.forEach(({ resolved }) => {
         // if validation passed, folder either exists or we're allowed to create
@@ -74,15 +76,10 @@ async function _buildValidatedProject(summary: BuildSummary) {
         fs.writeFileSync(outPath, pkg.getBuffer());
       });
     }
-
-    if (shouldTrackPackages) existingPackages.set(pkgConfig.filename, pkg);
   });
 
   if (summary.buildInfo.mode === "release") {
-    await _zipPackagesAndWrite(
-      context,
-      [...existingPackages.values()].map(pkg => pkg.getBuffer())
-    );
+    await _zipPackagesAndWrite(context, existingPackages);
   }
 }
 
@@ -94,7 +91,7 @@ function _insertDuplicatedFiles(context: PackageBuildContext, existingPackages: 
   // actually cause a problem, but it is unexpected behavior
   context.pkgConfig.duplicateFilesFrom.forEach(pkgName => {
     const pkg = existingPackages.get(pkgName);
-    if (!pkg) throw FatalBuildError(`${context.pkgInfo.filename} depends on ${pkgName}, but ${pkgName} was not found at runtime. This error should never occur; please report this immediately (${LINK.issues}).`);
+    if (!pkg) throw FatalBuildError(`${context.pkgInfo.filename} depends on ${pkgName}, but ${pkgName} was not found at runtime. This is expected if ${pkgName}'s 'doNotGenerate' property is true, but if it isn't, please report this error immediately (${LINK.issues}).`);
     pkg.entries.forEach((entry, i) => {
       if (entry.key.type === enums.BinaryResourceType.StringTable) {
         context.stbls.push({
@@ -456,36 +453,47 @@ function _flattenStringTables(context: PackageBuildContext) {
   context.stbls = [...flattenedStbls.values()];
 }
 
-async function _zipPackagesAndWrite(context: BuildContext, buffers: Buffer[]) {
-  const zipConfig = context.summary.config.zip!;
-  const zip = new JSZip();
+async function _zipPackagesAndWrite(context: BuildContext, packages: Map<string, models.Package>) {
+  if (!context.summary.config.zips?.length) return;
 
-  const resolveWithFolder = (filename: string) => {
-    return zipConfig.internalFolder
-      ? path.join(zipConfig.internalFolder, filename)
-      : filename;
+  for (const zipInfo of context.summary.config.zips) {
+    if (zipInfo.doNotGenerate) continue;
+
+    const zip = new JSZip();
+
+    const resolveWithFolder = (filename: string) => {
+      return zipInfo.internalFolder
+        ? path.join(zipInfo.internalFolder, filename)
+        : filename;
+    }
+
+    if (zipInfo.internalFolder) zip.folder(zipInfo.internalFolder);
+
+    for (const pkgName of zipInfo.packages) {
+      if (!packages.has(pkgName)) throw FatalBuildError(
+        `${zipInfo.filename} depends on ${pkgName}, but no package with this name was found at runtime. This error should never occur, please report it immediately (${LINK.issues})`
+      );
+    }
+
+    zipInfo.packages.forEach(pkgName => {
+      const buffer = packages.get(pkgName)!.getBuffer();
+      zip.file(resolveWithFolder(pkgName), buffer);
+    });
+
+    zipInfo.otherFiles.forEach(filepath => {
+      const buffer = fs.readFileSync(filepath);
+      zip.file(resolveWithFolder(path.basename(filepath)), buffer);
+    });
+
+    const buffer = await zip.generateAsync({ type: "nodebuffer" });
+
+    context.summary.config.destinations.forEach(({ resolved }) => {
+      // if validation passed, we're allowed to write missing destinations
+      if (!fs.existsSync(resolved)) fs.mkdirSync(resolved, { recursive: true });
+      const filepath = path.join(resolved, zipInfo.filename);
+      fs.writeFileSync(filepath, buffer);
+    });
   }
-
-  if (zipConfig.internalFolder) zip.folder(zipConfig.internalFolder);
-
-  buffers.forEach((buffer, i) => {
-    const pkgConfig = context.summary.config.packages[i];
-    zip.file(resolveWithFolder(pkgConfig.filename), buffer);
-  });
-
-  context.summary.config.zip!.otherFiles.forEach(filepath => {
-    const buffer = fs.readFileSync(filepath);
-    zip.file(resolveWithFolder(path.basename(filepath)), buffer);
-  });
-
-  const buffer = await zip.generateAsync({ type: "nodebuffer" });
-
-  context.summary.config.destinations.forEach(({ resolved }) => {
-    // if validation passed, we're allowed to write missing destinations
-    if (!fs.existsSync(resolved)) fs.mkdirSync(resolved, { recursive: true });
-    const filepath = path.join(resolved, context.summary.config.zip!.filename);
-    fs.writeFileSync(filepath, buffer);
-  });
 }
 
 //#endregion
