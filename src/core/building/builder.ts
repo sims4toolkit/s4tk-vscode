@@ -457,6 +457,8 @@ async function _zipPackagesAndWrite(context: BuildContext, packages: Map<string,
   if (!context.summary.config.zips?.length) return;
 
   for (const zipInfo of context.summary.config.zips) {
+    if (zipInfo.doNotGenerate) continue;
+
     const zip = new JSZip();
 
     const resolveWithFolder = (filename: string) => {
