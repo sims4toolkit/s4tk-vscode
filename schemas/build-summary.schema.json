@@ -102,32 +102,61 @@
               "warning": {
                 "type": "string",
                 "description": "Something about this package that doesn't seem right."
+              },
+              "duplicateFilesFrom": {
+                "type": "array",
+                "description": "List of previous packages to base this one on.",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "doNotGenerate": {
+                "type": "boolean",
+                "description": "Whether or not this package is being generated in memory."
+              },
+              "doNotWrite": {
+                "type": "boolean",
+                "description": "Whether or not this package is being written to disk, if it's generated."
               }
             }
           }
         },
-        "zip": {
-          "type": "object",
-          "description": "Information about the ZIP being built (release mode only).",
-          "properties": {
-            "filename": {
-              "type": "string",
-              "description": "The name of the ZIP file that contains all of the packages."
-            },
-            "internalFolder": {
-              "type": "string",
-              "description": "The name of the folder within this ZIP, if there is one."
-            },
-            "otherFiles": {
-              "type": "array",
-              "description": "List of paths to other files to include in the ZIP, based on the include/exclude patterns in the config.",
-              "items": {
-                "type": "string"
+        "zips": {
+          "type": "array",
+          "description": "Information about the ZIPs being built (release mode only).",
+          "items": {
+            "type": "object",
+            "properties": {
+              "filename": {
+                "type": "string",
+                "description": "The name of this ZIP file."
+              },
+              "internalFolder": {
+                "type": "string",
+                "description": "The name of the folder within this ZIP, if there is one."
+              },
+              "packages": {
+                "type": "array",
+                "description": "List of names of packages to include in this ZIP.",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "otherFiles": {
+                "type": "array",
+                "description": "List of paths to other files to include in the ZIP, based on the include/exclude patterns in the config.",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "warning": {
+                "type": "string",
+                "description": "Something about this ZIP that doesn't seem right."
+              },
+              "doNotGenerate": {
+                "type": "boolean",
+                "description": "Whether or not this ZIP is being generated and written."
               }
-            },
-            "warning": {
-              "type": "string",
-              "description": "Something about this ZIP that doesn't seem right."
             }
           }
         }
