@@ -204,42 +204,75 @@ function _validateBuildPackages(summary: BuildSummary) {
 function _validateBuildRelease(summary: BuildSummary) {
   const { releaseSettings } = S4TKWorkspace.config;
 
-  summary.config.zip = {
-    filename: _guaranteeExtension(releaseSettings.filename, ".zip"),
-    internalFolder: releaseSettings.internalFolder,
-    otherFiles: []
-  };
+  const seenZipNames = new Set<string>();
+  const availablePkgs = new Set<string>(
+    summary.config.packages
+      .filter(p => !p.doNotGenerate)
+      .map(p => p.filename)
+  );
 
-  if (!releaseSettings.filename) throw FatalBuildError(
-    `releaseSettings.filename cannot be empty when building in release mode`, {
-    addWarning: summary.config.zip
-  });
+  summary.config.zips ??= [];
+  releaseSettings.zips.forEach((zipInfo, i) => {
+    const zipIndex = `releaseSettings.zips[${i}]`;
 
-  function resolveGlobs(arrName: "include" | "exclude"): string[] {
-    if (!releaseSettings.otherFiles[arrName]?.length) return [];
+    const zip = addAndGetItem(summary.config.zips!, {
+      filename: _guaranteeExtension(zipInfo.filename, ".zip"),
+      internalFolder: zipInfo.internalFolder,
+      doNotGenerate: zipInfo.doNotGenerate ?? false,
+      packages: zipInfo.packages.map(pkgName => _guaranteeExtension(pkgName, ".package")),
+      otherFiles: [], // will add to
+    });
 
-    return releaseSettings.otherFiles[arrName]!.map((original, i) => {
-      const resolved = S4TKConfig.resolvePath(original, { isGlob: true }) ?? '';
+    if (zipInfo.doNotGenerate) {
+      zip.warning = "This ZIP is not being generated, so further validation is being skipped.";
+      // intentionally not incrementing problems since this isn't actually an issue
+      return;
+    }
 
-      if (!resolved) throw FatalBuildError(
-        `releaseSettings.otherFiles.${arrName}[${i}] could not be resolved as a valid path (${original})`, {
-        addWarning: summary.config.zip,
+    if (!zipInfo.filename) throw FatalBuildError(
+      `${zipIndex}.filename cannot be empty when building in release mode`, {
+      addWarning: zip,
+    });
+
+    if (seenZipNames.has(zip.filename)) throw FatalBuildError(
+      `${zipIndex}.filename resolves to "${zip.filename}", which is already in used by another ZIP.`, {
+      addWarning: zip
+    });
+    seenZipNames.add(zip.filename);
+
+    zip.packages.forEach((pkgName, j) => {
+      if (!availablePkgs.has(pkgName)) throw FatalBuildError(
+        `${zipIndex}.packages[${j}] resolves to "${pkgName}", which either does not exist or is not being generated.`, {
+        addWarning: zip,
       });
-
-      return resolved;
     });
-  }
 
-  const resolvedIncludes = resolveGlobs("include");
-  if (resolvedIncludes.length) {
-    const resolvedExcludes = resolveGlobs("exclude");
-    const matches = findGlobMatches(resolvedIncludes, resolvedExcludes, "all");
-    if (!matches.length) throw FatalBuildError(
-      `releaseSettings.otherFiles.include has at least one item, but no files were matched by the include/exclude patterns`, {
-      addWarning: summary.config.zip!
-    });
-    summary.config.zip.otherFiles = matches;
-  }
+    function resolveGlobs(arrName: "include" | "exclude"): string[] {
+      if (!zipInfo.otherFiles?.[arrName]?.length) return [];
+
+      return zipInfo.otherFiles[arrName]!.map((original, j) => {
+        const resolved = S4TKConfig.resolvePath(original, { isGlob: true }) ?? '';
+
+        if (!resolved) throw FatalBuildError(
+          `${zipIndex}.otherFiles.${arrName}[${j}] could not be resolved as a valid path (${original})`, {
+          addWarning: zip,
+        });
+
+        return resolved;
+      });
+    }
+
+    const resolvedIncludes = resolveGlobs("include");
+    if (resolvedIncludes.length) {
+      const resolvedExcludes = resolveGlobs("exclude");
+      const matches = findGlobMatches(resolvedIncludes, resolvedExcludes, "all");
+      if (!matches.length) throw FatalBuildError(
+        `${zipIndex}.otherFiles.include has at least one item, but no files were matched by the include/exclude patterns`, {
+        addWarning: zip
+      });
+      zip.otherFiles = matches;
+    }
+  });
 }
 
 //#endregion

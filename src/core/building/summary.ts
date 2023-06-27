@@ -19,7 +19,7 @@ export interface BuildSummary {
     source: ValidatedPath;
     destinations: ValidatedPath[];
     packages: ValidatedPackageInfo[];
-    zip?: ValidatedZipInfo;
+    zips?: ValidatedZipInfo[];
   };
 
   written: {
@@ -48,6 +48,8 @@ export interface ValidatedPath extends Warnable {
 export interface ValidatedZipInfo extends Warnable {
   filename: string;
   internalFolder?: string;
+  doNotGenerate: boolean;
+  packages: string[];
   otherFiles: string[];
 }
 

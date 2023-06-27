@@ -124,45 +124,74 @@
     },
     "releaseSettings": {
       "type": "object",
-      "description": "Settings that affect builds made for release (i.e. your packages and other miscellaneous files bundled together in a ZIP).",
+      "description": "Settings that affect builds made for release (i.e. packages and other miscellaneous files bundled together in ZIPs).",
       "additionalProperties": false,
+      "required": [
+        "zips"
+      ],
       "properties": {
-        "filename": {
-          "type": "string",
-          "description": "Name of the ZIP file that contains all of your mod files.",
-          "default": ""
-        },
-        "internalFolder": {
-          "type": "string",
-          "description": "Leave blank if you want your files to be loose within the ZIP. If you want them bundled within a folder, set a name here.",
-          "default": ""
-        },
-        "otherFiles": {
-          "type": "object",
-          "description": "Glob patterns that specify other files to include in the ZIP.",
-          "additionalProperties": false,
-          "properties": {
-            "include": {
-              "type": "array",
-              "description": "List of absolute and/or relative glob patterns that capture all non-source files that should be added to the ZIP, such as READMEs or ts4scripts.\n\n[If paths are relative, they are relative to the folder that contains your `s4tk.config.json`]",
-              "items": {
-                "type": "string"
-              }
-            },
-            "exclude": {
-              "type": "array",
-              "description": "List of absolute and/or relative glob patterns of files that should be excluded, even if they pass one of the `include` patterns.\n\n[If paths are relative, they are relative to the folder that contains your `s4tk.config.json`]",
-              "items": {
-                "type": "string"
-              }
-            }
-          }
-        },
         "overrideDestinations": {
           "type": "array",
-          "description": "List of absolute and/or relative paths to folders where the ZIP file should be output to. If omitted or empty, then `buildInstructions.destinations` will be used.\n\n[If paths are relative, they are relative to the folder that contains your `s4tk.config.json`]",
+          "description": "List of absolute and/or relative paths to folders where the ZIPs files should be output to. If omitted or empty, then `buildInstructions.destinations` will be used.\n\n[If paths are relative, they are relative to the folder that contains your `s4tk.config.json`]",
           "items": {
             "type": "string"
+          }
+        },
+        "zips": {
+          "type": "array",
+          "description": "List of ZIP files to generate. Each one must have a unique filename.",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "filename",
+              "packages"
+            ],
+            "properties": {
+              "filename": {
+                "type": "string",
+                "description": "Name of this ZIP file.",
+                "default": ""
+              },
+              "doNotGenerate": {
+                "type": "boolean",
+                "description": "Whether or not this ZIP file should be generated. If true, then it won't be. This is intended to provide a way to 'comment out' a ZIP.",
+                "default": false
+              },
+              "internalFolder": {
+                "type": "string",
+                "description": "Leave blank if you want your files to be loose within the ZIP. If you want them bundled within a folder, set a name here.",
+                "default": ""
+              },
+              "packages": {
+                "type": "array",
+                "description": "List of generated packages to include in this ZIP. Names must be present in buildInstructions, and every listed package must have been generated, or this ZIP will fail.",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "otherFiles": {
+                "type": "object",
+                "description": "Glob patterns that specify other files to include in the ZIP.",
+                "additionalProperties": false,
+                "properties": {
+                  "include": {
+                    "type": "array",
+                    "description": "List of absolute and/or relative glob patterns that capture all non-source files that should be added to the ZIP, such as READMEs or ts4scripts.\n\n[If paths are relative, they are relative to the folder that contains your `s4tk.config.json`]",
+                    "items": {
+                      "type": "string"
+                    }
+                  },
+                  "exclude": {
+                    "type": "array",
+                    "description": "List of absolute and/or relative glob patterns of files that should be excluded, even if they pass one of the `include` patterns.\n\n[If paths are relative, they are relative to the folder that contains your `s4tk.config.json`]",
+                    "items": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
           }
         }
       }

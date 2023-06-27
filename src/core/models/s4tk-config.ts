@@ -32,13 +32,17 @@ export interface S4TKConfig {
   };
 
   releaseSettings: {
-    filename: string;
-    internalFolder?: string;
-    otherFiles: {
-      include?: string[];
-      exclude?: string[];
-    };
     overrideDestinations: string[];
+    zips: {
+      filename: string;
+      internalFolder?: string;
+      doNotGenerate?: boolean;
+      packages: string[];
+      otherFiles?: {
+        include?: string[];
+        exclude?: string[];
+      };
+    }[];
   };
 
   stringTableSettings: {
@@ -69,9 +73,8 @@ const _CONFIG_TRANSFORMER: ConfigTransformer = {
   },
   releaseSettings: {
     defaults: {
-      filename: "",
-      otherFiles: {},
       overrideDestinations: [],
+      zips: [],
     },
   },
   stringTableSettings: {
