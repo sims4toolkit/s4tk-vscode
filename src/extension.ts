@@ -6,5 +6,5 @@ import registerContributions from "./contributions/_index";
 export function activate(context: vscode.ExtensionContext) {
 	S4TKAssets.setExtensionContext(context);
 	registerContributions(context);
-	S4TKWorkspace.activate();
+	S4TKWorkspace.activate(); // FIXME:
 }

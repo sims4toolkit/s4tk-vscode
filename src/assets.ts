@@ -1,27 +1,46 @@
 import * as vscode from "vscode";
 
+/**
+ * References to asset files that are used throughout the extension.
+ */
 namespace S4TKAssets {
   let _extensionContext: vscode.ExtensionContext;
 
-  export const MEDIA = {
-    root: _uriResolver("media", {
-      resetStyle: ["reset.css"],
-      vscodeStyle: ["vscode.css"],
+  /**
+   * URIs to JSON files within the ~/data/ folder.
+   */
+  export const data = _uriResolver("data", {
+    tdescEndpoints: ["tdesc-endpoints.json"],
+  });
+
+  /**
+   * URIs to styles and scripts within the ~/media/ folder.
+   */
+  export const media = {
+    styles: _uriResolver("media", {
+      reset: ["reset.css"],
+      vscode: ["vscode.css"],
+      package: ["editors", "package.css"],
+      stblBinary: ["editors", "stbl-binary.css"],
     }),
-    editors: _uriResolver("media", {
-      packageStyle: ["editors", "package.css"],
-      packageScript: ["editors", "package.js"],
-      stblBinaryStyle: ["editors", "stbl-binary.css"],
-      stblBinaryScript: ["editors", "stbl-binary.js"],
+    scripts: _uriResolver("media", {
+      package: ["editors", "package.js"],
+      stblBinary: ["editors", "stbl-binary.js"],
     }),
   };
 
-  export const SCHEMAS = _uriResolver("schemas", {
+  /**
+   * URIs to JSON schemas within the ~/schemas/ folder.
+   */
+  export const schemas = _uriResolver("schemas", {
     config: ["s4tk-config.schema.json"],
     stbl: ["stbl.schema.json"],
   });
 
-  export const SAMPLES = _uriResolver("samples", {
+  /**
+   * URIs to files within the ~/samples/ folder.
+   */
+  export const samples = _uriResolver("samples", {
     config: ["s4tk.config.json"],
     gitignore: ["gitignore.txt"],
     package: ["sample.package"],
