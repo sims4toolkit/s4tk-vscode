@@ -18,6 +18,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - CTRL/CMD click on tuning IDs to jump to their definitions, if in the current project
 - New properties in S4TK Config
   - `buildInstructions.packages[*].duplicateFilesFrom`: Allows you to include all files from a previously built package in this one
+  - `buildInstructions.packages[*].doNotGenerate`: Allows you to 'comment out' a package without causing build errors
+  - `buildInstructions.packages[*].doNotWrite`: Allows you to still generate a file so it can be used by others, but not written itself
   - `buildSettings.allowResourceKeyOverrides`: Safeguard against writing multiple resources with the same key into the same package
   - `stringTableSettings.allowStringKeyOverrides`: Safeguard against writing multiple string entries with the same key into the same string table
 - New properties in STBL JSON

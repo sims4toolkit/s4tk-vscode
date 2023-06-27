@@ -55,16 +55,23 @@ export async function buildProject(mode: BuildMode): Promise<BuildSummary> {
 
 async function _buildValidatedProject(summary: BuildSummary) {
   const existingPackages = new Map<string, models.Package>();
+  const packagesToZip = new Set<string>();
   const context = BuildContext.create(summary);
 
   const shouldTrackPackages = summary.buildInfo.mode === "release"
     || summary.config.packages.some(p => p.duplicateFilesFrom.length > 0);
 
   summary.config.packages.forEach(pkgConfig => {
+    if (pkgConfig.doNotGenerate) return;
+
     const pkgContext = BuildContext.forPackage(context, pkgConfig);
     if (pkgConfig.duplicateFilesFrom.length > 0)
       _insertDuplicatedFiles(pkgContext, existingPackages);
     const pkg = _buildPackage(pkgContext);
+
+    if (shouldTrackPackages) existingPackages.set(pkgConfig.filename, pkg);
+    if (pkgConfig.doNotWrite) return;
+    packagesToZip.add(pkgConfig.filename);
 
     if (summary.buildInfo.mode === "build") {
       summary.config.destinations.forEach(({ resolved }) => {
@@ -74,14 +81,12 @@ async function _buildValidatedProject(summary: BuildSummary) {
         fs.writeFileSync(outPath, pkg.getBuffer());
       });
     }
-
-    if (shouldTrackPackages) existingPackages.set(pkgConfig.filename, pkg);
   });
 
   if (summary.buildInfo.mode === "release") {
     await _zipPackagesAndWrite(
       context,
-      [...existingPackages.values()].map(pkg => pkg.getBuffer())
+      [...packagesToZip].map(name => existingPackages.get(name)!.getBuffer())
     );
   }
 }
@@ -94,7 +99,7 @@ function _insertDuplicatedFiles(context: PackageBuildContext, existingPackages: 
   // actually cause a problem, but it is unexpected behavior
   context.pkgConfig.duplicateFilesFrom.forEach(pkgName => {
     const pkg = existingPackages.get(pkgName);
-    if (!pkg) throw FatalBuildError(`${context.pkgInfo.filename} depends on ${pkgName}, but ${pkgName} was not found at runtime. This error should never occur; please report this immediately (${LINK.issues}).`);
+    if (!pkg) throw FatalBuildError(`${context.pkgInfo.filename} depends on ${pkgName}, but ${pkgName} was not found at runtime. This is expected if ${pkgName}'s 'doNotGenerate' property is true, but if it isn't, please report this error immediately (${LINK.issues}).`);
     pkg.entries.forEach((entry, i) => {
       if (entry.key.type === enums.BinaryResourceType.StringTable) {
         context.stbls.push({

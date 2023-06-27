@@ -35,6 +35,8 @@ export interface ValidatedPackageInfo extends Warnable {
   duplicateFilesFrom: string[];
   include: ValidatedPath[];
   exclude: ValidatedPath[];
+  doNotGenerate: boolean;
+  doNotWrite: boolean;
 }
 
 export interface ValidatedPath extends Warnable {

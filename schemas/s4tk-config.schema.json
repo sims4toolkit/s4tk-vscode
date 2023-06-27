@@ -64,6 +64,16 @@
                 "items": {
                   "type": "string"
                 }
+              },
+              "doNotGenerate": {
+                "type": "boolean",
+                "description": "Whether or not this package should be generated. If true, it won't be, and any other packages with this one in their `duplicateFilesFrom` list will fail. This is intended to provide a way to 'comment out' a package without causing any build warnings due to missing source files, as its glob patterns will still be considered during validation.",
+                "default": false
+              },
+              "doNotWrite": {
+                "type": "boolean",
+                "description": "Whether or not this package should be written to disk. If true, then it won't be. Whether or not it is still generated in memory, however, depends on the value of `doNotGenerate`. If `doNotWrite` is true but `doNotGenerate` is false, then packages with this one in their `duplicateFilesFrom` list can still be built.",
+                "default": false
               }
             }
           }

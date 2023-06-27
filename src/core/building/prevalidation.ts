@@ -98,10 +98,12 @@ function _validateBuildPackages(summary: BuildSummary) {
   const seenGlobMatches = new Set<string>();
   packages.forEach((pkg, i) => {
     const validatedPkg = addAndGetItem(summary.config.packages, {
-      duplicateFilesFrom: pkg.duplicateFilesFrom?.map(name => _guaranteeExtension(name, ".package")) ?? [],
       filename: _guaranteeExtension(pkg.filename, ".package"),
+      duplicateFilesFrom: pkg.duplicateFilesFrom?.map(name => _guaranteeExtension(name, ".package")) ?? [],
       include: [],
       exclude: [],
+      doNotGenerate: pkg.doNotGenerate ?? false,
+      doNotWrite: pkg.doNotWrite ?? false,
     });
 
     if (!pkg.filename) throw FatalBuildError(

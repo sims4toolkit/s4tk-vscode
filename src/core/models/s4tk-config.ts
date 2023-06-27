@@ -17,6 +17,8 @@ export interface S4TKConfig {
       duplicateFilesFrom?: string[];
       include: string[];
       exclude?: string[];
+      doNotGenerate?: boolean;
+      doNotWrite?: boolean;
     }[];
   };
 
