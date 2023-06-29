@@ -9,7 +9,7 @@ import { BinaryResourceType, SimDataGroup, TuningResourceType } from "@s4tk/mode
 const _TGI_REGEX = /(?<t>[a-f\d]{8}).(?<g>[a-f\d]{8}).(?<i>[a-f\d]{16})/i;
 
 
-function getKey(metadata: XmlMetadata, index?: ResourceIndex): InferredResourceKey {
+function inferKeyFromMetadata(metadata: XmlMetadata, index?: ResourceIndex): InferredResourceKey {
   const groups = _TGI_REGEX.exec(metadata.uri.path)?.groups;
 
   if (groups) return {
@@ -72,7 +72,7 @@ function getKey(metadata: XmlMetadata, index?: ResourceIndex): InferredResourceK
       }));
 
       if (tuning) {
-        const tuningKey = getKey(tuning);
+        const tuningKey = inferKeyFromMetadata(tuning);
 
         if (key.group == undefined && tuningKey.key.type) {
           const group = SimDataGroup.getForTuning(tuningKey.key.type);
