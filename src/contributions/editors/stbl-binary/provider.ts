@@ -1,7 +1,7 @@
 import * as vscode from 'vscode';
 import { MEDIA } from '#assets';
 import { EDITOR } from '#constants';
-import { getHtmlForWebview } from '#helpers/media';
+import { getHtmlForWebview } from 'contributions/editors/helpers/media';
 import type { StringTableInMessage, StringTableOutMessage } from './types';
 import ViewOnlyEditorProvider from '../view-only/provider';
 import StringTableDocument from './document';
