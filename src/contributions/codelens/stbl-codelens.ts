@@ -82,17 +82,19 @@ export default class StringTableJsonCodeLensProvider extends BaseCodeLensProvide
     for (let lineIndex = 0; lineIndex < document.lineCount; ++lineIndex) {
       const line = document.lineAt(lineIndex);
 
-      if (stblJson.hasMetaData && entriesRegex.test(line.text)) {
-        this._codeLenses.push(
-          new vscode.CodeLens(new vscode.Range(lineIndex, 0, lineIndex, 0), {
-            title: "New String",
-            tooltip: "Add a new string with a random hash to this STBL.",
-            command: S4TKCommand.stblJson.addEntry,
-            arguments: [editor, stblJson],
-          })
-        );
+      if (editor?.document.uri.scheme !== "s4tk") {
+        if (stblJson.hasMetaData && entriesRegex.test(line.text)) {
+          this._codeLenses.push(
+            new vscode.CodeLens(new vscode.Range(lineIndex, 0, lineIndex, 0), {
+              title: "New String",
+              tooltip: "Add a new string with a random hash to this STBL.",
+              command: S4TKCommand.stblJson.addEntry,
+              arguments: [editor, stblJson],
+            })
+          );
 
-        continue;
+          continue;
+        }
       }
 
       if (keyRegex.test(line.text)) {
