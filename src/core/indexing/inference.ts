@@ -17,7 +17,7 @@ import type { XmlMetadata, TuningMetadata, SimDataMetadata, InferredResourceKey,
 
 const _MAX_LINES = 5;
 const _TGI_REGEX = /(?<t>[a-f\d]{8}).(?<g>[a-f\d]{8}).(?<i>[a-f\d]{16})/i;
-const _S4TK_COMMENT_REGEX = /^<!--\sS4TK/i;
+const _S4TK_COMMENT_REGEX = /<!--\s*S4TK[^-]+-->/i;
 const _S4TK_TYPE_REGEX = /type:\s*([a-f0-9]{1,8})/i;
 const _S4TK_GROUP_REGEX = /group:\s*([a-f0-9]{1,8})/i;
 const _S4TK_INSTANCE_REGEX = /instance:\s*([a-f0-9]{1,16})/i;
@@ -193,7 +193,7 @@ export function insertXmlKeyOverrides(
 ): string | undefined {
   const lines = _getTopLinesFromFile(xmlContent);
   const mockMetadata: XmlMetadata = { kind: "tuning" }; // kind is irrelevant
-  for (const line in lines)
+  for (const line of lines)
     if (_parseOverrideComment(line, mockMetadata)) break;
 
   const hadOverrides = Boolean(mockMetadata.comment);
