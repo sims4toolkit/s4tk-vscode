@@ -1,7 +1,6 @@
 import * as vscode from "vscode";
 import { S4TKContext } from "#constants";
 import S4TKWorkspace from "./s4tk-workspace";
-import { S4TKConfig } from "#models/s4tk-config";
 
 class _S4TKWorkspaceManager implements vscode.Disposable {
   private _disposables: vscode.Disposable[] = [];
