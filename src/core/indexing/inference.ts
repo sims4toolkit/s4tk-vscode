@@ -85,9 +85,9 @@ export function inferKeyFromMetadata(metadata: XmlMetadata, index?: ResourceInde
     }
 
     if (metadata.uri && index && (key.group == undefined || key.instance == undefined)) {
-      const tuning = index.getMetadataFromUri(metadata.uri.with({
-        path: metadata.uri.path.replace(/\.SimData\.xml$/, ".xml"),
-      }));
+      const tuning = index.getMetadataFromUri(
+        vscode.Uri.file(metadata.uri.fsPath.replace(/\.SimData\.xml$/, ".xml"))
+      );
 
       if (tuning) {
         const tuningKey = inferKeyFromMetadata(tuning);
@@ -228,7 +228,7 @@ export function insertXmlKeyOverrides(
 function _getTopLinesFromFile(uriOrContent: vscode.Uri | string): string[] {
   try {
     if (typeof uriOrContent === "string") {
-      return uriOrContent.split("n", _MAX_LINES);
+      return uriOrContent.split("\n", _MAX_LINES);
     } else {
       const document = findOpenDocument(uriOrContent);
       if (document) {
@@ -237,7 +237,7 @@ function _getTopLinesFromFile(uriOrContent: vscode.Uri | string): string[] {
         for (let i = 0; i < maxLines; ++i) lines.push(document.lineAt(i).text);
         return lines;
       } else {
-        return fs.readFileSync(uriOrContent.fsPath).toString().split("n", _MAX_LINES);
+        return fs.readFileSync(uriOrContent.fsPath).toString().split("\n", _MAX_LINES);
       }
     }
   } catch (_) {

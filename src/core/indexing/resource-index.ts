@@ -76,7 +76,8 @@ export default class ResourceIndex implements vscode.Disposable {
 
   private async _indexSourceFolder() {
     if (!this._sourceFolder) return;
-    globSync(resolveGlobPattern(this._sourceFolder, "**/*.xml")).forEach(filepath => {
+    const pattern = resolveGlobPattern(this._sourceFolder, "**/*.xml");
+    globSync(pattern).forEach(filepath => {
       if (filepath.endsWith(".SimData.xml")) return;
       const uri = vscode.Uri.file(filepath);
       const metadata = inferTuningMetadata(uri);
