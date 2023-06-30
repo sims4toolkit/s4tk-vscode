@@ -1,5 +1,5 @@
 import * as vscode from "vscode";
-
+import S4TKWorkspace from "./s4tk-workspace";
 
 namespace S4TKWorkspaceManager {
   const _disposables: vscode.Disposable[] = [];
