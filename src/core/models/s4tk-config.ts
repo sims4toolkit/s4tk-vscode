@@ -1,4 +1,4 @@
-import { existsSync } from "fs";
+import { existsSync, readFileSync } from "fs";
 import * as vscode from "vscode";
 import S4TKAssets from "#assets";
 import { S4TKFilename } from "#constants";
@@ -157,10 +157,10 @@ type ConfigTransformer = {
   [key in keyof S4TKConfig]: ConfigPropertyTransformer<S4TKConfig[key]>;
 };
 
-type ConfigInfo = {
-  uri?: vscode.Uri;
+interface ConfigInfo {
+  uri: vscode.Uri;
   exists: boolean;
-};
+}
 
 function _getConfigProxy(config: S4TKConfig): S4TKConfig {
   return new Proxy<S4TKConfig>(config, {

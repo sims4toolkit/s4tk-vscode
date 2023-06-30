@@ -1,6 +1,6 @@
 import * as vscode from "vscode";
 import { sync as globSync } from "glob";
-import { resolvePattern } from "#helpers/globbing";
+import { resolveGlobPattern } from "#helpers/fs";
 import type { TuningMetadata } from "./types";
 import { inferTuningMetadata } from "./inference";
 
@@ -14,7 +14,7 @@ export default class ResourceIndex implements vscode.Disposable {
 
   //#region Lifecycle
 
-  constructor(private _sourceFolder: vscode.Uri) {
+  constructor(private _sourceFolder?: vscode.Uri) {
     this._startFsWatcher();
   }
 
@@ -75,7 +75,8 @@ export default class ResourceIndex implements vscode.Disposable {
   }
 
   private async _indexSourceFolder() {
-    globSync(resolvePattern(this._sourceFolder, "**/*.xml")).forEach(filepath => {
+    if (!this._sourceFolder) return;
+    globSync(resolveGlobPattern(this._sourceFolder, "**/*.xml")).forEach(filepath => {
       if (filepath.endsWith(".SimData.xml")) return;
       const uri = vscode.Uri.file(filepath);
       const metadata = inferTuningMetadata(uri);
@@ -105,6 +106,7 @@ export default class ResourceIndex implements vscode.Disposable {
   }
 
   private _startFsWatcher() {
+    if (!this._sourceFolder) return;
     const pattern = new vscode.RelativePattern(this._sourceFolder, "**/*.xml");
     const watcher = vscode.workspace.createFileSystemWatcher(pattern);
     watcher.onDidChange(e => this._updateFile(e), this, this._watcherDisposables);

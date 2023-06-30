@@ -1,5 +1,5 @@
 import * as vscode from "vscode";
-import { COMMAND, LINK } from "#constants";
+import { S4TKLink, S4TKCommand } from "#constants";
 
 export const MessageButton = {
   GetHelp: "Get Help",
@@ -18,16 +18,16 @@ export function handleMessageButtonClick(button: string | undefined) {
 
   switch (button) {
     case MessageButton.GetHelp:
-      vscode.env.openExternal(vscode.Uri.parse(LINK.help));
+      vscode.env.openExternal(vscode.Uri.parse(S4TKLink.help));
       break;
     case MessageButton.ReportProblem:
-      vscode.env.openExternal(vscode.Uri.parse(LINK.issues));
+      vscode.env.openExternal(vscode.Uri.parse(S4TKLink.issues));
       break;
     case MessageButton.ReloadConfig:
-      vscode.commands.executeCommand(COMMAND.workspace.reloadConfig);
+      vscode.commands.executeCommand(S4TKCommand.workspace.reloadConfig);
       break;
     case MessageButton.CreateProject:
-      vscode.commands.executeCommand(COMMAND.workspace.createWorkspace);
+      vscode.commands.executeCommand(S4TKCommand.workspace.createWorkspace);
       break;
   }
 }

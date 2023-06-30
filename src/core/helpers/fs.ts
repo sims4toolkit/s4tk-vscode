@@ -46,6 +46,16 @@ export async function replaceEntireDocument(
 }
 
 /**
+ * Returns a posix-style fs path for use with globbing.
+ * 
+ * @param baseUri Base folder for globbing to take place
+ * @param pattern Pattern to capture files with
+ */
+export function resolveGlobPattern(baseUri: vscode.Uri, pattern: string): string {
+  return `${baseUri.fsPath}/${pattern}`.replace(/\\/g, "/");
+}
+
+/**
  * Prompts the user for a file name and attempts to create it using the given
  * content generator.
  * 

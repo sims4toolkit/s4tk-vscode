@@ -103,7 +103,8 @@ export default class StringTableJson {
    * 
    * @param format Format to use for JSON
    */
-  static generate(format: StringTableJsonFormat): StringTableJson {
+  static generate(format?: StringTableJsonFormat): StringTableJson {
+    format ??= S4TKSettings.get("defaultStringTableJsonType");
     return (format === "array" || format === "object")
       ? new StringTableJson(format, [])
       : new StringTableJson(format, [], {
