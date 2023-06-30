@@ -1,18 +1,5 @@
+import { existsSync } from "fs";
 import * as vscode from "vscode";
-
-/**
- * Returns whether or not a file exists at the given URI.
- * 
- * @param uri URI to check
- */
-export async function fileExists(uri: vscode.Uri): Promise<boolean> {
-  try {
-    await vscode.workspace.fs.stat(uri);
-    return true;
-  } catch (e) {
-    return false;
-  }
-}
 
 /**
  * Checks if the file at the given URI is currently open, and if so, returns its
@@ -102,7 +89,7 @@ export async function tryCreateCustomFile(options: {
       path: destination.path + options.fileExtension,
     });
 
-  if (!(await fileExists(destination)))
+  if (!existsSync(destination.fsPath))
     await vscode.workspace.fs.writeFile(destination, options.contentGenerator());
 
   options.launchFile?.(destination);

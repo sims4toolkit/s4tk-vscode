@@ -1,7 +1,7 @@
+import { existsSync } from "fs";
 import * as vscode from "vscode";
 import S4TKAssets from "#assets";
 import { S4TKFilename } from "#constants";
-import { fileExists } from "#helpers/fs";
 import { parseAndValidateJson } from "#helpers/schemas";
 import { S4TKSettings } from "#helpers/settings";
 
@@ -100,9 +100,9 @@ export namespace S4TKConfig {
    * have one, and returns it alongside a boolean that says whether it actually
    * exists or not.
    */
-  export async function find(workspaceRoot: vscode.Uri): Promise<ConfigInfo> {
+  export function find(workspaceRoot: vscode.Uri): ConfigInfo {
     const uri = vscode.Uri.joinPath(workspaceRoot, S4TKFilename.config);
-    const exists = await fileExists(uri);
+    const exists = existsSync(uri.fsPath);
     return { uri, exists };
   }
 
