@@ -1,3 +1,4 @@
+import * as fs from "fs";
 import * as vscode from "vscode";
 import { ResourceKey } from "@s4tk/models/types";
 import { findOpenDocument } from "#helpers/fs";
@@ -5,11 +6,30 @@ import type ResourceIndex from "./resource-index";
 import { XmlMetadata, TuningMetadata, SimDataMetadata, InferredResourceKey, ResourceKeySources } from "./types";
 import { BinaryResourceType, SimDataGroup, TuningResourceType } from "@s4tk/models/enums";
 
+/*
+  NOTE: This file could be greatly simplified by parsing the input XML as an XML
+  DOM rather than manually searching individual lines with regexes, however,
+  this was a deliberate added complexity because of the massive time and space
+  performance gains. Performance in these functions is CRITICAL, because they
+  are called whenever an XML document is created or edited, and also on every
+  file during the build process.
+*/
 
+const _MAX_LINES = 5;
 const _TGI_REGEX = /(?<t>[a-f\d]{8}).(?<g>[a-f\d]{8}).(?<i>[a-f\d]{16})/i;
+const _S4TK_COMMENT_REGEX = /^<!--\sS4TK/i;
+const _S4TK_TYPE_REGEX = /type:\s*([a-f0-9]{1,8})/i;
+const _S4TK_GROUP_REGEX = /group:\s*([a-f0-9]{1,8})/i;
+const _S4TK_INSTANCE_REGEX = /instance:\s*([a-f0-9]{1,16})/i;
 
-
-function inferKeyFromMetadata(metadata: XmlMetadata, index?: ResourceIndex): InferredResourceKey {
+/**
+ * Returns the key to use for the resource with the given meta data, if it can
+ * be deduced, along with the source of each key segment.
+ * 
+ * @param metadata Known meta data about the file to get the key for
+ * @param index Existing index, if available (required for SimData)
+ */
+export function inferKeyFromMetadata(metadata: XmlMetadata, index?: ResourceIndex): InferredResourceKey {
   const groups = _TGI_REGEX.exec(metadata.uri.path)?.groups;
 
   if (groups) return {
@@ -93,66 +113,100 @@ function inferKeyFromMetadata(metadata: XmlMetadata, index?: ResourceIndex): Inf
   return { key, sources };
 }
 
-
+/**
+ * Returns the inferred meta data for the tuning file at the given URI.
+ * 
+ * @param uri URI of tuning file to get meta data for
+ */
 export function inferTuningMetadata(uri: vscode.Uri): TuningMetadata {
-  const def: TuningMetadata = { kind: "tuning", uri };
+  const metadata: TuningMetadata = { kind: "tuning", uri };
 
-  // TODO:
+  let parsedComment = false;
+  const lines = _getTopLinesFromFile(uri);
+  for (let i = 0; i < lines.length; ++i) {
+    const line = lines[i];
 
-  return def;
+    if (!parsedComment && _parseOverrideComment(line, metadata)) {
+      parsedComment = true;
+      continue;
+    }
+
+    if (_parseTuningDeclaration(line, metadata)) {
+      metadata.range = new vscode.Range(i, 0, i, line.length);
+      break;
+    }
+  }
+
+  return metadata;
 }
 
 /**
- * Returns the metadata
+ * Returns the inferred meta data for the XML SimData file at the given URI.
  * 
- * @param uri URI to XML SimData file
- * @param index Index for current workspace
+ * @param uri URI of SimData file to get meta data for
  */
-export function inferSimDataMetadata(uri: vscode.Uri, index?: ResourceIndex): SimDataMetadata {
-  const def: SimDataMetadata = { kind: "simdata", uri };
+export function inferSimDataMetadata(uri: vscode.Uri): SimDataMetadata {
+  const metadata: SimDataMetadata = { kind: "simdata", uri };
 
-  // TODO:
+  const lines = _getTopLinesFromFile(uri);
+  for (let i = 0; i < lines.length; ++i) {
+    if (_parseOverrideComment(lines[i], metadata)) break;
+  }
 
-  return def;
+  return metadata;
 }
 
 //#region Helper Functions
 
+function _getTopLinesFromFile(uri: vscode.Uri): string[] {
+  try {
+    const document = findOpenDocument(uri);
+    if (document) {
+      const lines: string[] = [];
+      const maxLines = Math.min(_MAX_LINES, document.lineCount);
+      for (let i = 0; i < maxLines; ++i) lines.push(document.lineAt(i).text);
+      return lines;
+    } else {
+      return fs.readFileSync(uri.fsPath).toString().split("n", _MAX_LINES);
+    }
+  } catch (_) {
+    return [];
+  }
+}
 
+function _parseOverrideComment(line: string, metadata: XmlMetadata): boolean {
+  if (!_S4TK_COMMENT_REGEX.test(line)) return false;
+  metadata.comment = {
+    type: _S4TK_TYPE_REGEX.exec(line)?.[1],
+    group: _S4TK_GROUP_REGEX.exec(line)?.[1],
+    instance: _S4TK_INSTANCE_REGEX.exec(line)?.[1],
+  };
+  return true;
+}
+
+function _parseTuningDeclaration(line: string, metadata: TuningMetadata): boolean {
+  if (line.startsWith("<I")) {
+    metadata.root = "I";
+  } else if (line.startsWith("<M")) {
+    metadata.root = "M";
+  } else {
+    return false;
+  }
+
+  _parseAttributes(line, metadata);
+  return true;
+}
+
+function _parseAttributes(line: string, metadata: TuningMetadata) {
+  metadata.attrs ??= {};
+  const regex = /\s(?<key>[cimns])="(?<value>[^"]+)"/g;
+  let match: RegExpExecArray | null;
+
+  do {
+    match = regex.exec(line);
+    //@ts-ignore Safe because regex restricts to cimns
+    if (match?.groups) metadata.attrs[match.groups.key] = match.groups.value;
+  } while (match);
+}
 
 //#endregion
-
-
-// export function inferXmlMetaData(uri: vscode.Uri, index?: ResourceIndex): ResourceMetaData | undefined {
-//   if (!uri.fsPath.endsWith(".xml")) return;
-//   return uri.fsPath.endsWith(".SimData.xml")
-//     ? _inferSimDataMetaData(uri)
-//     : _inferTuningMetaData(uri);
-// }
-
-// function _inferSimDataMetaData(uri: vscode.Uri): ResourceMetaData {
-//   const metadata: ResourceMetaData = { kind: "simdata", uri: uri, key: {} };
-
-//   // TODO:
-//   const document = findOpenDocument(uri);
-//   // return document
-//   //   ? _inferMetaDataFromDocument(document)
-//   //   : _inferMetaDataFromFileSystem(uri);
-
-//   return metadata;
-// }
-
-// function _inferTuningMetaData(uri: vscode.Uri): ResourceMetaData {
-//   const document = findOpenDocument(uri);
-//   if (document)
-//     // return document
-//     //   ? _inferMetaDataFromDocument(document)
-//     //   : _inferMetaDataFromFileSystem(uri);
-
-
-//     const metadata: ResourceMetaData = { kind: "unknown", uri: uri, key: {} };
-
-//   // TODO:
-
-//   return metadata;
-// }
