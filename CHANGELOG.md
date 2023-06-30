@@ -21,15 +21,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - `buildInstructions.packages[*].doNotGenerate`: Allows you to 'comment out' a package without causing build errors
   - `buildInstructions.packages[*].doNotWrite`: Allows you to still generate a file so it can be used by others, but not written itself
   - `buildSettings.allowResourceKeyOverrides`: Safeguard against writing multiple resources with the same key into the same package
+  - `releaseSettings.zips`: List of ZIP files to build for release.
   - `stringTableSettings.allowStringKeyOverrides`: Safeguard against writing multiple string entries with the same key into the same string table
 - New properties in STBL JSON
   - `fragment`: Marks a STBL as a part of another STBL, so its entries will either overwrite or be appended to another STBL rather than replacing the STBL entirely (intended for use with `duplicateFilesFrom`)
+- New supported file types
+  - TGI file types with the extension `.deleted` will now be built with the deleted record compression, and will be rendered in `*.package` files
 ### Changed
 - If two resources being written to the same package have the same resource key, a fatal error will occur if `allowResourceKeyOverrides` is false, or it will override the existing file if `allowResourceKeyOverrides` is true
-- `*.package` renderer now displays string tables as the configured STBL JSON type with metadata rather than always as an array without metadata.
+- `*.package` renderer now displays string tables as the configured STBL JSON type with metadata rather than always as an array without metadata
+- Multiple ZIPs are now supported in release mode, this is a breaking change due to a different required setup within `releaseSettings`
 ### Fixed
 - "Copy as XML Reference" command should now show up on all tuning XML files
 - Content-changing CodeLenses will no longer appear in read-only documents
+- S4TK configs and all related commands now work properly with multiple workspace folders
+### Removed
+- All properties of `releaseSettings` in the S4TK config except for `overrideDestinations`
 
 ## [0.1.0] - 2023/05/29
 ### Added
