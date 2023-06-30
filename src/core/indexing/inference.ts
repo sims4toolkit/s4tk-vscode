@@ -21,6 +21,7 @@ const _S4TK_COMMENT_REGEX = /^<!--\sS4TK/i;
 const _S4TK_TYPE_REGEX = /type:\s*([a-f0-9]{1,8})/i;
 const _S4TK_GROUP_REGEX = /group:\s*([a-f0-9]{1,8})/i;
 const _S4TK_INSTANCE_REGEX = /instance:\s*([a-f0-9]{1,16})/i;
+const _HEADER_REGEX = /^\s*<([IMS])/m;
 
 /**
  * Returns the key to use for the resource with the given meta data, if it can
@@ -30,20 +31,17 @@ const _S4TK_INSTANCE_REGEX = /instance:\s*([a-f0-9]{1,16})/i;
  * @param index Existing index, if available (required for SimData)
  */
 export function inferKeyFromMetadata(metadata: XmlMetadata, index?: ResourceIndex): InferredResourceKey {
-  const groups = _TGI_REGEX.exec(metadata.uri.path)?.groups;
-
-  if (groups) return {
-    key: {
-      type: parseInt(groups.t, 16),
-      group: parseInt(groups.g, 16),
-      instance: BigInt("0x" + groups.i),
-    },
-    sources: {
-      type: "This type is set in the file name.",
-      group: "This group is set in the file name.",
-      instance: "This instance is set in the file name.",
-    },
-  };
+  if (metadata.uri) {
+    const filenameKey = parseKeyFromTgiFilename(metadata.uri.path);
+    if (filenameKey) return {
+      key: filenameKey,
+      sources: {
+        type: "This type is set in the file name.",
+        group: "This group is set in the file name.",
+        instance: "This instance is set in the file name.",
+      },
+    };
+  }
 
   function ifSet<T>(v: string | undefined, fn: (v: string) => T): T | undefined {
     return v ? fn(v) : undefined;
@@ -86,7 +84,7 @@ export function inferKeyFromMetadata(metadata: XmlMetadata, index?: ResourceInde
       sources.type = "This type is the default for SimData files.";
     }
 
-    if (index != undefined && (key.group == undefined || key.instance == undefined)) {
+    if (metadata.uri && index && (key.group == undefined || key.instance == undefined)) {
       const tuning = index.getMetadataFromUri(metadata.uri.with({
         path: metadata.uri.path.replace(/\.SimData\.xml$/, ".xml"),
       }));
@@ -114,15 +112,18 @@ export function inferKeyFromMetadata(metadata: XmlMetadata, index?: ResourceInde
 }
 
 /**
- * Returns the inferred meta data for the tuning file at the given URI.
+ * Returns the inferred meta data for a tuning file.
  * 
- * @param uri URI of tuning file to get meta data for
+ * @param uriOrContent URI to or content of the tuning file
  */
-export function inferTuningMetadata(uri: vscode.Uri): TuningMetadata {
-  const metadata: TuningMetadata = { kind: "tuning", uri };
+export function inferTuningMetadata(uriOrContent: vscode.Uri | string): TuningMetadata {
+  const metadata: TuningMetadata = {
+    kind: "tuning",
+    uri: typeof uriOrContent === "string" ? undefined : uriOrContent,
+  };
 
   let parsedComment = false;
-  const lines = _getTopLinesFromFile(uri);
+  const lines = _getTopLinesFromFile(uriOrContent);
   for (let i = 0; i < lines.length; ++i) {
     const line = lines[i];
 
@@ -141,14 +142,17 @@ export function inferTuningMetadata(uri: vscode.Uri): TuningMetadata {
 }
 
 /**
- * Returns the inferred meta data for the XML SimData file at the given URI.
+ * Returns the inferred meta data for an XML SimData file.
  * 
- * @param uri URI of SimData file to get meta data for
+ * @param uriOrContent URI to or content of the SimData file
  */
-export function inferSimDataMetadata(uri: vscode.Uri): SimDataMetadata {
-  const metadata: SimDataMetadata = { kind: "simdata", uri };
+export function inferSimDataMetadata(uriOrContent: vscode.Uri | string): SimDataMetadata {
+  const metadata: SimDataMetadata = {
+    kind: "simdata",
+    uri: typeof uriOrContent === "string" ? undefined : uriOrContent,
+  };
 
-  const lines = _getTopLinesFromFile(uri);
+  const lines = _getTopLinesFromFile(uriOrContent);
   for (let i = 0; i < lines.length; ++i) {
     if (_parseOverrideComment(lines[i], metadata)) break;
   }
@@ -156,18 +160,85 @@ export function inferSimDataMetadata(uri: vscode.Uri): SimDataMetadata {
   return metadata;
 }
 
+/**
+ * Parses a resource key from the given filename, if possible.
+ * 
+ * @param filename Name of file that may or may not contain a TGI
+ */
+export function parseKeyFromTgiFilename(filename: string): ResourceKey | undefined {
+  const groups = _TGI_REGEX.exec(filename)?.groups;
+
+  if (groups) return {
+    type: parseInt(groups.t, 16),
+    group: parseInt(groups.g, 16),
+    instance: BigInt("0x" + groups.i),
+  };
+}
+
+/**
+ * Inserts a subset of key overrides to XML content, if applicable, and returns
+ * the new content to use if anything has changed.
+ * 
+ * @param xmlContent XML content as a plain text string
+ * @param overrides Object of overrides to insert
+ */
+export function insertXmlKeyOverrides(
+  xmlContent: string,
+  overrides: Partial<{ [key in 'type' | 'group' | 'instance']: string; }>
+): string | undefined {
+  const lines = _getTopLinesFromFile(xmlContent);
+  const mockMetadata: XmlMetadata = { kind: "tuning" }; // kind is irrelevant
+  for (const line in lines)
+    if (_parseOverrideComment(line, mockMetadata)) break;
+
+  const hadOverrides = Boolean(mockMetadata.comment);
+  const existingOverrides = mockMetadata.comment ?? {};
+  let hasChange = false;
+  for (const overrideKey in overrides) {
+    //@ts-expect-error 3 typing errors here, all safe to ignore
+    if (existingOverrides[overrideKey] !== overrides[overrideKey]) {
+      //@ts-expect-error 3 typing errors here, all safe to ignore
+      existingOverrides[overrideKey] = overrides[overrideKey];
+      hasChange = true;
+    }
+  }
+
+  if (!hasChange) return;
+
+  const commentSegments = [];
+  if (existingOverrides.type)
+    commentSegments.push(`Type: ${existingOverrides.type}`);
+  if (existingOverrides.group)
+    commentSegments.push(`Group: ${existingOverrides.group}`);
+  if (existingOverrides.instance)
+    commentSegments.push(`Instance: ${existingOverrides.instance}`);
+
+  const comment = `<!-- S4TK ${commentSegments.join(", ")} -->`;
+
+  if (hadOverrides) {
+    return xmlContent.replace(_S4TK_COMMENT_REGEX, comment);
+  } else {
+    const eol = xmlContent.split("\n", 1)[0]?.at(-1) === "\r" ? "\r\n" : "\n";
+    return xmlContent.replace(_HEADER_REGEX, `${comment}${eol}<$1`);
+  }
+}
+
 //#region Helper Functions
 
-function _getTopLinesFromFile(uri: vscode.Uri): string[] {
+function _getTopLinesFromFile(uriOrContent: vscode.Uri | string): string[] {
   try {
-    const document = findOpenDocument(uri);
-    if (document) {
-      const lines: string[] = [];
-      const maxLines = Math.min(_MAX_LINES, document.lineCount);
-      for (let i = 0; i < maxLines; ++i) lines.push(document.lineAt(i).text);
-      return lines;
+    if (typeof uriOrContent === "string") {
+      return uriOrContent.split("n", _MAX_LINES);
     } else {
-      return fs.readFileSync(uri.fsPath).toString().split("n", _MAX_LINES);
+      const document = findOpenDocument(uriOrContent);
+      if (document) {
+        const lines: string[] = [];
+        const maxLines = Math.min(_MAX_LINES, document.lineCount);
+        for (let i = 0; i < maxLines; ++i) lines.push(document.lineAt(i).text);
+        return lines;
+      } else {
+        return fs.readFileSync(uriOrContent.fsPath).toString().split("n", _MAX_LINES);
+      }
     }
   } catch (_) {
     return [];

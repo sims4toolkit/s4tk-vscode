@@ -2,12 +2,12 @@ import * as fs from "fs";
 import * as path from "path";
 import * as vscode from "vscode";
 import { ResourceKey } from "@s4tk/models/types";
-import { BinaryResourceType, SimDataGroup, TuningResourceType } from "@s4tk/models/enums";
 import { Package, RawResource, SimDataResource, StringTableResource } from "@s4tk/models";
-import { formatResourceType, formatResourceKey } from "@s4tk/hashing/formatting";
-import { getNewXmlContentWithOverride, inferXmlMetaData } from "#helpers/xml";
+import { BinaryResourceType, SimDataGroup, TuningResourceType } from "@s4tk/models/enums";
+import { formatResourceType, formatResourceKey, formatAsHexString } from "@s4tk/hashing/formatting";
 import { findGlobMatches, parseKeyFromTgi } from "#building/resources";
 import StringTableJson from "#models/stbl-json";
+import * as inference from "#indexing/inference";
 
 /**
  * Prompts the user for a folder containing packages and/or loose TGI files and
@@ -45,6 +45,8 @@ export async function convertFolderToProject() {
     _processSourceFile(sourcePath, destFolderUri.fsPath);
   });
 }
+
+//#region Helpers
 
 async function _promptForFolder({ title, openLabel }: {
   title: string;
@@ -113,16 +115,27 @@ function _processResource(key: ResourceKey, buffer: Buffer, destFolder: string) 
   if (key.type in TuningResourceType) {
     const subfolder = getSubfolder(TuningResourceType[key.type]);
     let xmlContent = buffer.toString();
-    const metadata = inferXmlMetaData(buffer.toString());
-    if (key.group !== 0)
-      xmlContent = getNewXmlContentWithOverride(xmlContent, "group", key.group) ?? xmlContent;
-    if (key.type !== metadata.key.type)
-      xmlContent = getNewXmlContentWithOverride(xmlContent, "type", key.type) ?? xmlContent;
-    if (key.instance !== metadata.key.instance)
-      xmlContent = getNewXmlContentWithOverride(xmlContent, "instance", key.instance) ?? xmlContent;
 
+    const metadata = inference.inferTuningMetadata(xmlContent);
+    const inferredKey = inference.inferKeyFromMetadata(metadata);
+
+    const overrides = {
+      type: key.type !== inferredKey.key.type
+        ? formatAsHexString(key.type, 8, false)
+        : undefined,
+      group: key.group !== 0
+        ? formatAsHexString(key.group, 8, false)
+        : undefined,
+      instance: key.instance !== inferredKey.key.instance
+        ? formatAsHexString(key.instance, 16, false)
+        : undefined,
+    };
+
+    xmlContent = inference.insertXmlKeyOverrides(xmlContent, overrides) ?? xmlContent;
+
+    // FIXME: remove creator name prefix
     fs.writeFileSync(
-      _getDestFilename(subfolder, metadata.filename ?? "UnnamedTuning", "xml"),
+      _getDestFilename(subfolder, metadata.attrs?.n ?? "UnnamedTuning", "xml"),
       xmlContent
     );
   } else if (key.type in BinaryResourceType) {
@@ -137,8 +150,9 @@ function _processResource(key: ResourceKey, buffer: Buffer, destFolder: string) 
 
       const xmlContent = simdata.toXmlDocument().toXml();
 
-      // FIXME: insert group and instance override if tuning not found
+      // TODO: insert group and instance override if tuning not found
 
+      // FIXME: remove creator name prefix
       fs.writeFileSync(
         _getDestFilename(subfolder, simdata.instance.name, "SimData.xml"),
         xmlContent
@@ -175,3 +189,5 @@ function _processResource(key: ResourceKey, buffer: Buffer, destFolder: string) 
     );
   }
 }
+
+//#endregion

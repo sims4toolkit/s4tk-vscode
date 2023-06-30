@@ -38,7 +38,7 @@ export interface ResourceKeySources {
 //#region Private Types
 
 interface BaseXmlMetadata {
-  uri: vscode.Uri;
+  uri?: vscode.Uri;
   kind: "tuning" | "simdata";
   comment?: {
     type?: string;
