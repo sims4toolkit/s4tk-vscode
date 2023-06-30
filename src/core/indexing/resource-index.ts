@@ -1,6 +1,8 @@
 import * as vscode from "vscode";
+import { sync as globSync } from "glob";
 import { resolvePattern } from "#helpers/globbing";
 import type { TuningMetadata } from "./types";
+import { inferTuningMetadata } from "./inference";
 
 /**
  * Keeps track of all resources within a workspace's source folder.
@@ -72,13 +74,26 @@ export default class ResourceIndex implements vscode.Disposable {
     this._instancesToPaths.clear();
   }
 
-  private _indexSourceFolder() {
-    const pattern = resolvePattern(this._sourceFolder, "**/*.xml");
-    // TODO: impl
+  private async _indexSourceFolder() {
+    globSync(resolvePattern(this._sourceFolder, "**/*.xml")).forEach(filepath => {
+      if (filepath.endsWith(".SimData.xml")) return;
+      const uri = vscode.Uri.file(filepath);
+      const metadata = inferTuningMetadata(uri);
+      this._pathsToDefinitions.set(uri.fsPath, metadata);
+      if (metadata.attrs?.s)
+        this._instancesToPaths.set(metadata.attrs.s, uri.fsPath);
+    });
   }
 
   private _updateFile(uri: vscode.Uri) {
-    // TODO:
+    if (uri.fsPath.endsWith(".SimData.xml")) return;
+    const oldId = this._pathsToDefinitions.get(uri.fsPath)?.attrs?.s;
+    if (oldId && this._instancesToPaths.has(oldId))
+      this._instancesToPaths.delete(oldId);
+    const metadata = inferTuningMetadata(uri);
+    this._pathsToDefinitions.set(uri.fsPath, metadata);
+    if (metadata.attrs?.s)
+      this._instancesToPaths.set(metadata.attrs.s, uri.fsPath);
   }
 
   private _removeFile(uri: vscode.Uri) {
