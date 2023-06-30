@@ -67,6 +67,11 @@ export function inferKeyFromMetadata(metadata: XmlMetadata, index?: ResourceInde
           sources.type = `This type is inferred from i="${metadata.attrs.i}".`;
         }
       }
+    } else if (metadata.root === "M") {
+      if (key.type == undefined) {
+        key.type = TuningResourceType.Tuning;
+        sources.type = `This type is the default for tuning modules.`;
+      }
     }
 
     if (key.group == undefined) {
