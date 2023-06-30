@@ -1,6 +1,7 @@
 import * as vscode from "vscode";
-import { inferXmlMetaData } from "#helpers/xml";
 import { TuningResourceType } from "@s4tk/models/enums";
+import { inferKeyFromMetadata } from "#indexing/inference";
+import S4TKWorkspaceManager from "#workspace/workspace-manager";
 
 export default class TuningHoverProvider implements vscode.HoverProvider {
   private static readonly _TDESC_BUCKETS = require("../../../data/tdesc-endpoints.json");
@@ -19,6 +20,7 @@ export default class TuningHoverProvider implements vscode.HoverProvider {
   ): vscode.ProviderResult<vscode.Hover> {
     const range = document.getWordRangeAtPosition(position);
     if (!range) return;
+
     const prefix = document.getText(new vscode.Range(
       range.start.line,
       range.start.character - 3,
@@ -26,14 +28,25 @@ export default class TuningHoverProvider implements vscode.HoverProvider {
       range.start.character,
     ));
     if (prefix !== 'c="') return;
+
     const tuningClass = document.getText(range);
     if (!tuningClass) return;
-    const metadata = inferXmlMetaData(document);
-    if (!metadata.key.type) return;
-    const typeName = TuningResourceType[metadata.key.type];
+
+    const workspace = S4TKWorkspaceManager.getWorkspaceForFileAt(document.uri);
+    if (!workspace) return;
+
+    const metadata = workspace.index.getMetadataFromUri(document.uri);
+    if (!metadata) return;
+
+    const key = inferKeyFromMetadata(metadata).key;
+    if (!key.type) return;
+
+    const typeName = TuningResourceType[key.type];
     if (!(typeName in TuningHoverProvider._TDESC_BUCKETS)) return;
+
     const bucket = TuningHoverProvider._TDESC_BUCKETS[typeName];
     if (!bucket) return;
+
     return {
       range: range,
       contents: [`[Go to \`${bucket}/${tuningClass}.tdesc\`](https://tdesc.lot51.cc/${bucket}/Descriptions/${tuningClass}.tdesc)`]

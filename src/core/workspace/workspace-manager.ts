@@ -31,6 +31,14 @@ class _S4TKWorkspaceManager implements vscode.Disposable {
     return this._workspaces.get(uri.fsPath);
   }
 
+  getWorkspaceForFileAt(uri: vscode.Uri): S4TKWorkspace | undefined {
+    if (!vscode.workspace.workspaceFolders) return;
+    for (const folder of vscode.workspace.workspaceFolders) {
+      if (uri.fsPath.startsWith(folder.uri.fsPath))
+        return this.getWorkspace(folder.uri);
+    }
+  }
+
   removeWorkspace(uri: vscode.Uri) {
     this._workspaces.get(uri.fsPath)?.dispose();
     this._workspaces.delete(uri.fsPath);
