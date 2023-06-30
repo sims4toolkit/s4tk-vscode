@@ -1,7 +1,6 @@
-import * as path from "path";
 import * as vscode from "vscode";
-import { SCHEMAS } from "#assets";
-import { FILENAME } from "#constants";
+import S4TKAssets from "#assets";
+import { S4TKFilename } from "#constants";
 import { fileExists } from "#helpers/fs";
 import { parseAndValidateJson } from "#helpers/schemas";
 import { S4TKSettings } from "#helpers/settings";
@@ -101,10 +100,8 @@ export namespace S4TKConfig {
    * have one, and returns it alongside a boolean that says whether it actually
    * exists or not.
    */
-  export async function find(): Promise<ConfigInfo> {
-    const rootUri = vscode.workspace.workspaceFolders?.[0]?.uri;
-    if (!rootUri) return { exists: false };
-    const uri = vscode.Uri.joinPath(rootUri, FILENAME.config);
+  export async function find(workspaceRoot: vscode.Uri): Promise<ConfigInfo> {
+    const uri = vscode.Uri.joinPath(workspaceRoot, S4TKFilename.config);
     const exists = await fileExists(uri);
     return { uri, exists };
   }
@@ -128,7 +125,7 @@ export namespace S4TKConfig {
    * @param content JSON content to parse
    */
   export function parse(content: string): S4TKConfig {
-    const result = parseAndValidateJson<S4TKConfig>(content, SCHEMAS.config);
+    const result = parseAndValidateJson<S4TKConfig>(content, S4TKAssets.schemas.config);
 
     if (result.parsed) {
       return _getConfigProxy(result.parsed);
@@ -145,38 +142,11 @@ export namespace S4TKConfig {
   export function stringify(config: S4TKConfig): string {
     return JSON.stringify(config, null, S4TKSettings.getSpacesPerIndent());
   }
-
-  /**
-   * Resolves one of the paths listed in the config.
-   * 
-   * @param original Original path to resolve
-   * @param relativeTo Path that original is relative to if not the config
-   * @param isGlob Whether or not to return a path compatible with globbing 
-   */
-  export function resolvePath(original: string, {
-    relativeTo = undefined,
-    isGlob = false,
-  }: {
-    relativeTo?: string;
-    isGlob?: boolean;
-  } = {}): string | undefined {
-    let absPath = original;
-    if (!path.isAbsolute(original)) {
-      if (relativeTo) {
-        absPath = path.resolve(relativeTo, original);
-      } else {
-        const baseUri = vscode.workspace.workspaceFolders?.[0]?.uri
-        if (!baseUri) return;
-        absPath = path.resolve(baseUri.fsPath, original);
-      }
-    }
-    return isGlob ? absPath.replace(/\\/g, "/") : absPath;
-  }
 }
 
 //#endregion
 
-//#region Helper Types + Proxy
+//#region Proxy
 
 interface ConfigPropertyTransformer<T> {
   defaults: T;

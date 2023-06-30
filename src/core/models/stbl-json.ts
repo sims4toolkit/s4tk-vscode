@@ -1,29 +1,11 @@
-import { ResourceKey } from "@s4tk/models/types";
+import type { ResourceKey } from "@s4tk/models/types";
 import { StringTableResource } from "@s4tk/models";
 import { StringTableLocale, BinaryResourceType } from "@s4tk/models/enums";
 import { formatAsHexString, formatStringKey } from "@s4tk/hashing/formatting";
+import S4TKAssets from "#assets";
 import { randomFnv32, randomFnv64 } from "#helpers/hashing";
 import { parseAndValidateJson } from "#helpers/schemas";
 import { S4TKSettings } from "#helpers/settings";
-import { SCHEMAS } from "#assets";
-
-type StringTableJsonFormat = "array" | "object" | "array-metadata" | "object-metadata";
-
-interface StringTableJsonEntry { key: string; value: string; }
-
-type RawStringTableJsonArray = StringTableJsonEntry[];
-type RawStringTableJsonObject = { [key: string]: string; };
-type RawStringTableJsonEntries = RawStringTableJsonArray | RawStringTableJsonObject;
-
-interface RawStringTableJsonMetaData {
-  locale?: StringTableLocaleName;
-  group?: string;
-  instanceBase?: string;
-  fragment?: boolean;
-  entries: RawStringTableJsonEntries;
-}
-
-type RawStringTableJson = RawStringTableJsonEntries | RawStringTableJsonMetaData;
 
 /**
  * A string table JSON that follows the `stbl.schema.json` schema.
@@ -35,9 +17,9 @@ export default class StringTableJson {
   private static _DEFAULT_GROUP_INT = 0x80000000;
 
   public get format() { return this._format; }
-  public get hasMetaData() { return this._format === "array-metadata" || this._format === "object-metadata"; }
-  public get isArray() { return this._format === "array" || this._format === "array-metadata"; }
-  public get isObject() { return this._format === "object" || this._format === "object-metadata"; }
+  public get hasMetaData() { return this._format.endsWith("metadata"); }
+  public get isArray() { return this._format.startsWith("array"); }
+  public get isObject() { return this._format.startsWith("object"); }
 
   private _locale?: StringTableLocaleName;
   public get locale() { return this._locale; }
@@ -77,7 +59,7 @@ export default class StringTableJson {
    * @throws If JSON is malformed or violates schema
    */
   static parse(content: string): StringTableJson {
-    const result = parseAndValidateJson<RawStringTableJson>(content, SCHEMAS.stbl);
+    const result = parseAndValidateJson<RawStringTableJson>(content, S4TKAssets.schemas.stbl);
 
     if (result.parsed) {
       if (Array.isArray(result.parsed)) {
@@ -292,3 +274,25 @@ export default class StringTableJson {
 
   //#endregion
 }
+
+//#region Types
+
+type StringTableJsonFormat = "array" | "object" | "array-metadata" | "object-metadata";
+
+interface StringTableJsonEntry { key: string; value: string; }
+
+type RawStringTableJsonArray = StringTableJsonEntry[];
+type RawStringTableJsonObject = { [key: string]: string; };
+type RawStringTableJsonEntries = RawStringTableJsonArray | RawStringTableJsonObject;
+
+interface RawStringTableJsonMetaData {
+  locale?: StringTableLocaleName;
+  group?: string;
+  instanceBase?: string;
+  fragment?: boolean;
+  entries: RawStringTableJsonEntries;
+}
+
+type RawStringTableJson = RawStringTableJsonEntries | RawStringTableJsonMetaData;
+
+//#endregion
