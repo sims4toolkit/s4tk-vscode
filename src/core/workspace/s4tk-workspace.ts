@@ -236,7 +236,7 @@ export default class S4TKWorkspace implements vscode.Disposable {
   }
 
   private _startFsWatcher() {
-    const pattern = new vscode.RelativePattern(this.rootUri, "s4tk.config.xml");
+    const pattern = new vscode.RelativePattern(this.rootUri, "s4tk.config.json");
     const watcher = vscode.workspace.createFileSystemWatcher(pattern);
     watcher.onDidCreate(_ => this.loadConfig(), this, this._disposables);
     watcher.onDidChange(_ => {
