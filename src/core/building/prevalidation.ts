@@ -30,7 +30,7 @@ function _validateBuildSource(context: BuildContext) {
 
   const resolved = (original
     ? context.workspace.resolvePath(original)
-    : vscode.workspace.workspaceFolders?.[0]?.uri?.fsPath) ?? '';
+    : context.workspace.rootUri.fsPath) ?? '';
 
   context.summary.config.source.original = original;
   context.summary.config.source.resolved = resolved;

@@ -114,10 +114,9 @@ export namespace BuildSummary {
   /**
    * Returns the URI at which to write the BuildSummary.json file.
    */
-  export function getUri(): vscode.Uri | undefined {
-    const rootDir = vscode.workspace.workspaceFolders?.[0]?.uri;
-    if (!rootDir) return;
-    return vscode.Uri.joinPath(rootDir, _BUILD_SUMMARY_FILENAME);
+  export function getUri(workspace: S4TKWorkspace): vscode.Uri | undefined {
+    // TODO: delete and just use join path yourself
+    return vscode.Uri.joinPath(workspace.rootUri, _BUILD_SUMMARY_FILENAME);
   }
 
   /**

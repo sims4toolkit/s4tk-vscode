@@ -29,6 +29,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `*.package` renderer now displays string tables as the configured STBL JSON type with metadata rather than always as an array without metadata.
 ### Fixed
 - "Copy as XML Reference" command should now show up on all tuning XML files
+- Content-changing CodeLenses will no longer appear in read-only documents
 
 ## [0.1.0] - 2023/05/29
 ### Added

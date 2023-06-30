@@ -1,5 +1,5 @@
 import * as vscode from 'vscode';
-import { COMMAND } from '#constants';
+import { S4TKCommand } from '#constants';
 import BaseCodeLensProvider from './base-codelens';
 
 /**
@@ -48,17 +48,17 @@ export default class S4TKConfigCodeLensProvider extends BaseCodeLensProvider {
       new vscode.CodeLens(line.range, {
         title: "Build",
         tooltip: "Build your project and output its files.",
-        command: COMMAND.workspace.build,
+        command: S4TKCommand.workspace.build,
       }),
       new vscode.CodeLens(line.range, {
         title: "Dry Run",
         tooltip: "Run the build process, check for issues, and show where the files *would* have been output to, but do not actually write them.",
-        command: COMMAND.workspace.buildDryRun,
+        command: S4TKCommand.workspace.buildDryRun,
       }),
       new vscode.CodeLens(line.range, {
         title: "Release",
         tooltip: "Build your project for release (ZIP all packages with optional other files), follwing `releaseSettings`.",
-        command: COMMAND.workspace.buildRelease,
+        command: S4TKCommand.workspace.buildRelease,
       })
     );
   }
@@ -68,7 +68,7 @@ export default class S4TKConfigCodeLensProvider extends BaseCodeLensProvider {
       new vscode.CodeLens(line.range, {
         title: "New Package",
         tooltip: "Add instructions for building a new package.",
-        command: COMMAND.config.addPackage,
+        command: S4TKCommand.config.addPackage,
         arguments: [vscode.window.activeTextEditor]
       })
     );
