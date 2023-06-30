@@ -133,7 +133,9 @@ function _tryAddPackage(context: PackageBuildContext, filepath: string, buffer: 
   try {
     if (path.extname(filepath) !== ".package") return false;
 
-    models.Package.extractResources(buffer).forEach((entry, i) => {
+    models.Package.extractResources(buffer, {
+      keepDeletedRecords: true
+    }).forEach((entry, i) => {
       let inPackageName = i.toString();
 
       if (entry.key.type === enums.BinaryResourceType.StringTable) {
@@ -169,6 +171,11 @@ function _tryAddTgiFile(context: PackageBuildContext, filepath: string, buffer: 
   try {
     const tgiKey = parseKeyFromTgi(filepath);
     if (!tgiKey) return false;
+
+    if (filepath.endsWith(".deleted")) {
+      _addOrReplaceInPackage(context, tgiKey, new models.DeletedResource());
+      return true;
+    }
 
     if (tgiKey.type === enums.BinaryResourceType.SimData) {
       fileType = "SimData";

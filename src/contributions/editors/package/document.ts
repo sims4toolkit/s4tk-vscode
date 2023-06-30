@@ -29,7 +29,10 @@ export default class PackageDocument extends ViewOnlyDocument {
 
   static async create(uri: vscode.Uri): Promise<PackageDocument> {
     const data = await vscode.workspace.fs.readFile(uri);
-    const pkg = models.Package.from(Buffer.from(data), { recoveryMode: true });
+    const pkg = models.Package.from(Buffer.from(data), {
+      recoveryMode: true,
+      keepDeletedRecords: true
+    });
     return new PackageDocument(uri, pkg, _getPkgIndex(pkg));
   }
 
@@ -148,7 +151,9 @@ function _getEntryGroup(entry: ResourceKeyPair): string {
 }
 
 function _getEntryFilename(entry: ResourceKeyPair): string {
-  if (entry.key.type in enums.BinaryResourceType) {
+  if (entry.value.encodingType === enums.EncodingType.Null) {
+    return "[Deleted Record]";
+  } else if (entry.key.type in enums.BinaryResourceType) {
     if (entry.key.type === enums.BinaryResourceType.StringTable) {
       const locale = enums.StringTableLocale.getLocale(entry.key.instance);
       const localeName = enums.StringTableLocale[locale] ?? "Unknown";
@@ -206,7 +211,9 @@ function _getVirtualContent(entry: ResourceKeyPair): string {
 
 function _getVirtualFilename(entry: ResourceKeyPair): string {
   const filename = formatResourceKey(entry.key, "_");
-  if (entry.value instanceof models.XmlResource) {
+  if (entry.value.encodingType === enums.EncodingType.Null) {
+    return filename + ".deleted";
+  } else if (entry.value instanceof models.XmlResource) {
     return filename + ".xml";
   } else if (entry.value instanceof models.SimDataResource) {
     return filename + ".SimData.xml";
