@@ -1,10 +1,9 @@
 import * as fs from "fs";
 import * as vscode from "vscode";
-import { S4TKConfig } from "#models/s4tk-config";
-import S4TKWorkspace from "#workspace/s4tk-workspace";
+import { resolveGlobPattern } from "#helpers/fs";
 import { FatalBuildError, addAndGetItem } from "./helpers";
 import { findGlobMatches } from "./resources";
-import { BuildSummary } from "./summary";
+import { BuildContext } from "./context";
 
 //#region Exported Functions
 
@@ -12,45 +11,45 @@ import { BuildSummary } from "./summary";
  * Validates the current loaded S4TK config and workspace files and prepares the
  * given summary for use during the build process.
  * 
- * @param summary BuildSummary to update during validation
+ * @param context BuildContext to update during validation
  */
-export function prevalidateBuild(summary: BuildSummary) {
-  _validateBuildSource(summary);
-  _validateBuildDestinations(summary);
-  _validateBuildPackages(summary);
-  if (summary.buildInfo.mode === "release")
-    _validateBuildRelease(summary);
+export function prevalidateBuild(context: BuildContext) {
+  _validateBuildSource(context);
+  _validateBuildDestinations(context);
+  _validateBuildPackages(context);
+  if (context.summary.buildInfo.mode === "release")
+    _validateBuildRelease(context);
 }
 
 //#endregion
 
 //#region Validation Helpers
 
-function _validateBuildSource(summary: BuildSummary) {
-  const original = S4TKWorkspace.config.buildInstructions.source;
+function _validateBuildSource(context: BuildContext) {
+  const original = context.workspace.config.buildInstructions.source;
 
   const resolved = (original
-    ? S4TKConfig.resolvePath(original)
+    ? context.workspace.resolvePath(original)
     : vscode.workspace.workspaceFolders?.[0]?.uri?.fsPath) ?? '';
 
-  summary.config.source.original = original;
-  summary.config.source.resolved = resolved;
+  context.summary.config.source.original = original;
+  context.summary.config.source.resolved = resolved;
 
   if (!resolved) throw FatalBuildError(
     "buildInstructions.source could not be resolved to a valid path", {
-    addWarning: summary.config.source
+    addWarning: context.summary.config.source
   });
 
   if (!_isExistingDirectory(resolved)) throw FatalBuildError(
     "buildInstructions.source does not lead to a folder", {
-    addWarning: summary.config.source
+    addWarning: context.summary.config.source
   });
 }
 
-function _validateBuildDestinations(summary: BuildSummary) {
-  const { destinations } = S4TKWorkspace.config.buildInstructions;
-  const { overrideDestinations } = S4TKWorkspace.config.releaseSettings;
-  const useOverrides = summary.buildInfo.mode === "release" && overrideDestinations.length >= 1;
+function _validateBuildDestinations(context: BuildContext) {
+  const { destinations } = context.workspace.config.buildInstructions;
+  const { overrideDestinations } = context.workspace.config.releaseSettings;
+  const useOverrides = context.summary.buildInfo.mode === "release" && overrideDestinations.length >= 1;
   const originals = useOverrides ? overrideDestinations : destinations;
   const propName = useOverrides ? 'releaseSettings.overrideDestinations' : 'buildInstructions.destinations';
 
@@ -58,12 +57,11 @@ function _validateBuildDestinations(summary: BuildSummary) {
     `${propName} cannot be empty`
   );
 
-  const { allowFolderCreation } = S4TKWorkspace.config.buildSettings;
+  const { allowFolderCreation } = context.workspace.config.buildSettings;
   const seenPaths = new Set<string>();
   originals.forEach((original, i) => {
-    const resolved = S4TKConfig.resolvePath(original) ?? '';
-
-    const destination = addAndGetItem(summary.config.destinations, { original, resolved });
+    const resolved = context.workspace.resolvePath(original);
+    const destination = addAndGetItem(context.summary.config.destinations, { original, resolved });
 
     if (!resolved) throw FatalBuildError(
       `${propName}[${i}] could not be resolved to a valid path (${original})`, {
@@ -78,16 +76,17 @@ function _validateBuildDestinations(summary: BuildSummary) {
     if (seenPaths.has(resolved)) {
       destination.warning = `${propName}[${i}] is listed more than once`;
       destination.ignore = true;
-      summary.buildInfo.problems++;
+      context.summary.buildInfo.problems++;
     } else {
       seenPaths.add(resolved);
     }
   });
 }
 
-function _validateBuildPackages(summary: BuildSummary) {
-  const { packages } = S4TKWorkspace.config.buildInstructions;
-  const { buildSettings } = S4TKWorkspace.config;
+function _validateBuildPackages(context: BuildContext) {
+  const summary = context.summary;
+  const { packages } = context.workspace.config.buildInstructions;
+  const { buildSettings } = context.workspace.config;
   const propName = "buildInstructions.packages";
 
   if (packages.length < 1) throw FatalBuildError(
@@ -132,13 +131,8 @@ function _validateBuildPackages(summary: BuildSummary) {
 
     function resolveGlobArray(arrName: "include" | "exclude") {
       return function resolveGlob(original: string, j: number) {
-        const resolved = S4TKConfig.resolvePath(original, {
-          relativeTo: summary.config.source.resolved,
-          isGlob: true
-        }) ?? '';
-
+        const resolved = resolveGlobPattern(summary.config.source.resolved, original);
         const added = addAndGetItem(validatedPkg[arrName], { original, resolved });
-
         if (!resolved) throw FatalBuildError(
           `${propName}[${i}].${arrName}[${j}] could not be resolved as a valid path`, {
           addWarning: added
@@ -175,10 +169,7 @@ function _validateBuildPackages(summary: BuildSummary) {
     matches.forEach(match => seenGlobMatches.add(match));
   });
 
-  const allGlob = S4TKConfig.resolvePath("**/*", {
-    relativeTo: summary.config.source.resolved,
-    isGlob: true
-  })!;
+  const allGlob = resolveGlobPattern(summary.config.source.resolved, "**/*");
 
   summary.written.ignoredSourceFiles.push(
     ...findGlobMatches([allGlob], undefined, "unsupported")
@@ -201,8 +192,9 @@ function _validateBuildPackages(summary: BuildSummary) {
   }
 }
 
-function _validateBuildRelease(summary: BuildSummary) {
-  const { releaseSettings } = S4TKWorkspace.config;
+function _validateBuildRelease(context: BuildContext) {
+  const summary = context.summary;
+  const { releaseSettings } = context.workspace.config;
 
   const seenZipNames = new Set<string>();
   const availablePkgs = new Set<string>(
@@ -251,7 +243,7 @@ function _validateBuildRelease(summary: BuildSummary) {
       if (!zipInfo.otherFiles?.[arrName]?.length) return [];
 
       return zipInfo.otherFiles[arrName]!.map((original, j) => {
-        const resolved = S4TKConfig.resolvePath(original, { isGlob: true }) ?? '';
+        const resolved = context.workspace.resolvePath(original, true) ?? '';
 
         if (!resolved) throw FatalBuildError(
           `${zipIndex}.otherFiles.${arrName}[${j}] could not be resolved as a valid path (${original})`, {

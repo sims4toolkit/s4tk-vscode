@@ -51,8 +51,9 @@ export async function replaceEntireDocument(
  * @param baseUri Base folder for globbing to take place
  * @param pattern Pattern to capture files with
  */
-export function resolveGlobPattern(baseUri: vscode.Uri, pattern: string): string {
-  return `${baseUri.fsPath}/${pattern}`.replace(/\\/g, "/");
+export function resolveGlobPattern(baseUri: vscode.Uri | string, pattern: string): string {
+  const baseFsPath = typeof baseUri === "string" ? baseUri : baseUri.fsPath;
+  return `${baseFsPath}/${pattern}`.replace(/\\/g, "/");
 }
 
 /**

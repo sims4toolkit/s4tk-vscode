@@ -5,12 +5,12 @@ import * as models from "@s4tk/models";
 import * as enums from "@s4tk/models/enums";
 import * as types from "@s4tk/models/types";
 import * as hashFormat from "@s4tk/hashing/formatting";
-import { LINK } from "#constants";
+import { S4TKLink } from "#constants";
 import { randomFnv64 } from "#helpers/hashing";
 import { S4TKSettings } from "#helpers/settings";
-import { getXmlKeyOverrides, inferXmlMetaData } from "#helpers/xml";
 import StringTableJson from "#models/stbl-json";
-import S4TKWorkspace from "#workspace/s4tk-workspace";
+import * as inference from "#indexing/inference";
+import type S4TKWorkspace from "#workspace/s4tk-workspace";
 import { FatalBuildError, addAndGetItem } from "./helpers";
 import { parseKeyFromTgi } from "./resources";
 import { BuildMode, BuildSummary } from "./summary";
@@ -23,12 +23,14 @@ import { prevalidateBuild } from "./prevalidation";
  * Builds the project and returns a BuildSummary object. If any errors occur,
  * they will not be thrown, but will be logged in the BuildSummary.
  * 
+ * @param workspace Workspace being built
  * @param mode Mode to build for
  */
-export async function buildProject(mode: BuildMode): Promise<BuildSummary> {
-  const summary = BuildSummary.create(mode);
+export async function buildProject(workspace: S4TKWorkspace, mode: BuildMode): Promise<BuildSummary> {
+  const summary = BuildSummary.create(workspace, mode);
+  const context = BuildContext.create(workspace, summary);
 
-  if (!S4TKWorkspace.active) {
+  if (!workspace.active) {
     summary.buildInfo.success = false;
     summary.buildInfo.problems++;
     summary.buildInfo.fatalErrorMessage = "S4TK config is not loaded";
@@ -36,8 +38,8 @@ export async function buildProject(mode: BuildMode): Promise<BuildSummary> {
   }
 
   try {
-    prevalidateBuild(summary);
-    await _buildValidatedProject(summary);
+    prevalidateBuild(context);
+    await _buildValidatedProject(context);
   } catch (err) {
     summary.buildInfo.success = false;
     summary.buildInfo.problems++;
@@ -51,9 +53,9 @@ export async function buildProject(mode: BuildMode): Promise<BuildSummary> {
 
 //#region Build Helpers
 
-async function _buildValidatedProject(summary: BuildSummary) {
+async function _buildValidatedProject(context: BuildContext) {
+  const summary = context.summary;
   const existingPackages = new Map<string, models.Package>();
-  const context = BuildContext.create(summary);
 
   const shouldTrackPackages = summary.buildInfo.mode === "release"
     || summary.config.packages.some(p => p.duplicateFilesFrom.length > 0);
@@ -91,7 +93,7 @@ function _insertDuplicatedFiles(context: PackageBuildContext, existingPackages: 
   // actually cause a problem, but it is unexpected behavior
   context.pkgConfig.duplicateFilesFrom.forEach(pkgName => {
     const pkg = existingPackages.get(pkgName);
-    if (!pkg) throw FatalBuildError(`${context.pkgInfo.filename} depends on ${pkgName}, but ${pkgName} was not found at runtime. This is expected if ${pkgName}'s 'doNotGenerate' property is true, but if it isn't, please report this error immediately (${LINK.issues}).`);
+    if (!pkg) throw FatalBuildError(`${context.pkgInfo.filename} depends on ${pkgName}, but ${pkgName} was not found at runtime. This is expected if ${pkgName}'s 'doNotGenerate' property is true, but if it isn't, please report this error immediately (${S4TKLink.issues}).`);
     pkg.entries.forEach((entry, i) => {
       if (entry.key.type === enums.BinaryResourceType.StringTable) {
         context.stbls.push({
@@ -144,7 +146,7 @@ function _tryAddPackage(context: PackageBuildContext, filepath: string, buffer: 
         if (entry.value instanceof models.SimDataResource) {
           inPackageName = entry.value.instance.name;
         } else if (entry.value instanceof models.XmlResource) {
-          const filename = inferXmlMetaData(entry.value.content).filename;
+          const filename = inference.inferTuningMetadata(entry.value.content).attrs?.n;
           if (filename) inPackageName = filename;
         }
 
@@ -311,13 +313,13 @@ function _resolveStringTables(context: PackageBuildContext) {
 
   _flattenStringTables(context);
 
-  if (S4TKWorkspace.config.stringTableSettings.generateMissingLocales)
+  if (context.workspace.config.stringTableSettings.generateMissingLocales)
     _generateStringTables(context);
 
-  if (S4TKWorkspace.config.stringTableSettings.mergeStringTablesInSamePackage)
+  if (context.workspace.config.stringTableSettings.mergeStringTablesInSamePackage)
     _mergeStringTables(context);
 
-  const { allowStringKeyOverrides } = S4TKWorkspace.config.stringTableSettings;
+  const { allowStringKeyOverrides } = context.workspace.config.stringTableSettings;
 
   context.stbls.forEach(stblRef => {
     _addToPackageInfo(context, stblRef.filepath, stblRef.stbl.key);
@@ -413,7 +415,7 @@ function _flattenStringTables(context: PackageBuildContext) {
   // overridden, i.e. if they are both in the new `include` list, so this will
   // not catch all possible errors
   const isInOverrideContext = context.pkgConfig.duplicateFilesFrom.length > 0;
-  const { allowResourceKeyOverrides } = S4TKWorkspace.config.buildSettings;
+  const { allowResourceKeyOverrides } = context.workspace.config.buildSettings;
   const overridesAllowed = isInOverrideContext || allowResourceKeyOverrides;
 
   const baseStbls = context.stbls.filter(stbl => !stbl.fragment);
@@ -471,7 +473,7 @@ async function _zipPackagesAndWrite(context: BuildContext, packages: Map<string,
 
     for (const pkgName of zipInfo.packages) {
       if (!packages.has(pkgName)) throw FatalBuildError(
-        `${zipInfo.filename} depends on ${pkgName}, but no package with this name was found at runtime. This error should never occur, please report it immediately (${LINK.issues})`
+        `${zipInfo.filename} depends on ${pkgName}, but no package with this name was found at runtime. This error should never occur, please report it immediately (${S4TKLink.issues})`
       );
     }
 
@@ -507,7 +509,7 @@ function _addToPackageInfo(
   kwargs?: {
     inPackageName?: string;
   }) {
-  if (S4TKWorkspace.config.buildSettings.outputBuildSummary === "full") {
+  if (context.workspace.config.buildSettings.outputBuildSummary === "full") {
     let filename = BuildSummary.makeRelative(context.summary, filepath);
     if (kwargs?.inPackageName) filename += `[${kwargs.inPackageName}]`;
     context.pkgInfo.resources?.push({
@@ -526,7 +528,7 @@ function _addOrReplaceInPackage(context: PackageBuildContext, key: types.Resourc
     // that it's being overridden more than once by files in `include`, in which
     // case a fatal error should also be reported
     if (context.pkgConfig.duplicateFilesFrom.length < 1) {
-      if (!S4TKWorkspace.config.buildSettings.allowResourceKeyOverrides) {
+      if (!context.workspace.config.buildSettings.allowResourceKeyOverrides) {
         throw FatalBuildError(`More than one file is using the resource key ${hashFormat.formatResourceKey(key, "-")} in package '${context.pkgInfo.filename}', and buildSettings.allowResourceKeyOverrides is false. To see which files have the same keys, make sure your build summary type is set to "full".`, {
           addWarning: context.pkgConfig
         });
@@ -560,38 +562,32 @@ function _getFileTypeString(key: types.ResourceKey): string {
 }
 
 function _getTuningKey(context: BuildContext, filepath: string, content: string): types.ResourceKey {
-  const key: Partial<types.ResourceKey> = getXmlKeyOverrides(content) ?? {};
+  const metadata = inference.inferTuningMetadata(content);
+  const key = inference.inferKeyFromMetadata(metadata).key;
 
   if (key.type != undefined && key.instance != undefined) {
     key.group ??= 0;
     return key as types.ResourceKey;
   }
 
-  const metadata = inferXmlMetaData(content);
-  key.type ??= metadata.key.type;
-  key.group ??= metadata.key.group ?? 0;
-  key.instance ??= metadata.key.instance;
+  const fileWarnings = addAndGetItem(context.summary.written.fileWarnings, {
+    file: BuildSummary.makeRelative(context.summary, filepath),
+    warnings: []
+  });
 
-  if (key.type == undefined || key.instance == undefined) {
-    const fileWarnings = addAndGetItem(context.summary.written.fileWarnings, {
-      file: BuildSummary.makeRelative(context.summary, filepath),
-      warnings: []
-    });
+  if (key.type == undefined)
+    fileWarnings.warnings.push("Tuning does not contain a recognized `i` attribute, and no type override was found.");
 
-    if (key.type == undefined)
-      fileWarnings.warnings.push("Tuning does not contain a recognized `i` attribute, and no type override was found.");
+  if (key.instance == undefined)
+    fileWarnings.warnings.push("Tuning does not contain a valid `s` attribute, and no instance override was found.");
 
-    if (key.instance == undefined)
-      fileWarnings.warnings.push("Tuning does not contain a valid `s` attribute, and no instance override was found.");
-
-    throw FatalBuildError(fileWarnings.warnings.join(" "));
-  }
-
-  return key as types.ResourceKey;
+  throw FatalBuildError(fileWarnings.warnings.join(" "));
 }
 
 function _getSimDataKey(context: BuildContext, filepath: string, content: string): types.ResourceKey {
-  const key: Partial<types.ResourceKey> = getXmlKeyOverrides(content) ?? {};
+  const metadata = inference.inferSimDataMetadata(content);
+  const key = inference.inferKeyFromMetadata(metadata).key;
+
   key.type ??= enums.BinaryResourceType.SimData;
 
   if (key.group == undefined || key.instance == undefined) {

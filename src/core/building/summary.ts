@@ -1,5 +1,5 @@
 import * as vscode from "vscode";
-import S4TKWorkspace from "#workspace/s4tk-workspace";
+import type S4TKWorkspace from "#workspace/s4tk-workspace";
 
 //#region Types
 
@@ -83,13 +83,14 @@ export namespace BuildSummary {
   /**
    * Returns a new BuildSummary object for the given mode.
    * 
+   * @param workspace Workspace being built
    * @param mode Mode for build
    */
-  export function create(mode: BuildMode): BuildSummary {
+  export function create(workspace: S4TKWorkspace, mode: BuildMode): BuildSummary {
     return {
       buildInfo: {
         mode: mode,
-        summary: S4TKWorkspace.config.buildSettings.outputBuildSummary,
+        summary: workspace.config.buildSettings.outputBuildSummary,
         success: true,
         problems: 0,
       },

@@ -3,7 +3,7 @@ import * as path from "path";
 import * as vscode from "vscode";
 import S4TKAssets from "#assets";
 import { S4TKContext } from "#constants";
-import { findOpenDocument, replaceEntireDocument } from "#helpers/fs";
+import { findOpenDocument, replaceEntireDocument, resolveGlobPattern } from "#helpers/fs";
 import { S4TKSettings } from "#helpers/settings";
 import ResourceIndex from "#indexing/resource-index";
 import { S4TKConfig } from "#models/s4tk-config";
@@ -152,6 +152,24 @@ export default class S4TKWorkspace implements vscode.Disposable {
         MessageButton.ReportProblem,
       ).then(handleMessageButtonClick);
       this._setConfig(undefined);
+    }
+  }
+
+  /**
+   * Resolves a path that is either absolute or relative to the root URI of this
+   * workspace. 
+   * 
+   * @param relativePath Relative path to resolve
+   * @param isGlob Whether or not this is for a glob pattern
+   */
+  resolvePath(relativePath: string, isGlob: boolean = false): string {
+    // FIXME: unsure if this is correct
+    if (isGlob) {
+      return resolveGlobPattern(this.rootUri, relativePath);
+    } else {
+      return path.isAbsolute(relativePath)
+        ? path.normalize(relativePath)
+        : path.resolve(this.rootUri.fsPath, relativePath);
     }
   }
 
