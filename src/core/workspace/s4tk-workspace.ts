@@ -23,7 +23,10 @@ export default class S4TKWorkspace implements vscode.Disposable {
   get active(): boolean { return Boolean(this._activeConfig); }
   get index(): ResourceIndex { return this._index; }
 
-  constructor(public readonly rootUri: vscode.Uri) {
+  constructor(
+    public readonly rootUri: vscode.Uri,
+    private readonly _onConfigChange: () => void,
+  ) {
     this.loadConfig({ showNoConfigError: false });
     this._index = new ResourceIndex(undefined);
     this._disposables.push(this._index);
@@ -226,13 +229,7 @@ export default class S4TKWorkspace implements vscode.Disposable {
     );
 
     this._activeConfig = config;
-
-    // FIXME: this doesn't work as expected because there can be multiple workspaces
-    vscode.commands.executeCommand(
-      'setContext',
-      S4TKContext.workspace.active,
-      Boolean(config)
-    );
+    this._onConfigChange();
   }
 
   private _startFsWatcher() {

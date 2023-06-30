@@ -1,5 +1,7 @@
 import * as vscode from "vscode";
+import { S4TKContext } from "#constants";
 import S4TKWorkspace from "./s4tk-workspace";
+import { S4TKConfig } from "#models/s4tk-config";
 
 class _S4TKWorkspaceManager implements vscode.Disposable {
   private _disposables: vscode.Disposable[] = [];
@@ -24,7 +26,8 @@ class _S4TKWorkspaceManager implements vscode.Disposable {
   //#region Public Methods
 
   addWorkspace(uri: vscode.Uri) {
-    this._workspaces.set(uri.fsPath, new S4TKWorkspace(uri));
+    const workspace = new S4TKWorkspace(uri, () => this._onSomeConfigChanged());
+    this._workspaces.set(uri.fsPath, workspace);
   }
 
   async chooseWorkspace(): Promise<S4TKWorkspace | undefined> {
@@ -53,6 +56,26 @@ class _S4TKWorkspaceManager implements vscode.Disposable {
   removeWorkspace(uri: vscode.Uri) {
     this._workspaces.get(uri.fsPath)?.dispose();
     this._workspaces.delete(uri.fsPath);
+  }
+
+  //#endregion
+
+  //#region Private Methods
+
+  private _onSomeConfigChanged() {
+    let someWorkspaceActive = false;
+    for (const workspace of this._workspaces.values()) {
+      if (workspace.active) {
+        someWorkspaceActive = true;
+        break;
+      }
+    }
+
+    vscode.commands.executeCommand(
+      'setContext',
+      S4TKContext.workspace.active,
+      someWorkspaceActive
+    );
   }
 
   //#endregion
