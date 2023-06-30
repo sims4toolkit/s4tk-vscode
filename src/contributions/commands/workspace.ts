@@ -2,7 +2,7 @@ import * as fs from "fs";
 import * as path from "path";
 import * as vscode from "vscode";
 import { formatStringKey } from "@s4tk/hashing/formatting";
-import { S4TKCommand } from "#constants";
+import { S4TKCommand, S4TKFilename } from "#constants";
 import S4TKWorkspace from "#workspace/s4tk-workspace";
 import { buildProject } from "#building/builder";
 import { BuildMode, BuildSummary } from "#building/summary";
@@ -141,7 +141,7 @@ async function _runBuild(workspace: S4TKWorkspace, mode: BuildMode, readableMode
 
 async function _outputBuildSummary(workspace: S4TKWorkspace, summary: BuildSummary): Promise<vscode.Uri | undefined> {
   if (workspace.config.buildSettings.outputBuildSummary === "none") return;
-  const uri = BuildSummary.getUri();
+  const uri = vscode.Uri.joinPath(workspace.rootUri, S4TKFilename.buildSummary);
   if (!uri) return;
   const content = JSON.stringify(summary, null, S4TKSettings.getSpacesPerIndent());
   await vscode.workspace.fs.writeFile(uri, Buffer.from(content));

@@ -78,8 +78,6 @@ export interface WrittenResourceInfo {
 //#region Functions
 
 export namespace BuildSummary {
-  const _BUILD_SUMMARY_FILENAME = "BuildSummary.json";
-
   /**
    * Returns a new BuildSummary object for the given mode.
    * 
@@ -109,14 +107,6 @@ export namespace BuildSummary {
         packages: [],
       },
     };
-  }
-
-  /**
-   * Returns the URI at which to write the BuildSummary.json file.
-   */
-  export function getUri(workspace: S4TKWorkspace): vscode.Uri | undefined {
-    // TODO: delete and just use join path yourself
-    return vscode.Uri.joinPath(workspace.rootUri, _BUILD_SUMMARY_FILENAME);
   }
 
   /**
