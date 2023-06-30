@@ -1,12 +1,12 @@
+import * as fs from "fs";
 import * as vscode from 'vscode';
 import { StringTableResource } from '@s4tk/models';
-import { fileExists } from '#helpers/fs';
+import { StringTableLocale } from '@s4tk/models/enums';
+import { formatAsHexString } from '@s4tk/hashing/formatting';
 import { S4TKSettings } from '#helpers/settings';
 import StringTableJson from '#models/stbl-json';
 import { parseKeyFromTgi } from '#building/resources';
 import ViewOnlyDocument from '../view-only/document';
-import { StringTableLocale } from '@s4tk/models/enums';
-import { formatAsHexString } from '@s4tk/hashing/formatting';
 
 /**
  * Document containing binary STBL data.
@@ -43,7 +43,7 @@ export default class StringTableDocument extends ViewOnlyDocument {
       this.uri.fsPath.replace(/\.((stbl)|(binary))$/, ".stbl.json")
     );
 
-    if (await fileExists(uri)) {
+    if (fs.existsSync(uri.fsPath)) {
       vscode.window.showWarningMessage(`STBL JSON already exists at ${uri.path}`);
       vscode.window.showTextDocument(uri);
     } else {

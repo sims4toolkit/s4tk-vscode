@@ -2,13 +2,12 @@ import * as vscode from 'vscode';
 import * as models from '@s4tk/models';
 import * as enums from '@s4tk/models/enums';
 import { ResourceEntry, ResourceKeyPair } from '@s4tk/models/types';
-import { formatAsHexString, formatResourceKey } from '@s4tk/hashing/formatting';
-import { inferXmlMetaData } from '#helpers/xml';
-import ViewOnlyDocument from '../view-only/document';
-import { PackageIndex, PackageIndexEntry, PackageIndexGroup } from './types';
-import PackageResourceContentProvider from './package-fs';
-import { S4TKSettings } from '#helpers/settings';
+import { formatResourceKey } from '@s4tk/hashing/formatting';
 import StringTableJson from '#models/stbl-json';
+import { inferTuningMetadata } from '#indexing/inference';
+import ViewOnlyDocument from '../view-only/document';
+import PackageResourceContentProvider from './package-fs';
+import type { PackageIndex, PackageIndexEntry, PackageIndexGroup } from './types';
 
 /**
  * Document containing binary DBPF data.
@@ -162,7 +161,7 @@ function _getEntryFilename(entry: ResourceKeyPair): string {
     }
   } else if (entry.key.type in enums.TuningResourceType) {
     return ((entry.value as models.XmlResource).content
-      ? inferXmlMetaData((entry.value as models.XmlResource).content).filename
+      ? inferTuningMetadata((entry.value as models.XmlResource).content).attrs?.n
       : null) ?? 'Unnamed Tuning';
   } else {
     return "Unknown";

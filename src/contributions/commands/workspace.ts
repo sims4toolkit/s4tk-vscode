@@ -1,49 +1,61 @@
+import * as fs from "fs";
 import * as path from "path";
 import * as vscode from "vscode";
 import { formatStringKey } from "@s4tk/hashing/formatting";
-import { COMMAND } from "#constants";
+import { S4TKCommand } from "#constants";
 import S4TKWorkspace from "#workspace/s4tk-workspace";
 import { buildProject } from "#building/builder";
 import { BuildMode, BuildSummary } from "#building/summary";
 import StringTableProxy from "#models/stbl-proxy";
-import { S4TKConfig } from "#models/s4tk-config";
 import { S4TKSettings } from "#helpers/settings";
 import { convertFolderToProject } from "#workspace/folder-to-project";
-import S4TKIndex from "#workspace/indexing";
 import StringTableJson from "#models/stbl-json";
-import { fileExists } from "#helpers/fs";
+import S4TKWorkspaceManager from "#workspace/workspace-manager";
 
 export default function registerWorkspaceCommands() {
-  vscode.commands.registerCommand(COMMAND.workspace.build, () => {
-    _runBuild("build", "Build");
+  vscode.commands.registerCommand(S4TKCommand.workspace.build, async (uri?: vscode.Uri) => {
+    const workspace = await _resolveWorkspace(uri);
+    if (workspace) _runBuild(workspace, "build", "Build");
   });
 
-  vscode.commands.registerCommand(COMMAND.workspace.buildDryRun, () => {
-    _runBuild("dryrun", "Dry Run");
+  vscode.commands.registerCommand(S4TKCommand.workspace.buildDryRun, async (uri?: vscode.Uri) => {
+    const workspace = await _resolveWorkspace(uri);
+    if (workspace) _runBuild(workspace, "dryrun", "Dry Run");
   });
 
-  vscode.commands.registerCommand(COMMAND.workspace.buildRelease, () => {
-    _runBuild("release", "Release");
+  vscode.commands.registerCommand(S4TKCommand.workspace.buildRelease, async (uri?: vscode.Uri) => {
+    const workspace = await _resolveWorkspace(uri);
+    if (workspace) _runBuild(workspace, "release", "Release");
   });
 
-  vscode.commands.registerCommand(COMMAND.workspace.createConfig, (_?: vscode.Uri) => {
-    S4TKWorkspace.createConfig(true);
+  vscode.commands.registerCommand(S4TKCommand.workspace.createConfig, async (uri?: vscode.Uri) => {
+    const workspace = await _resolveWorkspace(uri);
+    workspace?.createConfig(true);
   });
 
-  vscode.commands.registerCommand(COMMAND.workspace.createWorkspace, (_?: vscode.Uri) => {
-    S4TKWorkspace.createDefaultWorkspace();
+  vscode.commands.registerCommand(S4TKCommand.workspace.createWorkspace, async (uri?: vscode.Uri) => {
+    const workspace = await _resolveWorkspace(uri);
+    workspace?.createDefaultWorkspace();
   });
 
-  vscode.commands.registerCommand(COMMAND.workspace.reloadConfig, () => {
-    S4TKWorkspace.loadConfig({ showNoConfigError: true });
+  vscode.commands.registerCommand(S4TKCommand.workspace.reloadConfig, async (uri?: vscode.Uri) => {
+    const workspace = await _resolveWorkspace(uri);
+    workspace?.loadConfig({ showNoConfigError: true });
   });
 
-  vscode.commands.registerCommand(COMMAND.workspace.setDefaultStbl, (uri: vscode.Uri) => {
-    S4TKWorkspace.setDefaultStbl(uri);
+  vscode.commands.registerCommand(S4TKCommand.workspace.setDefaultStbl, async (uri: vscode.Uri) => {
+    const workspace = S4TKWorkspaceManager.getWorkspaceForFileAt(uri);
+
+    if (!workspace?.active) {
+      vscode.window.showErrorMessage("The selected file is not a part of an active S4TK project.");
+    } else {
+      workspace.setDefaultStbl(uri);
+    }
   });
 
-  vscode.commands.registerCommand(COMMAND.workspace.createStblFragment, async (uri: vscode.Uri) => {
+  vscode.commands.registerCommand(S4TKCommand.workspace.createStblFragment, async (uri: vscode.Uri) => {
     try {
+      // TODO: move this logic somewhere else
       const dirname = path.dirname(uri.fsPath);
       const filename = path.basename(uri.fsPath);
 
@@ -55,7 +67,7 @@ export default function registerWorkspaceCommands() {
       if (!fragmentName) return;
       if (!fragmentName.endsWith(".stbl.json")) fragmentName += ".stbl.json";
       const fragmentUri = vscode.Uri.file(path.join(dirname, fragmentName));
-      if (await fileExists(fragmentUri)) {
+      if (fs.existsSync(fragmentUri.fsPath)) {
         vscode.window.showWarningMessage("Cannot create a fragment at the chosen location because that file already exists.");
         return;
       }
@@ -69,18 +81,28 @@ export default function registerWorkspaceCommands() {
     }
   });
 
-  vscode.commands.registerCommand(COMMAND.workspace.addNewString, (clickedUri?: vscode.Uri) => {
-    _addNewString(clickedUri);
+  vscode.commands.registerCommand(S4TKCommand.workspace.addNewString, async (uri?: vscode.Uri) => {
+    const workspace = await _resolveWorkspace(uri);
+    if (workspace) _addNewString(workspace, uri);
   });
 
-  vscode.commands.registerCommand(COMMAND.workspace.folderToProject, convertFolderToProject);
-
-  vscode.commands.registerCommand(COMMAND.workspace.refreshIndex, () => {
-    S4TKIndex.refresh();
+  vscode.commands.registerCommand(S4TKCommand.workspace.refreshIndex, async () => {
+    const workspace = await _resolveWorkspace(undefined);
+    if (workspace) workspace.index.refresh();
   });
+
+  vscode.commands.registerCommand(S4TKCommand.workspace.folderToProject, convertFolderToProject);
 }
 
-async function _runBuild(mode: BuildMode, readableMode: string) {
+//#region Helpers
+
+async function _resolveWorkspace(uri: vscode.Uri | undefined): Promise<S4TKWorkspace | undefined> {
+  return uri
+    ? S4TKWorkspaceManager.getWorkspaceForFileAt(uri)
+    : S4TKWorkspaceManager.chooseWorkspace();
+}
+
+async function _runBuild(workspace: S4TKWorkspace, mode: BuildMode, readableMode: string) {
   vscode.window.withProgress({
     location: vscode.ProgressLocation.Window,
     cancellable: false,
@@ -88,8 +110,8 @@ async function _runBuild(mode: BuildMode, readableMode: string) {
   }, async (progress) => {
     progress.report({ increment: 0 });
 
-    const summary = await buildProject(mode);
-    const buildSummaryUri = await _outputBuildSummary(summary);
+    const summary = await buildProject(workspace, mode);
+    const buildSummaryUri = await _outputBuildSummary(workspace, summary);
 
     if (summary.buildInfo.success) {
       const warnings: string[] = [];
@@ -117,8 +139,8 @@ async function _runBuild(mode: BuildMode, readableMode: string) {
   });
 }
 
-async function _outputBuildSummary(summary: BuildSummary): Promise<vscode.Uri | undefined> {
-  if (S4TKWorkspace.config.buildSettings.outputBuildSummary === "none") return;
+async function _outputBuildSummary(workspace: S4TKWorkspace, summary: BuildSummary): Promise<vscode.Uri | undefined> {
+  if (workspace.config.buildSettings.outputBuildSummary === "none") return;
   const uri = BuildSummary.getUri();
   if (!uri) return;
   const content = JSON.stringify(summary, null, S4TKSettings.getSpacesPerIndent());
@@ -126,18 +148,18 @@ async function _outputBuildSummary(summary: BuildSummary): Promise<vscode.Uri | 
   return uri;
 }
 
-async function _addNewString(clickedUri?: vscode.Uri) {
+async function _addNewString(workspace: S4TKWorkspace, clickedUri?: vscode.Uri) {
   try {
     let uri = clickedUri;
     if (!uri) {
-      const defaultStringTable = S4TKWorkspace.config.stringTableSettings.defaultStringTable;
+      const defaultStringTable = workspace.config.stringTableSettings.defaultStringTable;
 
       if (!defaultStringTable) {
         vscode.window.showWarningMessage("Cannot add string because no default string table is set in s4tk.config.json.");
         return;
       }
 
-      uri = vscode.Uri.parse(S4TKConfig.resolvePath(defaultStringTable)!);
+      uri = vscode.Uri.parse(workspace.resolvePath(defaultStringTable));
     }
 
     try {
@@ -169,3 +191,5 @@ async function _addNewString(clickedUri?: vscode.Uri) {
     vscode.window.showErrorMessage(`Could not add string to STBL [${e}]`);
   }
 }
+
+//#endregion

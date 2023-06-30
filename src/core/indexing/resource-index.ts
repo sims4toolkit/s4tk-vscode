@@ -35,7 +35,7 @@ export default class ResourceIndex implements vscode.Disposable {
     this._teardownFsWatcher();
     this._sourceFolder = uri;
     this._startFsWatcher();
-    this.refreshIndex();
+    this.refresh();
   }
 
   /**
@@ -60,7 +60,7 @@ export default class ResourceIndex implements vscode.Disposable {
   /**
    * Clears all data in the index and re-indexes the source folder.
    */
-  refreshIndex() {
+  refresh() {
     this._clearIndex();
     this._indexSourceFolder();
   }
