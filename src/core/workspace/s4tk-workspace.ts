@@ -13,7 +13,7 @@ import { MessageButton, handleMessageButtonClick } from "./messaging";
 /**
  * A model for a single workspace folder that contains an S4TK project.
  */
-class S4TKWorkspace implements vscode.Disposable {
+export default class S4TKWorkspace implements vscode.Disposable {
   private static readonly _blankConfig: S4TKConfig = S4TKConfig.blankProxy();
   private _activeConfig?: S4TKConfig;
   private _index: ResourceIndex;
