@@ -1,36 +1,43 @@
 import * as vscode from "vscode";
 import S4TKWorkspace from "./s4tk-workspace";
 
-namespace S4TKWorkspaceManager {
-  const _disposables: vscode.Disposable[] = [];
-  const _workspaces = new Map<string, S4TKWorkspace>();
+class _S4TKWorkspaceManager implements vscode.Disposable {
+  private _disposables: vscode.Disposable[] = [];
+  private _workspaces = new Map<string, S4TKWorkspace>();
 
-  export function activate() {
-    vscode.workspace.workspaceFolders?.forEach(folder => create(folder.uri));
+  constructor() {
+    vscode.workspace.workspaceFolders?.forEach(folder => {
+      this.addWorkspace(folder.uri);
+    });
 
-    _disposables.push(vscode.workspace.onDidChangeWorkspaceFolders(e => {
-      e.removed.forEach(removed => remove(removed.uri));
-      e.added.forEach(added => create(added.uri));
+    this._disposables.push(vscode.workspace.onDidChangeWorkspaceFolders(e => {
+      e.removed.forEach(removed => this.removeWorkspace(removed.uri));
+      e.added.forEach(added => this.addWorkspace(added.uri));
     }));
   }
 
-  export function dispose() {
-    _disposables.forEach(disposable => disposable.dispose());
-    _disposables.length = 0;
+  dispose() {
+    while (this._disposables.length)
+      this._disposables.pop()?.dispose();
   }
 
-  export function get(rootUri: vscode.Uri): S4TKWorkspace | undefined {
-    return _workspaces.get(rootUri.fsPath);
+  //#region Public Methods
+
+  addWorkspace(uri: vscode.Uri) {
+    this._workspaces.set(uri.fsPath, new S4TKWorkspace(uri));
   }
 
-  function create(rootUri: vscode.Uri) {
-    _workspaces.set(rootUri.fsPath, new S4TKWorkspace(rootUri));
+  getWorkspace(uri: vscode.Uri): S4TKWorkspace | undefined {
+    return this._workspaces.get(uri.fsPath);
   }
 
-  function remove(rootUri: vscode.Uri) {
-    _workspaces.get(rootUri.fsPath)?.dispose();
-    _workspaces.delete(rootUri.fsPath);
+  removeWorkspace(uri: vscode.Uri) {
+    this._workspaces.get(uri.fsPath)?.dispose();
+    this._workspaces.delete(uri.fsPath);
   }
+
+  //#endregion
 }
 
+const S4TKWorkspaceManager = new _S4TKWorkspaceManager();
 export default S4TKWorkspaceManager;
