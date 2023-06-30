@@ -1,10 +1,10 @@
 import * as fs from "fs";
 import * as vscode from "vscode";
 import { ResourceKey } from "@s4tk/models/types";
+import { BinaryResourceType, SimDataGroup, TuningResourceType } from "@s4tk/models/enums";
 import { findOpenDocument } from "#helpers/fs";
 import type ResourceIndex from "./resource-index";
-import { XmlMetadata, TuningMetadata, SimDataMetadata, InferredResourceKey, ResourceKeySources } from "./types";
-import { BinaryResourceType, SimDataGroup, TuningResourceType } from "@s4tk/models/enums";
+import type { XmlMetadata, TuningMetadata, SimDataMetadata, InferredResourceKey, ResourceKeySources } from "./types";
 
 /*
   NOTE: This file could be greatly simplified by parsing the input XML as an XML
