@@ -10,7 +10,7 @@ import { inferTuningMetadata } from "./inference";
 export default class ResourceIndex implements vscode.Disposable {
   private _watcherDisposables: vscode.Disposable[] = [];
   private _pathsToDefinitions = new Map<string, TuningMetadata>();
-  private _instancesToPaths = new Map<string, string>();
+  private _instancesToPaths = new Map<string, string[]>();
 
   //#region Lifecycle
 
@@ -53,8 +53,19 @@ export default class ResourceIndex implements vscode.Disposable {
    * @param id String representation of the decimal tuning ID
    */
   getMetadataFromId(id: string): TuningMetadata | undefined {
-    const fsPath = this._instancesToPaths.get(id);
-    if (fsPath) return this._pathsToDefinitions.get(fsPath);
+    const fsPaths = this._instancesToPaths.get(id);
+    if (fsPaths?.length) return this._pathsToDefinitions.get(fsPaths[0]);
+  }
+
+  /**
+   * Returns `true` if there is more than one file associated with the given ID,
+   * and `false` otherwise.
+   * 
+   * @param id ID to check for repeats
+   */
+  isIdRepeated(id: string): boolean {
+    const fsPaths = this._instancesToPaths.get(id);
+    return fsPaths ? Boolean(fsPaths.length > 1) : false;
   }
 
   /**
@@ -82,20 +93,38 @@ export default class ResourceIndex implements vscode.Disposable {
       const uri = vscode.Uri.file(filepath);
       const metadata = inferTuningMetadata(uri);
       this._pathsToDefinitions.set(uri.fsPath, metadata);
-      if (metadata.attrs?.s)
-        this._instancesToPaths.set(metadata.attrs.s, uri.fsPath);
+      if (metadata.attrs?.s) this._onIdAdded(metadata.attrs.s, uri.fsPath);
     });
+  }
+
+  private _onIdAdded(id: string, filepath: string) {
+    if (this._instancesToPaths.has(id)) {
+      this._instancesToPaths.get(id)!.push(filepath);
+    } else {
+      this._instancesToPaths.set(id, [filepath]);
+    }
+  }
+
+  private _onIdRemoved(id: string, filepath: string) {
+    if (this._instancesToPaths.has(id)) {
+      const fsPaths = this._instancesToPaths.get(id)!;
+      if (fsPaths.length === 1) {
+        this._instancesToPaths.delete(id);
+      } else {
+        const index = fsPaths.indexOf(filepath);
+        if (index >= 0) fsPaths.splice(index, 1);
+      }
+    }
   }
 
   private _updateFile(uri: vscode.Uri) {
     if (uri.fsPath.endsWith(".SimData.xml")) return;
     const oldId = this._pathsToDefinitions.get(uri.fsPath)?.attrs?.s;
     if (oldId && this._instancesToPaths.has(oldId))
-      this._instancesToPaths.delete(oldId);
+      this._onIdRemoved(oldId, uri.fsPath);
     const metadata = inferTuningMetadata(uri);
     this._pathsToDefinitions.set(uri.fsPath, metadata);
-    if (metadata.attrs?.s)
-      this._instancesToPaths.set(metadata.attrs.s, uri.fsPath);
+    if (metadata.attrs?.s) this._onIdAdded(metadata.attrs.s, uri.fsPath);
   }
 
   private _removeFile(uri: vscode.Uri) {
@@ -103,7 +132,7 @@ export default class ResourceIndex implements vscode.Disposable {
     if (!definition) return;
     this._pathsToDefinitions.delete(uri.fsPath);
     if (definition.attrs?.s == undefined) return;
-    this._instancesToPaths.delete(definition.attrs.s);
+    this._onIdRemoved(definition.attrs.s, uri.fsPath);
   }
 
   private _startFsWatcher() {

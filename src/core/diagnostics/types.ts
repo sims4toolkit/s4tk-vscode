@@ -1,10 +1,10 @@
 export const DiagnosticKey = {
   // All XML
   unknownKeyValues: "s4tk:unknownKeyValues",
+  instanceRepeated: "s4tk:instanceRepeated",
   // Tuning
   moduleIdMismatch: "s4tk:moduleIdMismatch",
   rootAttrsMissing: "s4tk:rootAttrsMissing",
-  tuningIdRepeated: "s4tk:tuningIdRepeated", // TODO: not implemented
   tuningIdTooLarge: "s4tk:tuningIdTooLarge",
   tuningIdIncorrect: "s4tk:tuningIdIncorrect",
   tuningTypeIncorrect: "s4tk:tuningTypeIncorrect",

@@ -5,6 +5,7 @@ import { fnv64 } from "@s4tk/hashing";
 import { formatAsHexString } from "@s4tk/hashing/formatting";
 import * as inf from "#indexing/inference";
 import * as infTypes from "#indexing/types";
+import S4TKWorkspace from "#workspace/s4tk-workspace";
 import S4TKWorkspaceManager from "#workspace/workspace-manager";
 import { DiagnosticKey } from "./types";
 import * as helpers from "./helpers";
@@ -31,11 +32,7 @@ export async function diagnoseXmlDocument(
   const diagnostics: vscode.Diagnostic[] = [];
   _diagnoseMetadata(metadata, key, document, diagnostics);
   if (metadata.kind === "tuning") {
-    if (metadata.root === "I") {
-      _diagnoseInstanceDocument(metadata, key, document, diagnostics);
-    } else if (metadata.root === "M") {
-      _diagnoseModuleDocument(metadata, key, document, diagnostics);
-    }
+    _diagnoseTuningDocument(workspace, metadata, key, document, diagnostics);
   } else {
     _diagnoseSimDataDocument(metadata, key, document, diagnostics);
   }
@@ -58,6 +55,30 @@ function _diagnoseMetadata(
     );
     diagnostic.code = DiagnosticKey.unknownKeyValues;
     diagnostics.push(diagnostic);
+  }
+}
+
+function _diagnoseTuningDocument(
+  workspace: S4TKWorkspace,
+  metadata: infTypes.TuningMetadata,
+  key: infTypes.InferredResourceKey,
+  document: vscode.TextDocument,
+  diagnostics: vscode.Diagnostic[]
+) {
+  if (metadata.attrs?.s && workspace.index.isIdRepeated(metadata.attrs.s)) {
+    const diagnostic = new vscode.Diagnostic(
+      _findRangeForAttr(metadata, document, "s", metadata.attrs.s),
+      `The tuning ID ${metadata.attrs.s} is in use by more than one file.`,
+      vscode.DiagnosticSeverity.Warning
+    );
+    diagnostic.code = DiagnosticKey.instanceRepeated;
+    diagnostics.push(diagnostic);
+  }
+
+  if (metadata.root === "I") {
+    _diagnoseInstanceDocument(metadata, key, document, diagnostics);
+  } else if (metadata.root === "M") {
+    _diagnoseModuleDocument(metadata, key, document, diagnostics);
   }
 }
 
