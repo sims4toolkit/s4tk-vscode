@@ -1,9 +1,11 @@
+import * as fs from "fs";
 import * as vscode from "vscode";
 import { fnv64 } from "@s4tk/hashing";
 import * as inf from "#indexing/inference";
 import * as infTypes from "#indexing/types";
 import S4TKWorkspaceManager from "#workspace/workspace-manager";
 import { DiagnosticKey } from "./types";
+import * as helpers from "./helpers";
 
 /**
  * Runs diagnostics on the given XML document.
@@ -11,7 +13,7 @@ import { DiagnosticKey } from "./types";
  * @param document Document to run diagnostics on
  * @param collection Collection to add diagnostics to
  */
-export function diagnoseXmlDocument(
+export async function diagnoseXmlDocument(
   document: vscode.TextDocument,
   collection: vscode.DiagnosticCollection
 ) {
@@ -38,7 +40,7 @@ export function diagnoseXmlDocument(
   collection.set(document.uri, diagnostics);
 }
 
-//#region Helper Funcstions
+//#region Diagnose Helper Functions
 
 function _diagnoseMetadata(
   metadata: infTypes.XmlMetadata,
@@ -48,7 +50,7 @@ function _diagnoseMetadata(
 ) {
   if (key.key.type == undefined || key.key.group == undefined || key.key.instance == undefined) {
     const diagnostic = new vscode.Diagnostic(
-      document.lineAt(0).range,
+      (metadata as infTypes.TuningMetadata).range ?? document.lineAt(0).range,
       `This resource's full key could not be resolved, which will cause the build script to fail.`,
       vscode.DiagnosticSeverity.Error
     );
@@ -63,6 +65,49 @@ function _diagnoseInstanceDocument(
   document: vscode.TextDocument,
   diagnostics: vscode.Diagnostic[]
 ) {
+  const missingAttrs = ["c", "i", "m", "n", "s"]
+    .filter(attr => !Boolean((metadata.attrs as any)?.[attr]));
+  if (missingAttrs.length) {
+    const diagnostic = new vscode.Diagnostic(
+      metadata.range ?? document.lineAt(0).range,
+      `Instance tuning requires non-empty 'c', 'i', 'm', 'n', and 's' attributes and this file is missing [${missingAttrs}].`,
+      vscode.DiagnosticSeverity.Error
+    );
+    diagnostic.code = DiagnosticKey.rootAttrsMissing;
+    diagnostics.push(diagnostic);
+  }
+
+  if (metadata.attrs?.c && key.key.instance != undefined) {
+    const maxBits = helpers.maxBitsForClass(metadata.attrs.c);
+    const maxValue = 2n ** BigInt(maxBits) - 1n;
+    if (BigInt(key.key.instance) > maxValue) {
+      const diagnostic = new vscode.Diagnostic(
+        metadata.attrs.s
+          ? _findRangeForAttr(metadata, document, "s", metadata.attrs.s)
+          : _findRangeForAttr(metadata, document, "c", metadata.attrs.c),
+        `'${metadata.attrs.c}' class is known to require ${maxBits}-bit tuning IDs (max value: ${maxValue}), but this one has ${key.key.instance}.`,
+        vscode.DiagnosticSeverity.Warning
+      );
+      diagnostic.code = DiagnosticKey.tuningIdTooLarge;
+      diagnostics.push(diagnostic);
+    }
+  }
+
+  if (metadata.uri && metadata.attrs?.i && metadata.attrs?.c) {
+    if (helpers.requiresSimData(metadata.attrs.i, metadata.attrs.c)) {
+      const simdataPath = metadata.uri.fsPath.replace(".xml", ".SimData.xml");
+      if (!fs.existsSync(simdataPath)) {
+        const diagnostic = new vscode.Diagnostic(
+          metadata.range ?? document.lineAt(0).range,
+          `'${metadata.attrs.c}' class is known to require SimData, but no paired SimData file was found. Note that S4TK requires your SimData files to be in the same folder as your tuning, and have the exact same file name, but with a '.SimData.xml' extension.`,
+          vscode.DiagnosticSeverity.Warning
+        );
+        diagnostic.code = DiagnosticKey.tuningRequiresSimData;
+        diagnostics.push(diagnostic);
+      }
+    }
+  }
+
   // TODO:
 }
 
@@ -83,12 +128,8 @@ function _diagnoseModuleDocument(
   } else {
     const expectedInst = fnv64(metadata.attrs.n.replace(".", "-"), false).toString();
     if (metadata.attrs.s !== expectedInst) {
-      const defRange = metadata.range ?? document.lineAt(0).range;
-      const def = document.getText(defRange);
-      const start = def.indexOf('s="') + 3;
-      const end = start + metadata.attrs.s.length;
       const diagnostic = new vscode.Diagnostic(
-        new vscode.Range(defRange.start.line, start, defRange.start.line, end),
+        _findRangeForAttr(metadata, document, "s", metadata.attrs.s),
         `Module tuning ID must be the FNV64 hash of the filename, where all '.' are replaced with '-'. The expected ID is '${expectedInst}', but found '${metadata.attrs.s}' instead.`,
         vscode.DiagnosticSeverity.Error
       );
@@ -105,6 +146,23 @@ function _diagnoseSimDataDocument(
   diagnostics: vscode.Diagnostic[]
 ) {
   // TODO:
+}
+
+//#endregion
+
+//#region Other Helper Functions
+
+function _findRangeForAttr(
+  metadata: infTypes.TuningMetadata,
+  document: vscode.TextDocument,
+  attr: string,
+  value: string
+): vscode.Range {
+  const defRange = metadata.range ?? document.lineAt(0).range;
+  const def = document.getText(defRange);
+  const start = def.indexOf(`${attr}="`) + attr.length + 2;
+  const end = start + value.length;
+  return new vscode.Range(defRange.start.line, start, defRange.start.line, end);
 }
 
 //#endregion
