@@ -1,6 +1,8 @@
 import * as fs from "fs";
 import * as vscode from "vscode";
+import { TuningResourceType } from "@s4tk/models/enums";
 import { fnv64 } from "@s4tk/hashing";
+import { formatAsHexString } from "@s4tk/hashing/formatting";
 import * as inf from "#indexing/inference";
 import * as infTypes from "#indexing/types";
 import S4TKWorkspaceManager from "#workspace/workspace-manager";
@@ -108,7 +110,30 @@ function _diagnoseInstanceDocument(
     }
   }
 
-  // TODO:
+  if (metadata.attrs?.i && key.key.type != undefined) {
+    const expectedType = TuningResourceType.parseAttr(metadata.attrs.i);
+    if (expectedType !== TuningResourceType.Tuning && key.key.type !== expectedType) {
+      const diagnostic = new vscode.Diagnostic(
+        _findRangeForAttr(metadata, document, "i", metadata.attrs.i),
+        `Tuning with i="${metadata.attrs.i}" are known to require a type of ${formatAsHexString(expectedType, 8, false)} (${TuningResourceType[expectedType]}), but this one's type has been manually set to ${formatAsHexString(key.key.type, 8, false)}.`,
+        vscode.DiagnosticSeverity.Warning
+      );
+      diagnostic.code = DiagnosticKey.tuningTypeIncorrect;
+      diagnostics.push(diagnostic);
+    }
+  }
+
+  if (metadata.attrs?.s && key.key.instance != undefined) {
+    if (metadata.attrs.s !== key.key.instance.toString()) {
+      const diagnostic = new vscode.Diagnostic(
+        _findRangeForAttr(metadata, document, "s", metadata.attrs.s),
+        `This tuning has s="${metadata.attrs.s}", but its instance has been manually set to ${key.key.instance}. The build script will not fail, but this may cause errors in-game.`,
+        vscode.DiagnosticSeverity.Warning
+      );
+      diagnostic.code = DiagnosticKey.tuningIdIncorrect;
+      diagnostics.push(diagnostic);
+    }
+  }
 }
 
 function _diagnoseModuleDocument(

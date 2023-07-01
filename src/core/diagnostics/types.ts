@@ -6,7 +6,8 @@ export const DiagnosticKey = {
   rootAttrsMissing: "s4tk:rootAttrsMissing",
   tuningIdRepeated: "s4tk:tuningIdRepeated", // TODO: not implemented
   tuningIdTooLarge: "s4tk:tuningIdTooLarge",
-  tuningTypeIncorrect: "s4tk:tuningTypeIncorrect", // TODO: not implemented
+  tuningIdIncorrect: "s4tk:tuningIdIncorrect",
+  tuningTypeIncorrect: "s4tk:tuningTypeIncorrect",
   tuningRequiresSimData: "s4tk:tuningRequiresSimData",
   // SimData
   simDataGroupMismatch: "s4tk:simDataGroupMismatch", // TODO: not implemented
