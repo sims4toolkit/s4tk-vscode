@@ -1,0 +1,250 @@
+{
+  "bitLimits": [
+    {
+      "bits": 31,
+      "classes": [
+        "DevelopmentalMilestone"
+      ]
+    },
+    {
+      "bits": 32,
+      "classes": [
+        "Preference",
+        "Reward",
+        "HouseholdReward",
+        "SimReward",
+        "RelationshipBit",
+        "SocialContextBit",
+        "Aspiration",
+        "AspirationAssignment",
+        "AspirationBasic",
+        "AspirationCareer",
+        "AspirationGig",
+        "AspirationFamilialTrigger",
+        "AspirationNotification",
+        "AspirationOrganizationTask",
+        "AspirationSimInfoPanel",
+        "AspirationWhimSet",
+        "ObjectivelessWhimSet",
+        "TimedAspiration",
+        "ZoneDirectorEventListener"
+      ]
+    }
+  ],
+  "requiredSimData": {
+    "zone_modifier": [
+      "ZoneModifier"
+    ],
+    "weather_forecast": [
+      "WeatherForecast"
+    ],
+    "venue": [
+      "Venue"
+    ],
+    "user_interface_info": [
+      "ZoneModifierDisplayInfo",
+      "StoryProgressionRuleDisplayInfo",
+      "RankedStatisticDisplayInfo"
+    ],
+    "university_major": [
+      "UniversityMajor"
+    ],
+    "university_course_data": [
+      "UniversityCourseData"
+    ],
+    "university": [
+      "University"
+    ],
+    "tutorial_tip": [
+      "TutorialTipGroup",
+      "TutorialTip"
+    ],
+    "tutorial": [
+      "Tutorial",
+      "TutorialCategory",
+      "TutorialSubcategory"
+    ],
+    "trait": [
+      "Trait",
+      "Preference",
+      "GameplayObjectPreference"
+    ],
+    "street": [
+      "Street"
+    ],
+    "statistic": [
+      "Commodity",
+      "Statistic",
+      "Skill",
+      "RankedStatistic",
+      "LifeSkillStatistic",
+      "BodyTypeLevelCommodity"
+    ],
+    "spell": [
+      "Spell"
+    ],
+    "snippet": [
+      "VenueCivicPolicy",
+      "Scholarship",
+      "StreetCivicPolicy",
+      "Scenario",
+      "ScenarioTag",
+      "ScenarioRole",
+      "ScenarioPhase",
+      "ScenarioOutcome",
+      "CurrencyBuck",
+      "GlobalPolicy",
+      "EcoFootprintState",
+      "Organization",
+      "DisplaySnippet"
+    ],
+    "slot_type_set": [
+      "SlotTypeSet"
+    ],
+    "situation_job": [
+      "SituationJob"
+    ],
+    "season": [
+      "Season"
+    ],
+    "reward": [
+      "SimReward",
+      "HouseholdReward"
+    ],
+    "relbit": [
+      "RelationshipBit",
+      "SocialContextBit",
+      "RelationshipBitCollection",
+      "PromRelationshipBit"
+    ],
+    "region": [
+      "Region"
+    ],
+    "recipe": [
+      "PaintingRecipe",
+      "Recipe",
+      "PaintByReferenceRecipe",
+      "MusicRecipe"
+    ],
+    "pie_menu_category": [
+      "PieMenuCategory"
+    ],
+    "objective": [
+      "Objective",
+      "CustomTrackerObjective"
+    ],
+    "mood": [
+      "Mood"
+    ],
+    "lot_decoration_preset": [
+      "LotDecorationPreset"
+    ],
+    "household_milestone": [
+      "HouseholdMilestone"
+    ],
+    "holiday_tradition": [
+      "SituationActivity",
+      "HolidayTradition"
+    ],
+    "headline": [
+      "Headline"
+    ],
+    "drama_node": [
+      "MajorOrganizationEventDramaNode"
+    ],
+    "developmental_milestone": [
+      "DevelopmentalMilestone"
+    ],
+    "club_seed": [
+      "ClubSeed"
+    ],
+    "club_interaction_group": [
+      "ClubInteractionGroup"
+    ],
+    "clan_value": [
+      "ClanValue"
+    ],
+    "clan": [
+      "Clan"
+    ],
+    "cas_stories_trait_chooser": [
+      "CasStoriesTraitChooser"
+    ],
+    "cas_stories_question": [
+      "CasStoriesQuestion"
+    ],
+    "cas_stories_answer": [
+      "CasStoriesAnswer"
+    ],
+    "cas_preference_item": [
+      "ObjectPreferenceItem",
+      "StylePreferenceItem",
+      "ConversationPreferenceItem",
+      "CharacteristicPreferenceItem"
+    ],
+    "cas_preference_category": [
+      "CasPreferenceCategory"
+    ],
+    "cas_menu_item": [
+      "CASMenuItem"
+    ],
+    "cas_menu": [
+      "CASMenu"
+    ],
+    "career_track": [
+      "UniversityCourseTrack",
+      "TunableCareerTrack"
+    ],
+    "career_level": [
+      "UniversityCourseSchedule",
+      "CareerLevel"
+    ],
+    "career_gig": [
+      "RabbitholeGig",
+      "HomeAssignmentGig",
+      "ActiveGig",
+      "DecoratorGig"
+    ],
+    "career": [
+      "UniversityCourseCareerSlot",
+      "DetectiveCareer",
+      "Career"
+    ],
+    "business": [
+      "Business"
+    ],
+    "buff": [
+      "Buff",
+      "ClothingBuff",
+      "BurnoutBuff"
+    ],
+    "breed": [
+      "Breed"
+    ],
+    "aspiration_track": [
+      "AspirationTrack"
+    ],
+    "aspiration_category": [
+      "AspirationCategory"
+    ],
+    "aspiration": [
+      "ZoneDirectorEventListener",
+      "Aspiration",
+      "AspirationOrganizationTask",
+      "TimedAspiration",
+      "AspirationSimInfoPanel",
+      "AspirationCareer",
+      "AspirationAssignment",
+      "AspirationGig"
+    ],
+    "achievement_collection": [
+      "AchievementCollection"
+    ],
+    "achievement_category": [
+      "AchievementCat"
+    ],
+    "achievement": [
+      "Achievement"
+    ]
+  }
+}

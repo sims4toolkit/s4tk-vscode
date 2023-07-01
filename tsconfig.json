@@ -13,6 +13,7 @@
       "#assets": ["assets.ts"],
       "#constants": ["constants.ts"],
       "#building/*": ["core/building/*"],
+      "#diagnostics/*": ["core/diagnostics/*"],
       "#helpers/*": ["core/helpers/*"],
       "#indexing/*": ["core/indexing/*"],
       "#models/*": ["core/models/*"],

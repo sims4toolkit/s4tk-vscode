@@ -20,6 +20,11 @@ class _S4TKWorkspaceManager implements vscode.Disposable {
   dispose() {
     while (this._disposables.length)
       this._disposables.pop()?.dispose();
+
+    for (const fsPath of this._workspaces.keys()) {
+      this._workspaces.get(fsPath)?.dispose();
+      this._workspaces.delete(fsPath);
+    }
   }
 
   //#region Public Methods
