@@ -244,7 +244,7 @@ function _diagnoseSimDataDocument(
   }
 
   try {
-    models.SimDataResource.fromXml(document.getText());
+    if (!document.isDirty) models.SimDataResource.fromXml(document.getText());
   } catch (e) {
     const diagnostic = new vscode.Diagnostic(
       document.lineAt(0).range,
