@@ -173,7 +173,7 @@ function _diagnoseModuleDocument(
     diagnostic.code = DiagnosticKey.rootAttrsMissing;
     diagnostics.push(diagnostic);
   } else {
-    const expectedInst = fnv64(metadata.attrs.n.replace(".", "-"), false).toString();
+    const expectedInst = fnv64(metadata.attrs.n.replace(/\./g, "-"), false).toString();
     if (metadata.attrs.s !== expectedInst) {
       const diagnostic = new vscode.Diagnostic(
         _findRangeForAttr(metadata, document, "s", metadata.attrs.s),
