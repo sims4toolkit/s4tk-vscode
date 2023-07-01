@@ -50,6 +50,10 @@ export interface S4TKConfig {
     generateMissingLocales: boolean;
     mergeStringTablesInSamePackage: boolean;
   };
+
+  workspaceSettings: {
+    overrideIndexRoot?: string;
+  };
 }
 
 const _CONFIG_TRANSFORMER: ConfigTransformer = {
@@ -83,6 +87,9 @@ const _CONFIG_TRANSFORMER: ConfigTransformer = {
       generateMissingLocales: true,
       mergeStringTablesInSamePackage: true,
     },
+  },
+  workspaceSettings: {
+    defaults: {},
   },
 };
 

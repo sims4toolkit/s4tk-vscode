@@ -229,6 +229,16 @@
           "default": true
         }
       }
+    },
+    "workspaceSettings": {
+      "type": "object",
+      "description": "Optional settings that affect the workspace, but not anything related to building.",
+      "properties": {
+        "overrideIndexRoot": {
+          "type": "string",
+          "description": "The root to use for the resource index instead of `buildInstructions.source`. You likely do not have a use for this, unless your project is very complex."
+        }
+      }
     }
   }
 }

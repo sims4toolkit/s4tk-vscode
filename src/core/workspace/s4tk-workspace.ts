@@ -223,9 +223,14 @@ export default class S4TKWorkspace implements vscode.Disposable {
   }
 
   private _setConfig(config: S4TKConfig | undefined) {
+    const getIndexRoot = (config?: S4TKConfig) =>
+      config?.workspaceSettings.overrideIndexRoot
+        ? config.workspaceSettings.overrideIndexRoot
+        : config?.buildInstructions.source;
+
     this._checkForSourceChange(
-      this._activeConfig?.buildInstructions.source,
-      config?.buildInstructions.source
+      getIndexRoot(this._activeConfig),
+      getIndexRoot(config)
     );
 
     this._activeConfig = config;
