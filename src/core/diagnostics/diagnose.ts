@@ -193,10 +193,6 @@ function _diagnoseSimDataDocument(
   document: vscode.TextDocument,
   diagnostics: vscode.Diagnostic[]
 ) {
-  const tuningMetadata = workspace.index.getMetadataFromUri(
-    document.uri.fsPath.replace(".SimData.xml", ".xml")
-  );
-
   if (key.key.type !== enums.BinaryResourceType.SimData) {
     const diagnostic = new vscode.Diagnostic(
       document.lineAt(0).range,
@@ -207,7 +203,23 @@ function _diagnoseSimDataDocument(
     diagnostics.push(diagnostic);
   }
 
-  if (!tuningMetadata) {
+  try {
+    if (!document.isDirty) models.SimDataResource.fromXml(document.getText());
+  } catch (e) {
+    const diagnostic = new vscode.Diagnostic(
+      document.lineAt(0).range,
+      `This file could not be parsed as a valid binary SimData, which will cause a fatal error during the build process. [${e}]`,
+      vscode.DiagnosticSeverity.Error
+    );
+    diagnostic.code = DiagnosticKey.simDataInvalidFormat;
+    diagnostics.push(diagnostic);
+  }
+
+  const tuningUri = document.uri.fsPath.replace(".SimData.xml", ".xml");
+  const tuningExists = fs.existsSync(tuningUri);
+  const tuningMetadata = workspace.index.getMetadataFromUri(tuningUri);
+
+  if (!tuningExists) {
     const diagnostic = new vscode.Diagnostic(
       document.lineAt(0).range,
       `No matching tuning was found for this SimData file. Note that S4TK requires your SimData files to be in the same folder as your tuning, and have the exact same file name, but with a '.SimData.xml' extension.`,
@@ -218,6 +230,7 @@ function _diagnoseSimDataDocument(
     return;
   }
 
+  if (!tuningMetadata) return;
   const tuningKey = inf.inferKeyFromMetadata(tuningMetadata);
 
   if (tuningKey.key.type != undefined) {
@@ -240,18 +253,6 @@ function _diagnoseSimDataDocument(
       vscode.DiagnosticSeverity.Warning
     );
     diagnostic.code = DiagnosticKey.simDataIdMismatch;
-    diagnostics.push(diagnostic);
-  }
-
-  try {
-    if (!document.isDirty) models.SimDataResource.fromXml(document.getText());
-  } catch (e) {
-    const diagnostic = new vscode.Diagnostic(
-      document.lineAt(0).range,
-      `This file could not be parsed as a valid binary SimData, which will cause a fatal error during the build process. [${e}]`,
-      vscode.DiagnosticSeverity.Error
-    );
-    diagnostic.code = DiagnosticKey.simDataInvalidFormat;
     diagnostics.push(diagnostic);
   }
 }
