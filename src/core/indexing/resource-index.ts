@@ -43,8 +43,9 @@ export default class ResourceIndex implements vscode.Disposable {
    * 
    * @param uri URI of tuning to get definition for
    */
-  getMetadataFromUri(uri: vscode.Uri): TuningMetadata | undefined {
-    return this._pathsToDefinitions.get(uri.fsPath);
+  getMetadataFromUri(uri: vscode.Uri | string): TuningMetadata | undefined {
+    const fsPath = typeof uri === "string" ? uri : uri.fsPath;
+    return this._pathsToDefinitions.get(fsPath);
   }
 
   /**

@@ -1,6 +1,7 @@
 import * as fs from "fs";
 import * as vscode from "vscode";
-import { TuningResourceType } from "@s4tk/models/enums";
+import * as models from "@s4tk/models";
+import * as enums from "@s4tk/models/enums";
 import { fnv64 } from "@s4tk/hashing";
 import { formatAsHexString } from "@s4tk/hashing/formatting";
 import * as inf from "#indexing/inference";
@@ -34,7 +35,7 @@ export async function diagnoseXmlDocument(
   if (metadata.kind === "tuning") {
     _diagnoseTuningDocument(workspace, metadata, key, document, diagnostics);
   } else {
-    _diagnoseSimDataDocument(metadata, key, document, diagnostics);
+    _diagnoseSimDataDocument(workspace, metadata, key, document, diagnostics);
   }
   collection.set(document.uri, diagnostics);
 }
@@ -132,11 +133,11 @@ function _diagnoseInstanceDocument(
   }
 
   if (metadata.attrs?.i && key.key.type != undefined) {
-    const expectedType = TuningResourceType.parseAttr(metadata.attrs.i);
-    if (expectedType !== TuningResourceType.Tuning && key.key.type !== expectedType) {
+    const expectedType = enums.TuningResourceType.parseAttr(metadata.attrs.i);
+    if (expectedType !== enums.TuningResourceType.Tuning && key.key.type !== expectedType) {
       const diagnostic = new vscode.Diagnostic(
         _findRangeForAttr(metadata, document, "i", metadata.attrs.i),
-        `Tuning with i="${metadata.attrs.i}" are known to require a type of ${formatAsHexString(expectedType, 8, false)} (${TuningResourceType[expectedType]}), but this one's type has been manually set to ${formatAsHexString(key.key.type, 8, false)}.`,
+        `Tuning with i="${metadata.attrs.i}" are known to require a type of ${formatAsHexString(expectedType, 8, false)} (${enums.TuningResourceType[expectedType]}), but this one's type has been manually set to ${formatAsHexString(key.key.type, 8, false)}.`,
         vscode.DiagnosticSeverity.Warning
       );
       diagnostic.code = DiagnosticKey.tuningTypeIncorrect;
@@ -186,12 +187,73 @@ function _diagnoseModuleDocument(
 }
 
 function _diagnoseSimDataDocument(
+  workspace: S4TKWorkspace,
   metadata: infTypes.SimDataMetadata,
   key: infTypes.InferredResourceKey,
   document: vscode.TextDocument,
   diagnostics: vscode.Diagnostic[]
 ) {
-  // TODO:
+  const tuningMetadata = workspace.index.getMetadataFromUri(
+    document.uri.fsPath.replace(".SimData.xml", ".xml")
+  );
+
+  if (key.key.type !== enums.BinaryResourceType.SimData) {
+    const diagnostic = new vscode.Diagnostic(
+      document.lineAt(0).range,
+      `SimData files should always use the type ${formatAsHexString(enums.BinaryResourceType.SimData, 8, false)}.`,
+      vscode.DiagnosticSeverity.Warning
+    );
+    diagnostic.code = DiagnosticKey.simDataTypeIncorrect;
+    diagnostics.push(diagnostic);
+  }
+
+  if (!tuningMetadata) {
+    const diagnostic = new vscode.Diagnostic(
+      document.lineAt(0).range,
+      `No matching tuning was found for this SimData file. Note that S4TK requires your SimData files to be in the same folder as your tuning, and have the exact same file name, but with a '.SimData.xml' extension.`,
+      vscode.DiagnosticSeverity.Warning
+    );
+    diagnostic.code = DiagnosticKey.unpairedSimData;
+    diagnostics.push(diagnostic);
+    return;
+  }
+
+  const tuningKey = inf.inferKeyFromMetadata(tuningMetadata);
+
+  if (tuningKey.key.type != undefined) {
+    const expectedGroup = enums.SimDataGroup.getForTuning(tuningKey.key.type);
+    if (key.key.group && expectedGroup && (key.key.group !== expectedGroup)) {
+      const diagnostic = new vscode.Diagnostic(
+        document.lineAt(0).range,
+        `This SimData's paired tuning has type ${formatAsHexString(tuningKey.key.type, 8, false)} (${enums.TuningResourceType[tuningKey.key.type]}), so this SimData should be using group ${formatAsHexString(expectedGroup, 8, false)} (${enums.SimDataGroup[expectedGroup]}), but instead it is using ${formatAsHexString(key.key.group, 8, false)} (${enums.SimDataGroup[key.key.group] ?? "Unknown"}).`,
+        vscode.DiagnosticSeverity.Warning
+      );
+      diagnostic.code = DiagnosticKey.simDataGroupMismatch;
+      diagnostics.push(diagnostic);
+    }
+  }
+
+  if (tuningKey.key.instance && (key.key.instance != tuningKey.key.instance)) {
+    const diagnostic = new vscode.Diagnostic(
+      document.lineAt(0).range,
+      `This SimData's instance is set to ${key.key.instance}, but its paired tuning is using an instance of ${tuningKey.key.instance}, which does not match.`,
+      vscode.DiagnosticSeverity.Warning
+    );
+    diagnostic.code = DiagnosticKey.simDataIdMismatch;
+    diagnostics.push(diagnostic);
+  }
+
+  try {
+    models.SimDataResource.fromXml(document.getText());
+  } catch (e) {
+    const diagnostic = new vscode.Diagnostic(
+      document.lineAt(0).range,
+      `This file could not be parsed as a valid binary SimData, which will cause a fatal error during the build process. [${e}]`,
+      vscode.DiagnosticSeverity.Error
+    );
+    diagnostic.code = DiagnosticKey.simDataInvalidFormat;
+    diagnostics.push(diagnostic);
+  }
 }
 
 //#endregion
