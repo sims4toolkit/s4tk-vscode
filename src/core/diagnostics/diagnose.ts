@@ -22,7 +22,7 @@ export async function diagnoseXmlDocument(
   collection: vscode.DiagnosticCollection
 ) {
   if (!document.uri.fsPath.endsWith(".xml")) return;
-  const workspace = S4TKWorkspaceManager.getWorkspaceForFileAt(document.uri);
+  const workspace = S4TKWorkspaceManager.getWorkspaceContainingUri(document.uri);
   if (!workspace) return;
 
   const metadata = document.uri.fsPath.endsWith(".SimData.xml")

@@ -29,7 +29,7 @@ export default class TuningCodeLensProvider extends BaseCodeLensProvider {
     token: vscode.CancellationToken
   ): Promise<vscode.CodeLens[]> {
     const editor = vscode.window.activeTextEditor;
-    const workspace = S4TKWorkspaceManager.getWorkspaceForFileAt(document.uri);
+    const workspace = S4TKWorkspaceManager.getWorkspaceContainingUri(document.uri);
     if (!(editor && workspace?.active)) return [];
     if (editor.document.uri.scheme === "s4tk") return [];
 

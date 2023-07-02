@@ -6,7 +6,7 @@ export default function registerConfigCommands() {
   vscode.commands.registerCommand(S4TKCommand.config.addPackage,
     async (editor?: vscode.TextEditor) => {
       const workspace = editor?.document.uri
-        ? S4TKWorkspaceManager.getWorkspaceForFileAt(editor.document.uri)
+        ? S4TKWorkspaceManager.getWorkspaceContainingUri(editor.document.uri)
         : await S4TKWorkspaceManager.chooseWorkspace();
 
       workspace?.addPackageInstructions(editor);

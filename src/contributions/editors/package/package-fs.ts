@@ -46,7 +46,7 @@ class _PackageResourceContentProvider implements vscode.TextDocumentContentProvi
   }
 
   private _getPackageBaseUri(documentUri: vscode.Uri): vscode.Uri {
-    const workspace = S4TKWorkspaceManager.getWorkspaceForFileAt(documentUri);
+    const workspace = S4TKWorkspaceManager.getWorkspaceContainingUri(documentUri);
     const relative = path.relative(
       workspace?.rootUri.fsPath ?? '', // FIXME: default shouldn't be empty
       documentUri.fsPath

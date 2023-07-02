@@ -1,4 +1,4 @@
-import { existsSync, readFileSync } from "fs";
+import { existsSync } from "fs";
 import * as vscode from "vscode";
 import S4TKAssets from "#assets";
 import { S4TKFilename } from "#constants";

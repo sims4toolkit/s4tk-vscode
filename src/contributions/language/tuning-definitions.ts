@@ -25,7 +25,7 @@ export default class TuningDefinitionProvider implements vscode.DefinitionProvid
     ));
     if (prefix === 's="') return;
 
-    const workspace = S4TKWorkspaceManager.getWorkspaceForFileAt(document.uri);
+    const workspace = S4TKWorkspaceManager.getWorkspaceContainingUri(document.uri);
     if (!workspace) return;
 
     const id = document.getText(range);

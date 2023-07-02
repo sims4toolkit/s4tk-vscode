@@ -29,12 +29,26 @@ class _S4TKWorkspaceManager implements vscode.Disposable {
 
   //#region Public Methods
 
+  /**
+   * Creates and adds a workspace for the given root URI.
+   * 
+   * @param uri Root URI of workspace to add
+   */
   addWorkspace(uri: vscode.Uri) {
     const workspace = new S4TKWorkspace(uri, () => this._onSomeConfigChanged());
     this._workspaces.set(uri.fsPath, workspace);
   }
 
-  async chooseWorkspace(): Promise<S4TKWorkspace | undefined> {
+  /**
+   * If given a URI, then returns the workspace that contains it, if there is
+   * one. If not given a URI, then return the first workspace if there is only
+   * one. If there is more than one workspace, a prompt is displayed for the
+   * user to pick from.
+   * 
+   * @param uri Optional URI that the existing workspace must contain
+   */
+  async chooseWorkspace(uri?: vscode.Uri): Promise<S4TKWorkspace | undefined> {
+    if (uri) return this.getWorkspaceContainingUri(uri);
     const numWorkspaces = vscode.workspace.workspaceFolders?.length ?? 0;
     if (numWorkspaces === 0) return;
     if (numWorkspaces === 1) {
@@ -45,11 +59,21 @@ class _S4TKWorkspaceManager implements vscode.Disposable {
     }
   }
 
+  /**
+   * Returns the workspace with the given root URI, if there is one.
+   * 
+   * @param uri URI of workspace root
+   */
   getWorkspace(uri: vscode.Uri): S4TKWorkspace | undefined {
     return this._workspaces.get(uri.fsPath);
   }
 
-  getWorkspaceForFileAt(uri: vscode.Uri): S4TKWorkspace | undefined {
+  /**
+   * Returns the workspace that contains the given URI, if one exists.
+   * 
+   * @param uri URI that a workspace may contain
+   */
+  getWorkspaceContainingUri(uri: vscode.Uri): S4TKWorkspace | undefined {
     if (!vscode.workspace.workspaceFolders) return;
     for (const folder of vscode.workspace.workspaceFolders) {
       if (uri.fsPath.startsWith(folder.uri.fsPath))
@@ -57,6 +81,11 @@ class _S4TKWorkspaceManager implements vscode.Disposable {
     }
   }
 
+  /**
+   * Tears down, untracks, and deletes the workspace with the given root URI.
+   * 
+   * @param uri Root URI of workspace to remove
+   */
   removeWorkspace(uri: vscode.Uri) {
     this._workspaces.get(uri.fsPath)?.dispose();
     this._workspaces.delete(uri.fsPath);

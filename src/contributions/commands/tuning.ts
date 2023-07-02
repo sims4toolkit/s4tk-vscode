@@ -65,7 +65,7 @@ export default function registerTuningCommands() {
   vscode.commands.registerCommand(S4TKCommand.tuning.copyAsXml,
     async (uri?: vscode.Uri) => {
       if (!uri) return;
-      const workspace = S4TKWorkspaceManager.getWorkspaceForFileAt(uri);
+      const workspace = S4TKWorkspaceManager.getWorkspaceContainingUri(uri);
       if (!workspace) return;
 
       const metadata = workspace.index.getMetadataFromUri(uri);

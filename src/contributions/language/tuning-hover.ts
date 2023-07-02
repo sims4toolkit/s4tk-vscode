@@ -32,7 +32,7 @@ export default class TuningHoverProvider implements vscode.HoverProvider {
     const tuningClass = document.getText(range);
     if (!tuningClass) return;
 
-    const workspace = S4TKWorkspaceManager.getWorkspaceForFileAt(document.uri);
+    const workspace = S4TKWorkspaceManager.getWorkspaceContainingUri(document.uri);
     if (!workspace) return;
 
     const metadata = workspace.index.getMetadataFromUri(document.uri);
