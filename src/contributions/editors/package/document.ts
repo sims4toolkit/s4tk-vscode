@@ -3,7 +3,7 @@ import * as models from '@s4tk/models';
 import * as enums from '@s4tk/models/enums';
 import { ResourceEntry, ResourceKeyPair } from '@s4tk/models/types';
 import { formatResourceKey } from '@s4tk/hashing/formatting';
-import StringTableJson from '#models/stbl-json';
+import StringTableJson from '#stbls/stbl-json';
 import { inferTuningMetadata } from '#indexing/inference';
 import ViewOnlyDocument from '../view-only/document';
 import PackageResourceContentProvider from './package-fs';

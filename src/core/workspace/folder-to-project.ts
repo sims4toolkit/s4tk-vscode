@@ -6,7 +6,7 @@ import { Package, RawResource, SimDataResource, StringTableResource } from "@s4t
 import { BinaryResourceType, SimDataGroup, TuningResourceType } from "@s4tk/models/enums";
 import { formatResourceType, formatResourceKey, formatAsHexString } from "@s4tk/hashing/formatting";
 import { findGlobMatches, parseKeyFromTgi } from "#building/resources";
-import StringTableJson from "#models/stbl-json";
+import StringTableJson from "#stbls/stbl-json";
 import * as inference from "#indexing/inference";
 
 /**

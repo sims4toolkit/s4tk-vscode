@@ -2,12 +2,11 @@ import * as fs from "fs";
 import * as path from "path";
 import * as vscode from "vscode";
 import S4TKAssets from "#assets";
-import { S4TKContext } from "#constants";
 import { findOpenDocument, replaceEntireDocument, resolveGlobPattern } from "#helpers/fs";
 import { S4TKSettings } from "#helpers/settings";
 import ResourceIndex from "#indexing/resource-index";
-import { S4TKConfig } from "#models/s4tk-config";
-import StringTableJson from "#models/stbl-json";
+import { S4TKConfig } from "#workspace/s4tk-config";
+import StringTableJson from "#stbls/stbl-json";
 import { MessageButton, handleMessageButtonClick } from "./messaging";
 
 /**

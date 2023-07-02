@@ -8,7 +8,7 @@ import * as hashFormat from "@s4tk/hashing/formatting";
 import { S4TKLink } from "#constants";
 import { randomFnv64 } from "#helpers/hashing";
 import { S4TKSettings } from "#helpers/settings";
-import StringTableJson from "#models/stbl-json";
+import StringTableJson from "#stbls/stbl-json";
 import * as inference from "#indexing/inference";
 import type S4TKWorkspace from "#workspace/s4tk-workspace";
 import { FatalBuildError, addAndGetItem } from "./helpers";

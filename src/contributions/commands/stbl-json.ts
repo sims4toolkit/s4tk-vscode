@@ -2,7 +2,7 @@ import * as vscode from "vscode";
 import { S4TKCommand } from "#constants";
 import { S4TKSettings } from "#helpers/settings";
 import { replaceEntireDocument } from "#helpers/fs";
-import StringTableJson from "#models/stbl-json";
+import StringTableJson from "#stbls/stbl-json";
 import { MessageButton, handleMessageButtonClick } from "#workspace/messaging";
 
 export default function registerStblJsonCommands() {

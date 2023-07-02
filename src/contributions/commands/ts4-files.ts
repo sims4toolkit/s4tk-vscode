@@ -1,7 +1,7 @@
 import * as vscode from "vscode";
 import { StringTableResource } from "@s4tk/models";
 import { S4TKCommand, S4TKEditor } from "#constants";
-import StringTableJson from "#models/stbl-json";
+import StringTableJson from "#stbls/stbl-json";
 import { tryCreateCustomFile } from "#helpers/fs";
 import { S4TKSettings } from "#helpers/settings";
 

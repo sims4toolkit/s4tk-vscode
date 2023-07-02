@@ -4,9 +4,9 @@ import * as vscode from "vscode";
 import { formatStringKey } from "@s4tk/hashing/formatting";
 import { S4TKCommand } from "#constants";
 import S4TKWorkspace from "#workspace/s4tk-workspace";
-import StringTableProxy from "#models/stbl-proxy";
+import StringTableProxy from "#stbls/stbl-proxy";
 import { convertFolderToProject } from "#workspace/folder-to-project";
-import StringTableJson from "#models/stbl-json";
+import StringTableJson from "#stbls/stbl-json";
 import S4TKWorkspaceManager from "#workspace/workspace-manager";
 import { runBuild } from "#building/build-runner";
 

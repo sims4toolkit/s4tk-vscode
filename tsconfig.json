@@ -16,7 +16,7 @@
       "#diagnostics/*": ["core/diagnostics/*"],
       "#helpers/*": ["core/helpers/*"],
       "#indexing/*": ["core/indexing/*"],
-      "#models/*": ["core/models/*"],
+      "#stbls/*": ["core/stbls/*"],
       "#workspace/*": ["core/workspace/*"],
     }
   },

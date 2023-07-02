@@ -1,6 +1,6 @@
 import * as vscode from 'vscode';
 import { S4TKCommand } from '#constants';
-import StringTableJson from '#models/stbl-json';
+import StringTableJson from '#stbls/stbl-json';
 import BaseCodeLensProvider from './base-codelens';
 
 /**
