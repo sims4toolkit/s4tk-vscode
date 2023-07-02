@@ -6,8 +6,5 @@ import registerContributions from "./contributions/_index";
 export function activate(context: vscode.ExtensionContext) {
 	S4TKAssets.setExtensionContext(context);
 	registerContributions(context);
-}
-
-export function deactivate() {
-	S4TKWorkspaceManager.dispose();
+	context.subscriptions.push(S4TKWorkspaceManager);
 }
