@@ -236,7 +236,7 @@
       "properties": {
         "overrideIndexRoot": {
           "type": "string",
-          "description": "The root to use for the resource index instead of `buildInstructions.source`. You likely do not have a use for this, unless your project is very complex."
+          "description": "The root to use for the resource index instead of `buildInstructions.source`. You likely do not have a use for this unless your project includes multiple packages that have files that override each other."
         }
       }
     }
