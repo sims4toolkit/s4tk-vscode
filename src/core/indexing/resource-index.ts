@@ -2,7 +2,7 @@ import * as vscode from "vscode";
 import { sync as globSync } from "glob";
 import { resolveGlobPattern } from "#helpers/fs";
 import type { TuningMetadata } from "./types";
-import { inferTuningMetadata } from "./inference";
+import { inferKeyFromMetadata, inferTuningMetadata } from "./inference";
 
 /**
  * Keeps track of all resources within a workspace's source folder.
@@ -56,6 +56,23 @@ export default class ResourceIndex implements vscode.Disposable {
   getMetadataFromId(id: string): TuningMetadata | undefined {
     const fsPaths = this._instancesToPaths.get(id);
     if (fsPaths?.length) return this._pathsToDefinitions.get(fsPaths[0]);
+  }
+
+  /**
+   * Returns the ID and name of the tuning file at the given URI, if it exists,
+   * as a string containing value and comment XML nodes, i.e.
+   * `12345<!--some_file-->`.
+   * 
+   * @param uri URI of tuning file to get reference for
+   */
+  getTuningReference(uri: vscode.Uri): string | undefined {
+    const metadata = this.getMetadataFromUri(uri);
+    if (!metadata) return;
+    const key = inferKeyFromMetadata(metadata);
+    if (key.key.instance == undefined) return;
+    return metadata.attrs?.n
+      ? `${key.key.instance}<!--${metadata.attrs?.n}-->`
+      : key.key.instance.toString();
   }
 
   /**

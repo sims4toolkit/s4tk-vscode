@@ -17,6 +17,7 @@
       "#helpers/*": ["core/helpers/*"],
       "#indexing/*": ["core/indexing/*"],
       "#stbls/*": ["core/stbls/*"],
+      "#tuning/*": ["core/tuning/*"],
       "#workspace/*": ["core/workspace/*"],
     }
   },
