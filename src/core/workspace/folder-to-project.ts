@@ -37,8 +37,7 @@ export async function convertFolderToProject() {
     if (selected === "Cancel") return;
   }
 
-  // FIXME: make sure paths work on Windows
-  const sourcePattern = path.join(sourceFolderUri.fsPath, "**/*");
+  const sourcePattern = path.join(sourceFolderUri.fsPath, "**/*").replace(/\\/g, "/");
   const matches = findGlobMatches([sourcePattern], undefined, "supported");
 
   matches.forEach((sourcePath: string) => {
