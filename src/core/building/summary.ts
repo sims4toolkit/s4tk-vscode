@@ -1,5 +1,5 @@
 import * as vscode from "vscode";
-import S4TKWorkspace from "#workspace/s4tk-workspace";
+import type S4TKWorkspace from "#workspace/s4tk-workspace";
 
 //#region Types
 
@@ -19,7 +19,7 @@ export interface BuildSummary {
     source: ValidatedPath;
     destinations: ValidatedPath[];
     packages: ValidatedPackageInfo[];
-    zip?: ValidatedZipInfo;
+    zips?: ValidatedZipInfo[];
   };
 
   written: {
@@ -32,8 +32,11 @@ export interface BuildSummary {
 
 export interface ValidatedPackageInfo extends Warnable {
   filename: string;
+  duplicateFilesFrom: string[];
   include: ValidatedPath[];
   exclude: ValidatedPath[];
+  doNotGenerate: boolean;
+  doNotWrite: boolean;
 }
 
 export interface ValidatedPath extends Warnable {
@@ -45,6 +48,8 @@ export interface ValidatedPath extends Warnable {
 export interface ValidatedZipInfo extends Warnable {
   filename: string;
   internalFolder?: string;
+  doNotGenerate: boolean;
+  packages: string[];
   otherFiles: string[];
 }
 
@@ -73,18 +78,17 @@ export interface WrittenResourceInfo {
 //#region Functions
 
 export namespace BuildSummary {
-  const _BUILD_SUMMARY_FILENAME = "BuildSummary.json";
-
   /**
    * Returns a new BuildSummary object for the given mode.
    * 
+   * @param workspace Workspace being built
    * @param mode Mode for build
    */
-  export function create(mode: BuildMode): BuildSummary {
+  export function create(workspace: S4TKWorkspace, mode: BuildMode): BuildSummary {
     return {
       buildInfo: {
         mode: mode,
-        summary: S4TKWorkspace.config.buildSettings.outputBuildSummary,
+        summary: workspace.config.buildSettings.outputBuildSummary,
         success: true,
         problems: 0,
       },
@@ -103,15 +107,6 @@ export namespace BuildSummary {
         packages: [],
       },
     };
-  }
-
-  /**
-   * Returns the URI at which to write the BuildSummary.json file.
-   */
-  export function getUri(): vscode.Uri | undefined {
-    const rootDir = vscode.workspace.workspaceFolders?.[0]?.uri;
-    if (!rootDir) return;
-    return vscode.Uri.joinPath(rootDir, _BUILD_SUMMARY_FILENAME);
   }
 
   /**

@@ -1,6 +1,6 @@
 import * as vscode from 'vscode';
-import { COMMAND } from '#constants';
-import StringTableJson from '#models/stbl-json';
+import { S4TKCommand } from '#constants';
+import StringTableJson from '#stbls/stbl-json';
 import BaseCodeLensProvider from './base-codelens';
 
 /**
@@ -32,13 +32,13 @@ export default class StringTableJsonCodeLensProvider extends BaseCodeLensProvide
 
     this._codeLenses = [];
 
-    if (document.uri.scheme !== "s4tk") {
+    if (editor?.document.uri.scheme !== "s4tk") {
       if (!stblJson.hasMetaData) {
         this._codeLenses.push(
           new vscode.CodeLens(new vscode.Range(0, 0, 0, 0), {
             title: "New String",
             tooltip: "Add a new string with a random hash to this STBL.",
-            command: COMMAND.stblJson.addEntry,
+            command: S4TKCommand.stblJson.addEntry,
             arguments: [editor, stblJson],
           })
         );
@@ -49,7 +49,7 @@ export default class StringTableJsonCodeLensProvider extends BaseCodeLensProvide
           new vscode.CodeLens(new vscode.Range(0, 0, 0, 0), {
             title: "Convert to Object",
             tooltip: "Convert this array-based STBL JSON into an object-based one.",
-            command: COMMAND.stblJson.toObject,
+            command: S4TKCommand.stblJson.toObject,
             arguments: [editor, stblJson],
           })
         );
@@ -58,7 +58,7 @@ export default class StringTableJsonCodeLensProvider extends BaseCodeLensProvide
           new vscode.CodeLens(new vscode.Range(0, 0, 0, 0), {
             title: "Convert to Array",
             tooltip: "Convert this object-based STBL JSON into an array-based one.",
-            command: COMMAND.stblJson.toArray,
+            command: S4TKCommand.stblJson.toArray,
             arguments: [editor, stblJson],
           })
         );
@@ -69,7 +69,7 @@ export default class StringTableJsonCodeLensProvider extends BaseCodeLensProvide
           new vscode.CodeLens(new vscode.Range(0, 0, 0, 0), {
             title: "Insert Metadata",
             tooltip: "Convert this STBL into an object that tracks metadata (locale, group, instance).",
-            command: COMMAND.stblJson.addMetaData,
+            command: S4TKCommand.stblJson.addMetaData,
             arguments: [editor, stblJson],
           })
         );
@@ -82,17 +82,19 @@ export default class StringTableJsonCodeLensProvider extends BaseCodeLensProvide
     for (let lineIndex = 0; lineIndex < document.lineCount; ++lineIndex) {
       const line = document.lineAt(lineIndex);
 
-      if (stblJson.hasMetaData && entriesRegex.test(line.text)) {
-        this._codeLenses.push(
-          new vscode.CodeLens(new vscode.Range(lineIndex, 0, lineIndex, 0), {
-            title: "New String",
-            tooltip: "Add a new string with a random hash to this STBL.",
-            command: COMMAND.stblJson.addEntry,
-            arguments: [editor, stblJson],
-          })
-        );
+      if (editor?.document.uri.scheme !== "s4tk") {
+        if (stblJson.hasMetaData && entriesRegex.test(line.text)) {
+          this._codeLenses.push(
+            new vscode.CodeLens(new vscode.Range(lineIndex, 0, lineIndex, 0), {
+              title: "New String",
+              tooltip: "Add a new string with a random hash to this STBL.",
+              command: S4TKCommand.stblJson.addEntry,
+              arguments: [editor, stblJson],
+            })
+          );
 
-        continue;
+          continue;
+        }
       }
 
       if (keyRegex.test(line.text)) {
@@ -101,7 +103,7 @@ export default class StringTableJsonCodeLensProvider extends BaseCodeLensProvide
           {
             title: "Copy as XML",
             tooltip: "Copies this string's key and value as XML that can be pasted into tuning.",
-            command: COMMAND.stblJson.copyEntry,
+            command: S4TKCommand.stblJson.copyEntry,
             arguments: [stblJson, stblEntryIndex]
           }
         ));

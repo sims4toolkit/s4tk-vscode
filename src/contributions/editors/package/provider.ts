@@ -1,7 +1,7 @@
 import * as vscode from 'vscode';
-import { MEDIA } from '#assets';
-import { EDITOR } from '#constants';
-import { getHtmlForWebview } from '#helpers/media';
+import S4TKAssets from '#assets';
+import { S4TKEditor } from '#constants';
+import { getHtmlForWebview } from 'contributions/editors/helpers/media';
 import type { PackageInMessage, PackageOutMessage } from './types';
 import ViewOnlyEditorProvider from '../view-only/provider';
 import PackageDocument from './document';
@@ -17,7 +17,7 @@ export default class PackageEditorProvider
 
   public static register(): vscode.Disposable {
     return vscode.window.registerCustomEditorProvider(
-      EDITOR.package,
+      S4TKEditor.dbpf,
       new PackageEditorProvider(), {
       supportsMultipleEditorsPerDocument: true,
       webviewOptions: {
@@ -39,8 +39,8 @@ export default class PackageEditorProvider
       title: "TS4 Package",
       body: `<p class="margin-bottom">Packages are view-only (<span id="reload-button" class="link-button">Reload</span>)</p>
       <div id="pkg-editor"></div>`,
-      styles: [MEDIA.editors.packageStyle],
-      scripts: [MEDIA.editors.packageScript],
+      styles: [S4TKAssets.media.styles.package],
+      scripts: [S4TKAssets.media.scripts.package],
     });
   }
 

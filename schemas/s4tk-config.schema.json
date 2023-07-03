@@ -44,6 +44,13 @@
                 "type": "string",
                 "description": "What to name the built package file."
               },
+              "duplicateFilesFrom": {
+                "type": "array",
+                "description": "List of previously-built packages to base this new package on. Files from these packages will be copied over, in order, overriding each other if the resource keys are the same. The values in this list must match the filenames of packages that precede this one in the `packages` list.",
+                "items": {
+                  "type": "string"
+                }
+              },
               "include": {
                 "type": "array",
                 "description": "List of relative glob patterns that capture all files that should be built into this package.\n\n[These glob patterns are relative to the source folder set in `buildInstructions.source`]",
@@ -57,6 +64,16 @@
                 "items": {
                   "type": "string"
                 }
+              },
+              "doNotGenerate": {
+                "type": "boolean",
+                "description": "Whether or not this package should be generated. If true, it won't be, and any other packages with this one in their `duplicateFilesFrom` list will fail. This is intended to provide a way to 'comment out' a package without causing any build warnings due to missing source files, as its glob patterns will still be considered during validation.",
+                "default": false
+              },
+              "doNotWrite": {
+                "type": "boolean",
+                "description": "Whether or not this package should be written to disk. If true, then it won't be. Whether or not it is still generated in memory, however, depends on the value of `doNotGenerate`. If `doNotWrite` is true but `doNotGenerate` is false, then packages with this one in their `duplicateFilesFrom` list can still be built.",
+                "default": false
               }
             }
           }
@@ -88,6 +105,11 @@
           "description": "Whether or not packages are allowed to contain the same resources. If false, then packages with overlapping glob patterns will cause the build process to fail. You should not set this to true unless you have a legitimate reason for doing so, as this setting will help you catch common bugs with glob patterns.",
           "default": false
         },
+        "allowResourceKeyOverrides": {
+          "type": "boolean",
+          "description": "Whether or not packages with no items in `duplicateFilesFrom` are allowed to contain resources that override each other. If false, then attempting to write more than one resource with the same key to a package will cause the build script to fail. You should not set this to true unless you have a legitimate reason for doing so, as this setting will help you catch common bugs with resource keys.",
+          "default": false
+        },
         "outputBuildSummary": {
           "type": "string",
           "description": "Whether or not the `BuildSummary.json` file should be generated, and what information it should contain.\n\nFull build summaries are useful for debugging because they include information about every single resource that is written to every single package, but this can make it lengthy.\n\nPartial build summaries exclude this information and only show how the config was interpreted and what warnings were found, if any.",
@@ -102,45 +124,74 @@
     },
     "releaseSettings": {
       "type": "object",
-      "description": "Settings that affect builds made for release (i.e. your packages and other miscellaneous files bundled together in a ZIP).",
+      "description": "Settings that affect builds made for release (i.e. packages and other miscellaneous files bundled together in ZIPs).",
       "additionalProperties": false,
+      "required": [
+        "zips"
+      ],
       "properties": {
-        "filename": {
-          "type": "string",
-          "description": "Name of the ZIP file that contains all of your mod files.",
-          "default": ""
-        },
-        "internalFolder": {
-          "type": "string",
-          "description": "Leave blank if you want your files to be loose within the ZIP. If you want them bundled within a folder, set a name here.",
-          "default": ""
-        },
-        "otherFiles": {
-          "type": "object",
-          "description": "Glob patterns that specify other files to include in the ZIP.",
-          "additionalProperties": false,
-          "properties": {
-            "include": {
-              "type": "array",
-              "description": "List of absolute and/or relative glob patterns that capture all non-source files that should be added to the ZIP, such as READMEs or ts4scripts.\n\n[If paths are relative, they are relative to the folder that contains your `s4tk.config.json`]",
-              "items": {
-                "type": "string"
-              }
-            },
-            "exclude": {
-              "type": "array",
-              "description": "List of absolute and/or relative glob patterns of files that should be excluded, even if they pass one of the `include` patterns.\n\n[If paths are relative, they are relative to the folder that contains your `s4tk.config.json`]",
-              "items": {
-                "type": "string"
-              }
-            }
-          }
-        },
         "overrideDestinations": {
           "type": "array",
-          "description": "List of absolute and/or relative paths to folders where the ZIP file should be output to. If omitted or empty, then `buildInstructions.destinations` will be used.\n\n[If paths are relative, they are relative to the folder that contains your `s4tk.config.json`]",
+          "description": "List of absolute and/or relative paths to folders where the ZIPs files should be output to. If omitted or empty, then `buildInstructions.destinations` will be used.\n\n[If paths are relative, they are relative to the folder that contains your `s4tk.config.json`]",
           "items": {
             "type": "string"
+          }
+        },
+        "zips": {
+          "type": "array",
+          "description": "List of ZIP files to generate. Each one must have a unique filename.",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "filename",
+              "packages"
+            ],
+            "properties": {
+              "filename": {
+                "type": "string",
+                "description": "Name of this ZIP file.",
+                "default": ""
+              },
+              "doNotGenerate": {
+                "type": "boolean",
+                "description": "Whether or not this ZIP file should be generated. If true, then it won't be. This is intended to provide a way to 'comment out' a ZIP.",
+                "default": false
+              },
+              "internalFolder": {
+                "type": "string",
+                "description": "Leave blank if you want your files to be loose within the ZIP. If you want them bundled within a folder, set a name here.",
+                "default": ""
+              },
+              "packages": {
+                "type": "array",
+                "description": "List of generated packages to include in this ZIP. Names must be present in buildInstructions, and every listed package must have been generated, or this ZIP will fail.",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "otherFiles": {
+                "type": "object",
+                "description": "Glob patterns that specify other files to include in the ZIP.",
+                "additionalProperties": false,
+                "properties": {
+                  "include": {
+                    "type": "array",
+                    "description": "List of absolute and/or relative glob patterns that capture all non-source files that should be added to the ZIP, such as READMEs or ts4scripts.\n\n[If paths are relative, they are relative to the folder that contains your `s4tk.config.json`]",
+                    "items": {
+                      "type": "string"
+                    }
+                  },
+                  "exclude": {
+                    "type": "array",
+                    "description": "List of absolute and/or relative glob patterns of files that should be excluded, even if they pass one of the `include` patterns.\n\n[If paths are relative, they are relative to the folder that contains your `s4tk.config.json`]",
+                    "items": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
           }
         }
       }
@@ -150,6 +201,11 @@
       "description": "Settings that affect your string tables.",
       "additionalProperties": false,
       "properties": {
+        "allowStringKeyOverrides": {
+          "type": "boolean",
+          "description": "Whether or not string tables are allowed to contain entries that override each other. If false, then two strings with the same key in the same locale will cause the build script to fail. You should not set this to true unless you have a legitimate reason for doing so, as this setting will help you catch common bugs with strings.",
+          "default": false
+        },
         "defaultStringTable": {
           "type": "string",
           "description": "Absolute or relative path to the string table (binary or JSON) that serves as the default for this project. Any strings generated via commands will be added to this string table.\n\n[If path is relative, it is relative to the folder that contains your `s4tk.config.json`]",
@@ -171,6 +227,16 @@
           "type": "boolean",
           "description": "Whether or not all of the string tables of the same locale being written to the same package should be merged.",
           "default": true
+        }
+      }
+    },
+    "workspaceSettings": {
+      "type": "object",
+      "description": "Optional settings that affect the workspace, but not anything related to building.",
+      "properties": {
+        "overrideIndexRoot": {
+          "type": "string",
+          "description": "The root to use for the resource index instead of `buildInstructions.source`. You likely do not have a use for this unless your project includes multiple packages that have files that override each other."
         }
       }
     }

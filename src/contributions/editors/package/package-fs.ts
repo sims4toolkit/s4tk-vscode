@@ -1,3 +1,4 @@
+import S4TKWorkspaceManager from "#workspace/workspace-manager";
 import * as path from "path";
 import * as vscode from "vscode";
 
@@ -45,8 +46,11 @@ class _PackageResourceContentProvider implements vscode.TextDocumentContentProvi
   }
 
   private _getPackageBaseUri(documentUri: vscode.Uri): vscode.Uri {
-    const root = vscode.workspace.workspaceFolders?.[0]?.uri?.fsPath ?? '';
-    const relative = path.relative(root, documentUri.fsPath).replace(/\\/g, "/");
+    const workspace = S4TKWorkspaceManager.getWorkspaceContainingUri(documentUri);
+    const relative = path.relative(
+      workspace?.rootUri.fsPath ?? '', // FIXME: default shouldn't be empty
+      documentUri.fsPath
+    ).replace(/\\/g, "/");
     return vscode.Uri.parse("s4tk:" + relative);
   }
 }

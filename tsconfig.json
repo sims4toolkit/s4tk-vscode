@@ -12,10 +12,12 @@
     "paths": {
       "#assets": ["assets.ts"],
       "#constants": ["constants.ts"],
-      "#extension": ["extension.ts"],
       "#building/*": ["core/building/*"],
+      "#diagnostics/*": ["core/diagnostics/*"],
       "#helpers/*": ["core/helpers/*"],
-      "#models/*": ["core/models/*"],
+      "#indexing/*": ["core/indexing/*"],
+      "#stbls/*": ["core/stbls/*"],
+      "#tuning/*": ["core/tuning/*"],
       "#workspace/*": ["core/workspace/*"],
     }
   },

@@ -1,12 +1,13 @@
 import * as vscode from "vscode";
 import { XmlDocumentNode } from "@s4tk/xml-dom";
-import { COMMAND } from "#constants";
+import { S4TKCommand } from "#constants";
 import { replaceEntireDocument } from "#helpers/fs";
 import { S4TKSettings } from "#helpers/settings";
-import { getNewXmlContentWithOverride, getXmlKeyOverrides, inferXmlMetaData } from "#helpers/xml";
+import { cloneWithNewName, overrideTgiComment } from "#tuning/commands";
+import S4TKWorkspaceManager from "#workspace/workspace-manager";
 
 export default function registerTuningCommands() {
-  vscode.commands.registerCommand(COMMAND.tuning.format,
+  vscode.commands.registerCommand(S4TKCommand.tuning.format,
     (editor: vscode.TextEditor | undefined) => {
       if (!editor?.document) return;
       try {
@@ -20,54 +21,45 @@ export default function registerTuningCommands() {
     }
   );
 
-  vscode.commands.registerCommand(COMMAND.tuning.overrideGroup,
-    (editor: vscode.TextEditor | undefined, value?: number) => {
-      if (!editor?.document) return;
-      const newContent = getNewXmlContentWithOverride(editor.document, "group", value);
-      if (!newContent) return;
-      replaceEntireDocument(editor, newContent, false);
+  vscode.commands.registerCommand(S4TKCommand.tuning.overrideType,
+    (editor?: vscode.TextEditor, value?: number) => {
+      if (!(editor?.document && value != undefined)) return;
+      overrideTgiComment(editor, "type", value);
     }
   );
 
-  vscode.commands.registerCommand(COMMAND.tuning.overrideInstance,
-    (editor: vscode.TextEditor | undefined, value?: bigint) => {
-      if (!editor?.document) return;
-      const newContent = getNewXmlContentWithOverride(editor.document, "instance", value);
-      if (!newContent) return;
-      replaceEntireDocument(editor, newContent, false);
+  vscode.commands.registerCommand(S4TKCommand.tuning.overrideGroup,
+    (editor?: vscode.TextEditor, value?: number) => {
+      if (!(editor?.document && value != undefined)) return;
+      overrideTgiComment(editor, "group", value);
     }
   );
 
-  vscode.commands.registerCommand(COMMAND.tuning.overrideType,
-    (editor: vscode.TextEditor | undefined, value?: number) => {
-      if (!editor?.document) return;
-      const newContent = getNewXmlContentWithOverride(editor.document, "type", value);
-      if (!newContent) return;
-      replaceEntireDocument(editor, newContent, false);
+  vscode.commands.registerCommand(S4TKCommand.tuning.overrideInstance,
+    (editor?: vscode.TextEditor, value?: bigint) => {
+      if (!(editor?.document && value != undefined)) return;
+      overrideTgiComment(editor, "instance", value);
     }
   );
 
-  vscode.commands.registerCommand(COMMAND.tuning.copyAsXml,
+  vscode.commands.registerCommand(S4TKCommand.tuning.copyAsXml,
     async (uri?: vscode.Uri) => {
       if (!uri) return;
-
-      const content = (await vscode.workspace.fs.readFile(uri)).toString();
-      const overrides = getXmlKeyOverrides(content);
-      const metadata = inferXmlMetaData(content);
-      const instance = overrides?.instance ?? metadata.key.instance;
-
-      if (instance == undefined) {
-        vscode.window.showWarningMessage("Could not infer tuning ID, and no override was found.");
-      } else {
-        const toCopy = metadata.filename
-          ? `${instance}<!--${metadata.filename}-->`
-          : instance.toString();
-
-        vscode.env.clipboard.writeText(toCopy);
-
+      const workspace = S4TKWorkspaceManager.getWorkspaceContainingUri(uri);
+      const ref = workspace?.index.getTuningReference(uri);
+      if (ref) {
+        vscode.env.clipboard.writeText(ref);
         if (S4TKSettings.get("showCopyConfirmMessage"))
-          vscode.window.showInformationMessage(`Copied: ${toCopy}`);
+          vscode.window.showInformationMessage(`Copied: ${ref}`);
+      } else {
+        vscode.window.showWarningMessage(`Could not resolve XML reference for '${uri.fsPath}'`);
       }
+    }
+  );
+
+  vscode.commands.registerCommand(S4TKCommand.tuning.cloneNewName,
+    async (srcUri?: vscode.Uri) => {
+      if (srcUri) cloneWithNewName(srcUri);
     }
   );
 }

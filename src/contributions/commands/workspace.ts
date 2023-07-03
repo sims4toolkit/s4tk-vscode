@@ -1,134 +1,68 @@
-import * as path from "path";
 import * as vscode from "vscode";
-import { formatStringKey } from "@s4tk/hashing/formatting";
-import { COMMAND } from "#constants";
-import S4TKWorkspace from "#workspace/s4tk-workspace";
-import { buildProject } from "#building/builder";
-import { BuildMode, BuildSummary } from "#building/summary";
-import StringTableProxy from "#models/stbl-proxy";
-import { S4TKConfig } from "#models/s4tk-config";
-import { S4TKSettings } from "#helpers/settings";
+import { S4TKCommand } from "#constants";
+import { runBuild } from "#building/build-runner";
+import * as stbls from "#stbls/stbl-commands";
+import { convertFolderToProject } from "#workspace/folder-to-project";
+import S4TKWorkspaceManager from "#workspace/workspace-manager";
 
 export default function registerWorkspaceCommands() {
-  vscode.commands.registerCommand(COMMAND.workspace.build, () => {
-    _runBuild("build", "Build");
+  vscode.commands.registerCommand(S4TKCommand.workspace.build, async (uri?: vscode.Uri) => {
+    const workspace = await S4TKWorkspaceManager.chooseWorkspace(uri);
+    if (workspace) runBuild(workspace, "build", "Build");
   });
 
-  vscode.commands.registerCommand(COMMAND.workspace.buildDryRun, () => {
-    _runBuild("dryrun", "Dry Run");
+  vscode.commands.registerCommand(S4TKCommand.workspace.buildDryRun, async (uri?: vscode.Uri) => {
+    const workspace = await S4TKWorkspaceManager.chooseWorkspace(uri);
+    if (workspace) runBuild(workspace, "dryrun", "Dry Run");
   });
 
-  vscode.commands.registerCommand(COMMAND.workspace.buildRelease, () => {
-    _runBuild("release", "Release");
+  vscode.commands.registerCommand(S4TKCommand.workspace.buildRelease, async (uri?: vscode.Uri) => {
+    const workspace = await S4TKWorkspaceManager.chooseWorkspace(uri);
+    if (workspace) runBuild(workspace, "release", "Release");
   });
 
-  vscode.commands.registerCommand(COMMAND.workspace.createConfig, (_?: vscode.Uri) => {
-    S4TKWorkspace.createConfig(true);
+  vscode.commands.registerCommand(S4TKCommand.workspace.createConfig, async (uri?: vscode.Uri) => {
+    const workspace = await S4TKWorkspaceManager.chooseWorkspace(uri);
+    workspace?.createConfig(true);
   });
 
-  vscode.commands.registerCommand(COMMAND.workspace.createWorkspace, (_?: vscode.Uri) => {
-    S4TKWorkspace.createDefaultWorkspace();
+  vscode.commands.registerCommand(S4TKCommand.workspace.createWorkspace, async (uri?: vscode.Uri) => {
+    const workspace = await S4TKWorkspaceManager.chooseWorkspace(uri);
+    workspace?.createDefaultWorkspace();
   });
 
-  vscode.commands.registerCommand(COMMAND.workspace.reloadConfig, () => {
-    S4TKWorkspace.loadConfig({ showNoConfigError: true });
+  vscode.commands.registerCommand(S4TKCommand.workspace.reloadConfig, async (uri?: vscode.Uri) => {
+    const workspace = await S4TKWorkspaceManager.chooseWorkspace(uri);
+    workspace?.loadConfig({ showNoConfigError: true });
   });
 
-  vscode.commands.registerCommand(COMMAND.workspace.setDefaultStbl, (uri: vscode.Uri) => {
-    S4TKWorkspace.setDefaultStbl(uri);
-  });
+  vscode.commands.registerCommand(S4TKCommand.workspace.setDefaultStbl, async (uri: vscode.Uri) => {
+    const workspace = S4TKWorkspaceManager.getWorkspaceContainingUri(uri);
 
-  vscode.commands.registerCommand(COMMAND.workspace.addNewString, (clickedUri?: vscode.Uri) => {
-    _addNewString(clickedUri);
-  });
-}
-
-async function _runBuild(mode: BuildMode, readableMode: string) {
-  vscode.window.withProgress({
-    location: vscode.ProgressLocation.Window,
-    cancellable: false,
-    title: `Building S4TK Project (${readableMode})`
-  }, async (progress) => {
-    progress.report({ increment: 0 });
-
-    const summary = await buildProject(mode);
-    const buildSummaryUri = await _outputBuildSummary(summary);
-
-    if (summary.buildInfo.success) {
-      const warnings: string[] = [];
-      const warnIf = (num: number, msg: string) => {
-        if (num) warnings.push(`${num} ${msg}${(num === 1) ? '' : 's'}`);
-      }
-      warnIf(summary.buildInfo.problems, "problem");
-      warnIf(summary.written.ignoredSourceFiles.length, "ignored file");
-      warnIf(summary.written.missingSourceFiles.length, "missing file");
-      const warningMsg = warnings.length ? ` [${warnings.join("; ")}]` : "";
-      vscode.window.showInformationMessage(`S4TK ${readableMode} Successful${warningMsg}`);
-    } else if (buildSummaryUri) {
-      const viewBuildSummary = 'View BuildSummary.json';
-      vscode.window.showErrorMessage(
-        `S4TK ${readableMode} Failed: ${summary.buildInfo.fatalErrorMessage}`,
-        viewBuildSummary
-      ).then((button) => {
-        if (button === viewBuildSummary) vscode.window.showTextDocument(buildSummaryUri);
-      });
+    if (!workspace?.active) {
+      vscode.window.showErrorMessage("The selected file is not a part of an active S4TK project.");
     } else {
-      vscode.window.showErrorMessage(`S4TK ${readableMode} Failed: ${summary.buildInfo.fatalErrorMessage}`);
+      workspace.setDefaultStbl(uri);
     }
-
-    progress.report({ increment: 100 });
   });
-}
 
-async function _outputBuildSummary(summary: BuildSummary): Promise<vscode.Uri | undefined> {
-  if (S4TKWorkspace.config.buildSettings.outputBuildSummary === "none") return;
-  const uri = BuildSummary.getUri();
-  if (!uri) return;
-  const content = JSON.stringify(summary, null, S4TKSettings.getSpacesPerIndent());
-  await vscode.workspace.fs.writeFile(uri, Buffer.from(content));
-  return uri;
-}
+  vscode.commands.registerCommand(S4TKCommand.workspace.createStblFragment, async (uri?: vscode.Uri) => {
+    if (uri) stbls.createStblFragment(uri);
+  });
 
-async function _addNewString(clickedUri?: vscode.Uri) {
-  try {
-    let uri = clickedUri;
-    if (!uri) {
-      const defaultStringTable = S4TKWorkspace.config.stringTableSettings.defaultStringTable;
-
-      if (!defaultStringTable) {
-        vscode.window.showWarningMessage("Cannot add string because no default string table is set in s4tk.config.json.");
-        return;
-      }
-
-      uri = vscode.Uri.parse(S4TKConfig.resolvePath(defaultStringTable)!);
+  vscode.commands.registerCommand(S4TKCommand.workspace.addNewString, async (uri?: vscode.Uri) => {
+    if (uri) {
+      stbls.addStringToStbl(uri);
+    } else {
+      const workspace = await S4TKWorkspaceManager.chooseWorkspace();
+      if (workspace) stbls.addStringToDefaultStbl(workspace);
     }
+  });
 
-    try {
-      const bytes = await vscode.workspace.fs.readFile(uri);
-      var stbl = new StringTableProxy(bytes);
-    } catch (e) {
-      vscode.window.showErrorMessage(`Path '${uri.fsPath}' does not lead to a valid string table.`);
-      return;
-    }
+  vscode.commands.registerCommand(S4TKCommand.workspace.refreshIndex, async () => {
+    const workspace = await S4TKWorkspaceManager.chooseWorkspace();
+    if (workspace) workspace.index.refresh();
+  });
 
-    const input = await vscode.window.showInputBox({
-      title: "Enter String Text",
-      prompt: "A random FNV32 will be generated for the key.",
-    });
-
-    if (!input) return;
-    const key = stbl.addValue(input);
-    await vscode.workspace.fs.writeFile(uri, stbl.serialize());
-
-    const clickToCopy = "Copy as XML";
-    vscode.window.showInformationMessage(
-      `Added new string to ${path.basename(uri.fsPath)}`,
-      clickToCopy,
-    ).then(value => {
-      if (value === clickToCopy)
-        vscode.env.clipboard.writeText(`${formatStringKey(key)}<!--${input}-->`);
-    });
-  } catch (e) {
-    vscode.window.showErrorMessage(`Could not add string to STBL [${e}]`);
-  }
+  vscode.commands.registerCommand(S4TKCommand.workspace.folderToProject, convertFolderToProject);
 }

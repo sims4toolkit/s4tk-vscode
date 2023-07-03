@@ -1,12 +1,10 @@
 import * as vscode from "vscode";
-import S4TKWorkspace from "#workspace/s4tk-workspace";
+import S4TKAssets from "#assets";
+import S4TKWorkspaceManager from "#workspace/workspace-manager";
 import registerContributions from "./contributions/_index";
 
-let _extensionContext: vscode.ExtensionContext;
-export const getExtensionContext = () => _extensionContext;
-
 export function activate(context: vscode.ExtensionContext) {
-	_extensionContext = context;
+	S4TKAssets.setExtensionContext(context);
 	registerContributions(context);
-	S4TKWorkspace.activate();
+	context.subscriptions.push(S4TKWorkspaceManager);
 }

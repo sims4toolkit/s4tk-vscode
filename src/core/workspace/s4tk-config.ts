@@ -1,9 +1,7 @@
-import * as path from "path";
-import * as process from "process";
+import { existsSync } from "fs";
 import * as vscode from "vscode";
-import { SCHEMAS } from "#assets";
-import { FILENAME } from "#constants";
-import { fileExists } from "#helpers/fs";
+import S4TKAssets from "#assets";
+import { S4TKFilename } from "#constants";
 import { parseAndValidateJson } from "#helpers/schemas";
 import { S4TKSettings } from "#helpers/settings";
 
@@ -15,8 +13,11 @@ export interface S4TKConfig {
     destinations: string[];
     packages: {
       filename: string;
+      duplicateFilesFrom?: string[];
       include: string[];
       exclude?: string[];
+      doNotGenerate?: boolean;
+      doNotWrite?: boolean;
     }[];
   };
 
@@ -25,23 +26,33 @@ export interface S4TKConfig {
     allowFolderCreation: boolean;
     allowMissingSourceFiles: boolean;
     allowPackageOverlap: boolean;
+    allowResourceKeyOverrides: boolean;
     outputBuildSummary: "none" | "partial" | "full";
   };
 
   releaseSettings: {
-    filename: string;
-    internalFolder?: string;
-    otherFiles: {
-      include?: string[];
-      exclude?: string[];
-    };
     overrideDestinations: string[];
+    zips: {
+      filename: string;
+      internalFolder?: string;
+      doNotGenerate?: boolean;
+      packages: string[];
+      otherFiles?: {
+        include?: string[];
+        exclude?: string[];
+      };
+    }[];
   };
 
   stringTableSettings: {
+    allowStringKeyOverrides: boolean;
     defaultStringTable: string;
     generateMissingLocales: boolean;
     mergeStringTablesInSamePackage: boolean;
+  };
+
+  workspaceSettings: {
+    overrideIndexRoot?: string;
   };
 }
 
@@ -59,22 +70,26 @@ const _CONFIG_TRANSFORMER: ConfigTransformer = {
       allowFolderCreation: false,
       allowMissingSourceFiles: false,
       allowPackageOverlap: false,
+      allowResourceKeyOverrides: false,
       outputBuildSummary: "partial",
     },
   },
   releaseSettings: {
     defaults: {
-      filename: "",
-      otherFiles: {},
       overrideDestinations: [],
+      zips: [],
     },
   },
   stringTableSettings: {
     defaults: {
+      allowStringKeyOverrides: false,
       defaultStringTable: "",
       generateMissingLocales: true,
       mergeStringTablesInSamePackage: true,
     },
+  },
+  workspaceSettings: {
+    defaults: {},
   },
 };
 
@@ -92,11 +107,9 @@ export namespace S4TKConfig {
    * have one, and returns it alongside a boolean that says whether it actually
    * exists or not.
    */
-  export async function find(): Promise<ConfigInfo> {
-    const rootUri = vscode.workspace.workspaceFolders?.[0]?.uri;
-    if (!rootUri) return { exists: false };
-    const uri = vscode.Uri.joinPath(rootUri, FILENAME.config);
-    const exists = await fileExists(uri);
+  export function find(workspaceRoot: vscode.Uri): ConfigInfo {
+    const uri = vscode.Uri.joinPath(workspaceRoot, S4TKFilename.config);
+    const exists = existsSync(uri.fsPath);
     return { uri, exists };
   }
 
@@ -119,7 +132,7 @@ export namespace S4TKConfig {
    * @param content JSON content to parse
    */
   export function parse(content: string): S4TKConfig {
-    const result = parseAndValidateJson<S4TKConfig>(content, SCHEMAS.config);
+    const result = parseAndValidateJson<S4TKConfig>(content, S4TKAssets.schemas.config);
 
     if (result.parsed) {
       return _getConfigProxy(result.parsed);
@@ -136,44 +149,11 @@ export namespace S4TKConfig {
   export function stringify(config: S4TKConfig): string {
     return JSON.stringify(config, null, S4TKSettings.getSpacesPerIndent());
   }
-
-  /**
-   * Resolves one of the paths listed in the config.
-   * 
-   * @param original Original path to resolve
-   * @param relativeTo Path that original is relative to if not the config
-   * @param isGlob Whether or not to return a path compatible with globbing 
-   */
-  export function resolvePath(original: string, {
-    relativeTo = undefined,
-    isGlob = false,
-  }: {
-    relativeTo?: string;
-    isGlob?: boolean;
-  } = {}): string | undefined {
-    let absPath = original;
-    if (!path.isAbsolute(original)) {
-      if (relativeTo) {
-        absPath = path.resolve(relativeTo, original);
-      } else {
-        const baseUri = vscode.workspace.workspaceFolders?.[0]?.uri
-        if (!baseUri) return;
-        // HACK: for relative ignored globs to work on windows
-        if (process.platform === "win32") {
-          const [drive, filepath] = baseUri.fsPath.split(":", 2);
-          absPath = path.resolve(`${drive.toUpperCase()}:${filepath}`, original);
-        } else {
-          absPath = path.resolve(baseUri.fsPath, original);
-        }
-      }
-    }
-    return isGlob ? absPath.replace(/\\/g, "/") : absPath;
-  }
 }
 
 //#endregion
 
-//#region Helper Types + Proxy
+//#region Proxy
 
 interface ConfigPropertyTransformer<T> {
   defaults: T;
@@ -184,10 +164,10 @@ type ConfigTransformer = {
   [key in keyof S4TKConfig]: ConfigPropertyTransformer<S4TKConfig[key]>;
 };
 
-type ConfigInfo = {
-  uri?: vscode.Uri;
+interface ConfigInfo {
+  uri: vscode.Uri;
   exists: boolean;
-};
+}
 
 function _getConfigProxy(config: S4TKConfig): S4TKConfig {
   return new Proxy<S4TKConfig>(config, {

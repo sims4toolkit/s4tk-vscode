@@ -1,12 +1,12 @@
 import * as vscode from "vscode";
-import { COMMAND } from "#constants";
+import { S4TKCommand } from "#constants";
 import { S4TKSettings } from "#helpers/settings";
 import { replaceEntireDocument } from "#helpers/fs";
-import StringTableJson from "#models/stbl-json";
+import StringTableJson from "#stbls/stbl-json";
 import { MessageButton, handleMessageButtonClick } from "#workspace/messaging";
 
 export default function registerStblJsonCommands() {
-  vscode.commands.registerCommand(COMMAND.stblJson.addEntry,
+  vscode.commands.registerCommand(S4TKCommand.stblJson.addEntry,
     async (editor: vscode.TextEditor | undefined, stblJson: StringTableJson) => {
       if (editor) {
         const start = S4TKSettings.get("newStringsToStartOfStringTable");
@@ -22,7 +22,7 @@ export default function registerStblJsonCommands() {
     }
   );
 
-  vscode.commands.registerCommand(COMMAND.stblJson.addMetaData,
+  vscode.commands.registerCommand(S4TKCommand.stblJson.addMetaData,
     async (editor: vscode.TextEditor | undefined, stblJson: StringTableJson) => {
       if (stblJson.hasMetaData) return;
 
@@ -39,7 +39,7 @@ export default function registerStblJsonCommands() {
     }
   );
 
-  vscode.commands.registerCommand(COMMAND.stblJson.copyEntry,
+  vscode.commands.registerCommand(S4TKCommand.stblJson.copyEntry,
     (stblJson: StringTableJson, entryIndex: number) => {
       const xml = stblJson.getEntryXml(entryIndex);
       vscode.env.clipboard.writeText(xml);
@@ -48,7 +48,7 @@ export default function registerStblJsonCommands() {
     }
   );
 
-  vscode.commands.registerCommand(COMMAND.stblJson.toArray,
+  vscode.commands.registerCommand(S4TKCommand.stblJson.toArray,
     async (editor: vscode.TextEditor | undefined, stblJson: StringTableJson) => {
       if (stblJson.isArray) return;
 
@@ -65,7 +65,7 @@ export default function registerStblJsonCommands() {
     }
   );
 
-  vscode.commands.registerCommand(COMMAND.stblJson.toObject,
+  vscode.commands.registerCommand(S4TKCommand.stblJson.toObject,
     async (editor: vscode.TextEditor | undefined, stblJson: StringTableJson) => {
       if (stblJson.isObject) return;
 

@@ -2,10 +2,10 @@ import * as vscode from "vscode";
 import { fnv32, fnv64 } from "@s4tk/hashing";
 import { formatAsHexString } from "@s4tk/hashing/formatting";
 import { randomFnv32, randomFnv64, reduceBits } from "#helpers/hashing";
-import { COMMAND } from "#constants";
+import { S4TKCommand } from "#constants";
 
 export default function registerHashingCommands() {
-  vscode.commands.registerCommand(COMMAND.hashing.text, async () => {
+  vscode.commands.registerCommand(S4TKCommand.hashing.text, async () => {
     const bits = await _promptForBits();
     if (!bits) return;
     const text = await vscode.window.showInputBox({ title: `Text to hash with FNV${bits}` });
@@ -14,17 +14,17 @@ export default function registerHashingCommands() {
     else _showHashMessage(msg, reduceBits(fnv64(text ?? ""), bits), 16);
   });
 
-  vscode.commands.registerCommand(COMMAND.hashing.text32, async () => {
+  vscode.commands.registerCommand(S4TKCommand.hashing.text32, async () => {
     const text = await vscode.window.showInputBox({ title: "Text to hash with FNV32" });
     _showHashMessage(`Click to copy 32-bit hash for "${text}"`, fnv32(text ?? ""), 8);
   });
 
-  vscode.commands.registerCommand(COMMAND.hashing.text64, async () => {
+  vscode.commands.registerCommand(S4TKCommand.hashing.text64, async () => {
     const text = await vscode.window.showInputBox({ title: "Text to hash with FNV64" });
     _showHashMessage(`Click to copy 64-bit hash for "${text}"`, fnv64(text ?? ""), 16);
   });
 
-  vscode.commands.registerCommand(COMMAND.hashing.random, async () => {
+  vscode.commands.registerCommand(S4TKCommand.hashing.random, async () => {
     const bits = await _promptForBits();
     if (!bits) return;
     const msg = `Click to copy this random ${bits}-bit FNV hash`;
@@ -32,11 +32,11 @@ export default function registerHashingCommands() {
     else _showHashMessage(msg, randomFnv64(bits), 16);
   });
 
-  vscode.commands.registerCommand(COMMAND.hashing.random32, () => {
+  vscode.commands.registerCommand(S4TKCommand.hashing.random32, () => {
     _showHashMessage("Click to copy this random 32-bit FNV hash", randomFnv32(), 8);
   });
 
-  vscode.commands.registerCommand(COMMAND.hashing.random64, () => {
+  vscode.commands.registerCommand(S4TKCommand.hashing.random64, () => {
     _showHashMessage("Click to copy this random 64-bit FNV hash", randomFnv64(), 16);
   });
 }

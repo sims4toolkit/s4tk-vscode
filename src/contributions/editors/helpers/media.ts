@@ -1,6 +1,6 @@
 import * as vscode from "vscode";
 import { randomBytes } from "crypto";
-import { MEDIA } from "#assets";
+import S4TKAssets from "#assets";
 
 /**
  * Returns an HTML string for use in the given webview.
@@ -33,8 +33,8 @@ export function getHtmlForWebview(
   <meta charset="UTF-8">
   <meta http-equiv="Content-Security-Policy" content="default-src 'none'; img-src ${webview.cspSource} blob:; style-src ${webview.cspSource}; script-src 'nonce-${nonce}';">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  ${toStyleLink(MEDIA.root.resetStyle)}
-  ${toStyleLink(MEDIA.root.vscodeStyle)}
+  ${toStyleLink(S4TKAssets.media.styles.reset)}
+  ${toStyleLink(S4TKAssets.media.styles.vscode)}
   ${htmlContent.styles?.map(toStyleLink).join('\n')}
   <title>${htmlContent.title}</title>
 </head>

@@ -90,6 +90,11 @@
           "description": "The locale of this string table.\n\nIf omitted, it is assumed to be English.",
           "default": "English"
         },
+        "fragment": {
+          "type": "boolean",
+          "description": "Whether or not this string table is a fragment of another one. Being a fragment means that this string table's entries will either overwrite or be appended to another string table. The string table that this one is a fragment of is determined by them having matching resource keys (i.e. same group, locale, and instance base). Fragments are intended for use with the `duplicateFilesFrom` option in `buildInstructions.packages`; they can be used to add or overwrite individual strings without needing to overwrite the entire base string table.",
+          "default": false
+        },
         "entries": {
           "$ref": "#/definitions/entries"
         }

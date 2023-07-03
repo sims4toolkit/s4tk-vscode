@@ -3,11 +3,11 @@ import * as models from '@s4tk/models';
 import * as enums from '@s4tk/models/enums';
 import { ResourceEntry, ResourceKeyPair } from '@s4tk/models/types';
 import { formatResourceKey } from '@s4tk/hashing/formatting';
-import { inferXmlMetaData } from '#helpers/xml';
+import StringTableJson from '#stbls/stbl-json';
+import { inferTuningMetadata } from '#indexing/inference';
 import ViewOnlyDocument from '../view-only/document';
-import { PackageIndex, PackageIndexEntry, PackageIndexGroup } from './types';
 import PackageResourceContentProvider from './package-fs';
-import { S4TKSettings } from '#helpers/settings';
+import type { PackageIndex, PackageIndexEntry, PackageIndexGroup } from './types';
 
 /**
  * Document containing binary DBPF data.
@@ -29,7 +29,10 @@ export default class PackageDocument extends ViewOnlyDocument {
 
   static async create(uri: vscode.Uri): Promise<PackageDocument> {
     const data = await vscode.workspace.fs.readFile(uri);
-    const pkg = models.Package.from(Buffer.from(data), { recoveryMode: true });
+    const pkg = models.Package.from(Buffer.from(data), {
+      recoveryMode: true,
+      keepDeletedRecords: true
+    });
     return new PackageDocument(uri, pkg, _getPkgIndex(pkg));
   }
 
@@ -148,7 +151,9 @@ function _getEntryGroup(entry: ResourceKeyPair): string {
 }
 
 function _getEntryFilename(entry: ResourceKeyPair): string {
-  if (entry.key.type in enums.BinaryResourceType) {
+  if (entry.value.encodingType === enums.EncodingType.Null) {
+    return "[Deleted Record]";
+  } else if (entry.key.type in enums.BinaryResourceType) {
     if (entry.key.type === enums.BinaryResourceType.StringTable) {
       const locale = enums.StringTableLocale.getLocale(entry.key.instance);
       const localeName = enums.StringTableLocale[locale] ?? "Unknown";
@@ -161,7 +166,7 @@ function _getEntryFilename(entry: ResourceKeyPair): string {
     }
   } else if (entry.key.type in enums.TuningResourceType) {
     return ((entry.value as models.XmlResource).content
-      ? inferXmlMetaData((entry.value as models.XmlResource).content).filename
+      ? inferTuningMetadata((entry.value as models.XmlResource).content).attrs?.n
       : null) ?? 'Unnamed Tuning';
   } else {
     return "Unknown";
@@ -197,11 +202,8 @@ function _getVirtualContent(entry: ResourceKeyPair): string {
   } else if (entry.value instanceof models.SimDataResource) {
     return entry.value.toXmlDocument().toXml();
   } else if (entry.value instanceof models.StringTableResource) {
-    return JSON.stringify(
-      entry.value.toJsonObject(true),
-      null,
-      S4TKSettings.getSpacesPerIndent()
-    );
+    const json = StringTableJson.fromBinary(entry.key, entry.value);
+    return json.stringify();
   } else {
     return entry.value.getBuffer().toString();
   }
@@ -209,7 +211,9 @@ function _getVirtualContent(entry: ResourceKeyPair): string {
 
 function _getVirtualFilename(entry: ResourceKeyPair): string {
   const filename = formatResourceKey(entry.key, "_");
-  if (entry.value instanceof models.XmlResource) {
+  if (entry.value.encodingType === enums.EncodingType.Null) {
+    return filename + ".deleted";
+  } else if (entry.value instanceof models.XmlResource) {
     return filename + ".xml";
   } else if (entry.value instanceof models.SimDataResource) {
     return filename + ".SimData.xml";

@@ -1,47 +1,41 @@
+import * as fs from "fs";
+import * as path from "path";
 import * as vscode from "vscode";
-import { SAMPLES } from "#assets";
-import { CONTEXT, FILENAME } from "#constants";
-import { fileExists, findOpenDocument, getRelativeToRoot, replaceEntireDocument } from "#helpers/fs";
-import { S4TKConfig } from "#models/s4tk-config";
-import StringTableJson from "#models/stbl-json";
-import { MessageButton, handleMessageButtonClick } from "./messaging";
+import S4TKAssets from "#assets";
+import { findOpenDocument, replaceEntireDocument, resolveGlobPattern } from "#helpers/fs";
 import { S4TKSettings } from "#helpers/settings";
+import ResourceIndex from "#indexing/resource-index";
+import { S4TKConfig } from "#workspace/s4tk-config";
+import StringTableJson from "#stbls/stbl-json";
+import { MessageButton, handleMessageButtonClick } from "./messaging";
 
-class _S4TKWorkspace {
-  //#region Properties
-
-  private _isSavingDocument: boolean = false;
+/**
+ * A model for a single workspace folder that contains an S4TK project.
+ */
+export default class S4TKWorkspace implements vscode.Disposable {
+  private static readonly _blankConfig: S4TKConfig = S4TKConfig.blankProxy();
   private _activeConfig?: S4TKConfig;
-  private _blankConfig: S4TKConfig = S4TKConfig.blankProxy();
-  get config(): S4TKConfig { return this._activeConfig ?? this._blankConfig; }
-  get active() { return Boolean(this._activeConfig); }
+  private _index: ResourceIndex;
+  private _disposables: vscode.Disposable[] = [];
+  private _isSavingConfig = false;
+  get config(): S4TKConfig { return this._activeConfig ?? S4TKWorkspace._blankConfig; }
+  get active(): boolean { return Boolean(this._activeConfig); }
+  get index(): ResourceIndex { return this._index; }
 
-  //#endregion
-
-  //#region Activation
-
-  /**
-   * Does setup work for the S4TK workspace.
-   */
-  activate() {
-    vscode.workspace.onDidSaveTextDocument((document) => {
-      if (this._isSavingDocument) return;
-      if (document.fileName.endsWith(FILENAME.config)) this.loadConfig();
-    });
-
-    vscode.workspace.onDidDeleteFiles((e) => {
-      if (!this.active) return;
-      if (e.files.some(uri => uri.path.endsWith(FILENAME.config))) {
-        this._setConfig();
-        if (S4TKSettings.get("showConfigUnloadedMessage"))
-          vscode.window.showWarningMessage("S4TK config has been unloaded.");
-      }
-    });
-
-    this.loadConfig();
+  constructor(
+    public readonly rootUri: vscode.Uri,
+    private readonly _onConfigChange: () => void,
+  ) {
+    this.loadConfig({ showNoConfigError: false });
+    this._index = new ResourceIndex(undefined);
+    this._disposables.push(this._index);
+    this._startFsWatcher();
   }
 
-  //#endregion
+  dispose() {
+    while (this._disposables.length)
+      this._disposables.pop()?.dispose();
+  }
 
   //#region Public Methods
 
@@ -55,7 +49,6 @@ class _S4TKWorkspace {
       config.buildInstructions.packages.push({
         filename: `MyPackage${config.buildInstructions.packages.length + 1}`,
         include: ["**/*"],
-        exclude: [],
       });
     });
   }
@@ -67,21 +60,17 @@ class _S4TKWorkspace {
    * @param show Whether or not to show the document when it's created
    */
   async createConfig(show: boolean): Promise<boolean> {
-    // confirm workspace doesn't already exist
-    const configInfo = await S4TKConfig.find();
+    const configInfo = S4TKConfig.find(this.rootUri);
     if (configInfo.exists) {
       vscode.window.showWarningMessage("S4TK config file already exists.");
       return false;
-    } else if (!configInfo.uri) {
-      vscode.window.showErrorMessage("Failed to locate URI for config file.");
-      return false;
     }
 
-    const configData = await vscode.workspace.fs.readFile(SAMPLES.config);
+    const configData = await vscode.workspace.fs.readFile(S4TKAssets.samples.config);
 
     vscode.workspace.fs.writeFile(configInfo.uri, configData).then(() => {
       this.loadConfig();
-      if (show) vscode.window.showTextDocument(configInfo.uri!);
+      if (show) vscode.window.showTextDocument(configInfo.uri);
     });
 
     return true;
@@ -93,55 +82,45 @@ class _S4TKWorkspace {
   async createDefaultWorkspace() {
     if (!(await this.createConfig(false))) return;
 
-    const fs = vscode.workspace.fs;
-    const rootUri = vscode.workspace.workspaceFolders?.[0]?.uri as vscode.Uri;
+    const createDir = (...segments: string[]) =>
+      vscode.workspace.fs.createDirectory(
+        vscode.Uri.joinPath(this.rootUri, ...segments)
+      );
 
-    fs.createDirectory(vscode.Uri.joinPath(rootUri, "out"));
-    fs.createDirectory(vscode.Uri.joinPath(rootUri, "src"));
-    fs.createDirectory(vscode.Uri.joinPath(rootUri, "src", "strings"));
-    fs.createDirectory(vscode.Uri.joinPath(rootUri, "src", "tuning"));
-    fs.createDirectory(vscode.Uri.joinPath(rootUri, "src", "packages"));
+    createDir("out");
+    createDir("src");
+    createDir("src", "strings");
+    createDir("src", "tuning");
+    createDir("src", "packages");
 
     const createFile = async (contentSource: vscode.Uri | Buffer, ...destination: string[]) => {
-      const uri = vscode.Uri.joinPath(rootUri, ...destination);
-      if (!(await fileExists(uri))) {
+      const uri = vscode.Uri.joinPath(this.rootUri, ...destination);
+      if (!fs.existsSync(uri.fsPath)) {
         const content = contentSource instanceof Buffer
           ? contentSource
-          : await fs.readFile(contentSource);
-        await fs.writeFile(uri, content);
+          : await vscode.workspace.fs.readFile(contentSource);
+        await vscode.workspace.fs.writeFile(uri, content);
       }
       return uri;
     };
 
-    createFile(SAMPLES.readme, "HowToUseS4TK.md").then((uri) => {
+    const { samples } = S4TKAssets;
+    createFile(samples.readme, "HowToUseS4TK.md").then((uri) => {
       vscode.window.showTextDocument(uri);
     });
 
-    createFile(SAMPLES.gitignore, ".gitignore");
-    createFile(SAMPLES.package, "src", "packages", "sample.package");
-    createFile(SAMPLES.tuning, "src", "tuning", "buff_Example.xml");
-    createFile(SAMPLES.simdata, "src", "tuning", "buff_Example.SimData.xml");
-    createFile(SAMPLES.stbl, "src", "strings", "sample.stbl");
+    createFile(samples.gitignore, ".gitignore");
+    createFile(samples.package, "src", "packages", "sample.package");
+    createFile(samples.tuning, "src", "tuning", "buff_Example.xml");
+    createFile(samples.simdata, "src", "tuning", "buff_Example.SimData.xml");
+    createFile(samples.stbl, "src", "strings", "sample.stbl");
 
-    const stblJson = StringTableJson.generate(S4TKSettings.get("defaultStringTableJsonType"));
-    JSON.parse((await fs.readFile(SAMPLES.stblJsonStrings)).toString()
+    const stblJson = StringTableJson.generate();
+    JSON.parse((await vscode.workspace.fs.readFile(samples.stblJsonStrings)).toString()
     ).forEach((value: string) => stblJson.addEntry({ value }));
     stblJson.insertDefaultMetadata();
     const stblBuffer = Buffer.from(stblJson.stringify());
     createFile(stblBuffer, "src", "strings", "default.stbl.json");
-  }
-
-  /**
-   * Attempts to save the given document and then reload the config.
-   * 
-   * @param document Document to save before reloading the config
-   */
-  async trySaveDocumentAndReload(document: vscode.TextDocument) {
-    if (this._isSavingDocument || !document.isDirty) return;
-    this._isSavingDocument = true;
-    await document.save();
-    await this.loadConfig();
-    this._isSavingDocument = false;
   }
 
   /**
@@ -152,30 +131,47 @@ class _S4TKWorkspace {
    * if there is no config to load
    */
   async loadConfig({ showNoConfigError = false }: { showNoConfigError?: boolean; } = {}) {
-    this._setConfig();
-
-    const configInfo = await S4TKConfig.find();
-    if (!(configInfo.uri && configInfo.exists)) {
-      if (showNoConfigError)
-        vscode.window.showWarningMessage(
-          "No 's4tk.config.json' file was found at the root of this project.",
-          MessageButton.CreateProject,
-        ).then(handleMessageButtonClick);
+    const configInfo = S4TKConfig.find(this.rootUri);
+    if (!configInfo.exists) {
+      if (showNoConfigError) vscode.window.showWarningMessage(
+        "No S4TK config file was found at the root of this workspace.",
+        MessageButton.CreateProject,
+      ).then(handleMessageButtonClick);
+      this._setConfig(undefined);
       return;
     }
 
     try {
-      const content = await vscode.workspace.fs.readFile(configInfo.uri!);
+      const content = await vscode.workspace.fs.readFile(configInfo.uri);
       const config = S4TKConfig.parse(content.toString());
       if (S4TKSettings.get("showConfigLoadedMessage"))
-        vscode.window.showInformationMessage('Successfully loaded S4TK config.');
+        vscode.window.showInformationMessage("Successfully loaded S4TK config.");
       this._setConfig(config);
     } catch (e) {
       vscode.window.showErrorMessage(
         `Could not validate S4TK config. You will not be able to build your project until all errors are resolved and the config has been reloaded. [${e}]`,
         MessageButton.GetHelp,
-        MessageButton.ReloadConfig,
+        MessageButton.ReportProblem,
       ).then(handleMessageButtonClick);
+      this._setConfig(undefined);
+    }
+  }
+
+  /**
+   * Resolves a path that is either absolute or relative to the root URI of this
+   * workspace. 
+   * 
+   * @param relativePath Relative path to resolve
+   * @param isGlob Whether or not this is for a glob pattern
+   */
+  resolvePath(relativePath: string, isGlob: boolean = false): string {
+    // FIXME: unsure if this is correct
+    if (isGlob) {
+      return resolveGlobPattern(this.rootUri, relativePath);
+    } else {
+      return path.isAbsolute(relativePath)
+        ? path.normalize(relativePath)
+        : path.resolve(this.rootUri.fsPath, relativePath);
     }
   }
 
@@ -187,21 +183,72 @@ class _S4TKWorkspace {
   async setDefaultStbl(stblUri: vscode.Uri) {
     await this._tryEditAndSaveConfig("Set Default STBL", null, (config) => {
       config.stringTableSettings.defaultStringTable =
-        getRelativeToRoot(stblUri) ?? stblUri.fsPath;
+        path.relative(this.rootUri.fsPath, stblUri.fsPath);
     });
+  }
+
+  /**
+   * Attempts to save the given document and then reload the config.
+   * 
+   * @param document Document to save before reloading the config
+   */
+  async trySaveConfigAndReload(document: vscode.TextDocument) {
+    if (this._isSavingConfig || !document.isDirty) return;
+    this._isSavingConfig = true;
+    await document.save();
+    await this.loadConfig();
+    this._isSavingConfig = false;
   }
 
   //#endregion
 
   //#region Private Methods
 
-  private _setConfig(config?: S4TKConfig) {
-    this._activeConfig = config;
-    vscode.commands.executeCommand(
-      'setContext',
-      CONTEXT.workspace.active,
-      this.active
+  private _checkForSourceChange(oldSrc: string | undefined, newSrc: string | undefined) {
+    if (oldSrc) {
+      if (newSrc) {
+        const oldResolved = path.resolve(this.rootUri.fsPath, oldSrc);
+        const newResolved = path.resolve(this.rootUri.fsPath, newSrc);
+        if (oldResolved !== newResolved)
+          this._index.updateSourceFolder(vscode.Uri.file(newResolved));
+      }
+
+      // intentionally not clearing index if newSrc is falsey, config might have
+      // a syntax error but the source is the same as before
+    } else if (newSrc) {
+      const newResolved = path.resolve(this.rootUri.fsPath, newSrc);
+      this._index.updateSourceFolder(vscode.Uri.file(newResolved));
+    }
+  }
+
+  private _setConfig(config: S4TKConfig | undefined) {
+    const getIndexRoot = (config?: S4TKConfig) =>
+      config?.workspaceSettings.overrideIndexRoot
+        ? config.workspaceSettings.overrideIndexRoot
+        : config?.buildInstructions.source;
+
+    this._checkForSourceChange(
+      getIndexRoot(this._activeConfig),
+      getIndexRoot(config)
     );
+
+    this._activeConfig = config;
+    this._onConfigChange();
+  }
+
+  private _startFsWatcher() {
+    const pattern = new vscode.RelativePattern(this.rootUri, "s4tk.config.json");
+    const watcher = vscode.workspace.createFileSystemWatcher(pattern);
+    watcher.onDidCreate(_ => this.loadConfig(), this, this._disposables);
+    watcher.onDidChange(_ => {
+      if (!this._isSavingConfig) this.loadConfig();
+    }, this, this._disposables);
+    watcher.onDidDelete(_ => {
+      this._setConfig(undefined);
+      if (S4TKSettings.get("showConfigUnloadedMessage"))
+        vscode.window.showWarningMessage("S4TK config has been unloaded.");
+    }, this, this._disposables);
+    this._disposables.push(watcher);
   }
 
   private async _tryEditAndSaveConfig(
@@ -217,18 +264,10 @@ class _S4TKWorkspace {
       return;
     }
 
-    const configUri = (await S4TKConfig.find()).uri;
-    if (!configUri) {
-      vscode.window.showErrorMessage(
-        `Cannot perform '${action}' because no S4TK config could be located. Please report this problem.`,
-        MessageButton.ReportProblem,
-      ).then(handleMessageButtonClick);
-      return;
-    }
-
+    const configUri = S4TKConfig.find(this.rootUri).uri;
     const openConfigDocument = editor?.document ?? findOpenDocument(configUri);
     if (openConfigDocument)
-      await this.trySaveDocumentAndReload(openConfigDocument);
+      await this.trySaveConfigAndReload(openConfigDocument);
 
     if (!this._activeConfig) {
       vscode.window.showErrorMessage(
@@ -246,9 +285,3 @@ class _S4TKWorkspace {
 
   //#endregion
 }
-
-/**
- * Manages the state of the S4TK workspace, including the config.
- */
-const S4TKWorkspace = new _S4TKWorkspace();
-export default S4TKWorkspace;

@@ -1,12 +1,12 @@
 import * as vscode from "vscode";
 import { StringTableResource } from "@s4tk/models";
-import { COMMAND, EDITOR } from "#constants";
-import StringTableJson from "#models/stbl-json";
+import { S4TKCommand, S4TKEditor } from "#constants";
+import StringTableJson from "#stbls/stbl-json";
 import { tryCreateCustomFile } from "#helpers/fs";
 import { S4TKSettings } from "#helpers/settings";
 
 export default function registerTS4FilesCommands() {
-  vscode.commands.registerCommand(COMMAND.ts4Files.createStblBinary, (folderUri?: vscode.Uri) => {
+  vscode.commands.registerCommand(S4TKCommand.ts4Files.createStblBinary, (folderUri?: vscode.Uri) => {
     tryCreateCustomFile({
       promptTitle: "Name of String Table (Binary)",
       fileExtension: ".stbl",
@@ -15,12 +15,12 @@ export default function registerTS4FilesCommands() {
       launchFile: (uri) => vscode.commands.executeCommand(
         'vscode.openWith',
         uri,
-        EDITOR.stblBinary,
+        S4TKEditor.stbl,
       ),
     });
   });
 
-  vscode.commands.registerCommand(COMMAND.ts4Files.createStblJson, (folderUri?: vscode.Uri) => {
+  vscode.commands.registerCommand(S4TKCommand.ts4Files.createStblJson, (folderUri?: vscode.Uri) => {
     tryCreateCustomFile({
       promptTitle: "Name of String Table (JSON)",
       fileExtension: ".stbl.json",
