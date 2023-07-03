@@ -151,7 +151,6 @@ function _processResource(key: ResourceKey, buffer: Buffer, destFolder: string) 
 
       // TODO: insert group and instance override if tuning not found
 
-      // FIXME: remove creator name prefix
       fs.writeFileSync(
         _getDestFilename(subfolder, simdata.instance.name, "SimData.xml"),
         xmlContent
