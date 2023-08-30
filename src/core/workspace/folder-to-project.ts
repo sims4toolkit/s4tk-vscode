@@ -71,15 +71,17 @@ function _appendFolder(basepath: string, ...toAppend: string[]): string {
 }
 
 function _getDestFilename(destFolder: string, filename: string, ext: string): string {
+  const pfilename = filename.includes(":")
+    ? filename.split(":").slice(1).join(":")
+    : filename
+  const sanitized = sanitize(pfilename, { replacement: '_', })
   const baseDestPath = path.join(
     destFolder,
-    filename.includes(":")
-      ? filename.split(":").slice(1).join(":")
-      : filename
+    sanitized
   );
 
   let index = 0;
-  let destPath = sanitize(baseDestPath, "_");
+  let destPath = baseDestPath;
   while (fs.existsSync(`${destPath}.${ext}`)) {
     destPath = `${baseDestPath}_${index++}`;
   }
