@@ -10,6 +10,8 @@ import StringTableJson from "#stbls/stbl-json";
 import * as inference from "#indexing/inference";
 var sanitize = require("sanitize-filename");
 
+var instanceMap: Map<bigint, string>;
+
 /**
  * Prompts the user for a folder containing packages and/or loose TGI files and
  * turns them into a structure that is easier to use with the S4TK extension.
@@ -40,6 +42,8 @@ export async function convertFolderToProject() {
 
   const sourcePattern = path.join(sourceFolderUri.fsPath, "**/*").replace(/\\/g, "/");
   const matches = findGlobMatches([sourcePattern], undefined, "supported");
+
+  instanceMap = new Map();
 
   matches.forEach((sourcePath: string) => {
     _processSourceFile(sourcePath, destFolderUri.fsPath);
@@ -99,6 +103,19 @@ function _processSourceFile(sourcePath: string, destFolder: string) {
     Package.extractResources<RawResource>(buffer, {
       loadRaw: true,
       decompressBuffers: true,
+      resourceFilter(type, group, inst) {
+        return type in TuningResourceType;
+      }
+    }).forEach(entry => {
+      _processResource(entry.key, entry.value.buffer, packageDest);
+    });
+
+    Package.extractResources<RawResource>(buffer, {
+      loadRaw: true,
+      decompressBuffers: true,
+      resourceFilter(type, group, inst) {
+        return !(type in TuningResourceType);
+      }
     }).forEach(entry => {
       _processResource(entry.key, entry.value.buffer, packageDest);
     });
@@ -136,10 +153,10 @@ function _processResource(key: ResourceKey, buffer: Buffer, destFolder: string) 
     xmlContent = inference.insertXmlKeyOverrides(xmlContent, overrides) ?? xmlContent;
 
     // FIXME: remove creator name prefix
-    fs.writeFileSync(
-      _getDestFilename(subfolder, metadata.attrs?.n ?? "UnnamedTuning", "xml"),
-      xmlContent
-    );
+    const dest = _getDestFilename(subfolder, metadata.attrs?.n ?? "UnnamedTuning", "xml");
+    fs.writeFileSync(dest, xmlContent);
+
+    instanceMap.set(key.instance, dest);
   } else if (key.type in BinaryResourceType) {
     if (key.type === BinaryResourceType.SimData) {
       const subfolder = key.group in SimDataGroup
@@ -152,12 +169,17 @@ function _processResource(key: ResourceKey, buffer: Buffer, destFolder: string) 
 
       const xmlContent = simdata.toXmlDocument().toXml();
 
-      // TODO: insert group and instance override if tuning not found
+      
+      var dest: string;
+      const val = instanceMap.get(key.instance);
+      if (val) {
+        dest = val.replace(".xml", ".SimData.xml");
+      } else {
+        // TODO: insert group and instance override instead of using formatResourceKey
+        dest = _getDestFilename(subfolder, formatResourceKey(key, "_"), "SimData.xml");
+      }
 
-      fs.writeFileSync(
-        _getDestFilename(subfolder, simdata.instance.name, "SimData.xml"),
-        xmlContent
-      );
+      fs.writeFileSync(dest, xmlContent);
     } else if (key.type === BinaryResourceType.StringTable) {
       const subfolder = getSubfolder("StringTable");
       const stbl = StringTableResource.from(buffer);
