@@ -8,6 +8,7 @@ import { formatResourceType, formatResourceKey, formatAsHexString } from "@s4tk/
 import { findGlobMatches, parseKeyFromTgi } from "#building/resources";
 import StringTableJson from "#stbls/stbl-json";
 import * as inference from "#indexing/inference";
+var sanitize = require("sanitize-filename");
 
 /**
  * Prompts the user for a folder containing packages and/or loose TGI files and
@@ -78,7 +79,7 @@ function _getDestFilename(destFolder: string, filename: string, ext: string): st
   );
 
   let index = 0;
-  let destPath = baseDestPath;
+  let destPath = sanitize(baseDestPath, "_");
   while (fs.existsSync(`${destPath}.${ext}`)) {
     destPath = `${baseDestPath}_${index++}`;
   }
