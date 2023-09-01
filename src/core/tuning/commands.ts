@@ -9,6 +9,8 @@ import { insertXmlKeyOverrides } from "#indexing/inference";
 import { reduceBits } from "#helpers/hashing";
 import { maxBitsForClass } from "#diagnostics/helpers";
 
+var sanitize = require("sanitize-filename");
+
 /**
  * Clones the tuning file (and its SimData, if it has one) at the given URI,
  * prompting the user for a new name to use. A new hash with the correct number
@@ -44,7 +46,7 @@ export async function cloneWithNewName(srcUri: vscode.Uri) {
 
   const tuningFsPath = path.join(
     path.dirname(srcUri.fsPath),
-    `${newFilename.replace(/^[^:]*:/, "")}.xml`
+    sanitize(newFilename + ".xml", { replacement: '_', })
   );
 
   if (fs.existsSync(tuningFsPath)) {
