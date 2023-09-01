@@ -10,7 +10,7 @@ import StringTableJson from "#stbls/stbl-json";
 import * as inference from "#indexing/inference";
 var sanitize = require("sanitize-filename");
 
-var instanceMap: Map<bigint, string>;
+var instanceMap: Map<bigint, [string, string]>;
 
 /**
  * Prompts the user for a folder containing packages and/or loose TGI files and
@@ -153,10 +153,11 @@ function _processResource(key: ResourceKey, buffer: Buffer, destFolder: string) 
     xmlContent = inference.insertXmlKeyOverrides(xmlContent, overrides) ?? xmlContent;
 
     // FIXME: remove creator name prefix
-    const dest = _getDestFilename(subfolder, metadata.attrs?.n ?? "UnnamedTuning", "xml");
+    const name = metadata.attrs?.n ?? "UnnamedTuning"
+    const dest = _getDestFilename(subfolder, name, "xml");
     fs.writeFileSync(dest, xmlContent);
 
-    instanceMap.set(key.instance, dest);
+    instanceMap.set(key.instance, [name, dest]);
   } else if (key.type in BinaryResourceType) {
     if (key.type === BinaryResourceType.SimData) {
       const subfolder = key.group in SimDataGroup
@@ -167,18 +168,17 @@ function _processResource(key: ResourceKey, buffer: Buffer, destFolder: string) 
         ? SimDataResource.from(buffer)
         : SimDataResource.fromXml(buffer);
 
-      const xmlContent = simdata.toXmlDocument().toXml();
-
-      
       var dest: string;
       const val = instanceMap.get(key.instance);
       if (val) {
-        dest = val.replace(".xml", ".SimData.xml");
+        simdata.instance.name = val[0] + "_SimData";
+        dest = val[1].replace(".xml", ".SimData.xml");
       } else {
         // TODO: insert group and instance override instead of using formatResourceKey
         dest = _getDestFilename(subfolder, formatResourceKey(key, "_"), "SimData.xml");
       }
 
+      const xmlContent = simdata.toXmlDocument().toXml();
       fs.writeFileSync(dest, xmlContent);
     } else if (key.type === BinaryResourceType.StringTable) {
       const subfolder = getSubfolder("StringTable");
