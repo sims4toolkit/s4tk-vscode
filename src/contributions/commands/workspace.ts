@@ -64,5 +64,8 @@ export default function registerWorkspaceCommands() {
     if (workspace) workspace.index.refresh();
   });
 
-  vscode.commands.registerCommand(S4TKCommand.workspace.folderToProject, convertFolderToProject);
+  vscode.commands.registerCommand(S4TKCommand.workspace.folderToProject, async () => {
+    const workspace = await S4TKWorkspaceManager.chooseWorkspace();
+    if (workspace) convertFolderToProject(workspace);
+  });
 }

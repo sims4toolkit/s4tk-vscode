@@ -4,12 +4,10 @@ import * as vscode from "vscode";
 import { fnv64 } from "@s4tk/hashing";
 import { formatAsHexString } from "@s4tk/hashing/formatting";
 import { SimDataResource, XmlResource } from "@s4tk/models";
-import { replaceEntireDocument } from "#helpers/fs";
+import { replaceEntireDocument, simplifyTuningFilename } from "#helpers/fs";
 import { insertXmlKeyOverrides } from "#indexing/inference";
 import { reduceBits } from "#helpers/hashing";
 import { maxBitsForClass } from "#diagnostics/helpers";
-
-var sanitize = require("sanitize-filename");
 
 /**
  * Clones the tuning file (and its SimData, if it has one) at the given URI,
@@ -46,7 +44,7 @@ export async function cloneWithNewName(srcUri: vscode.Uri) {
 
   const tuningFsPath = path.join(
     path.dirname(srcUri.fsPath),
-    sanitize(newFilename + ".xml", { replacement: '_', })
+    simplifyTuningFilename(newFilename)
   );
 
   if (fs.existsSync(tuningFsPath)) {

@@ -1,6 +1,6 @@
 import * as fs from "fs";
 import * as path from "path";
-import * as JSZip from "jszip";
+import JSZip from "jszip";
 import * as models from "@s4tk/models";
 import * as enums from "@s4tk/models/enums";
 import * as types from "@s4tk/models/types";
