@@ -24,7 +24,7 @@
 	},
 	"dependencies": {
 		"@s4tk/hashing": "^0.2.1",
-		"@s4tk/models": "^0.6.8",
+		"@s4tk/models": "^0.6.12",
 		"@s4tk/xml-dom": "^0.2.6",
 		"glob": "^10.2.2",
 		"jsonschema": "^1.4.1",
