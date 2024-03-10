@@ -3,7 +3,7 @@ import { XmlDocumentNode } from "@s4tk/xml-dom";
 import { S4TKCommand } from "#constants";
 import { replaceEntireDocument } from "#helpers/fs";
 import { S4TKSettings } from "#helpers/settings";
-import { cloneWithNewName, overrideTgiComment } from "#tuning/commands";
+import { cloneWithNewName, overrideTgiComment, renameTuningFile } from "#tuning/commands";
 import S4TKWorkspaceManager from "#workspace/workspace-manager";
 
 export default function registerTuningCommands() {
@@ -60,6 +60,12 @@ export default function registerTuningCommands() {
   vscode.commands.registerCommand(S4TKCommand.tuning.cloneNewName,
     async (srcUri?: vscode.Uri) => {
       if (srcUri) cloneWithNewName(srcUri);
+    }
+  );
+
+  vscode.commands.registerCommand(S4TKCommand.tuning.renameTuning,
+    async (srcUri?: vscode.Uri) => {
+      if (srcUri) renameTuningFile(srcUri);
     }
   );
 }
