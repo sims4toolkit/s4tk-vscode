@@ -44,6 +44,7 @@ export namespace S4TKCommand {
     overrideGroup: "s4tk.tuning.overrideGroup",
     overrideInstance: "s4tk.tuning.overrideInstance",
     overrideType: "s4tk.tuning.overrideType",
+    renameTuning: "s4tk.tuning.renameTuning",
   };
 
   export const workspace = {

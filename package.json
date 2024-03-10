@@ -1,6 +1,6 @@
 {
 	"name": "s4tk-vscode",
-	"version": "0.2.1",
+	"version": "0.2.2",
 	"displayName": "Sims 4 Toolkit",
 	"description": "Sims 4 Toolkit support for VS Code.",
 	"icon": "media/assets/s4tk-icon.png",
@@ -24,7 +24,7 @@
 	},
 	"dependencies": {
 		"@s4tk/hashing": "^0.2.1",
-		"@s4tk/models": "^0.6.12",
+		"@s4tk/models": "^0.6.13",
 		"@s4tk/xml-dom": "^0.2.6",
 		"glob": "^10.2.2",
 		"jsonschema": "^1.4.1",
@@ -89,6 +89,12 @@
 			{
 				"command": "s4tk.tuning.cloneNewName",
 				"title": "Clone With New Name",
+				"category": "TS4 Tuning",
+				"enablement": "resourceFilename =~ /^((?!\\.SimData).)*\\.xml$/"
+			},
+			{
+				"command": "s4tk.tuning.renameTuning",
+				"title": "Rename / Rehash Tuning File",
 				"category": "TS4 Tuning",
 				"enablement": "resourceFilename =~ /^((?!\\.SimData).)*\\.xml$/"
 			},
@@ -309,6 +315,11 @@
 					"group": "S4TK"
 				},
 				{
+					"when": "resourceFilename =~ /^((?!\\.SimData).)*\\.xml$/",
+					"command": "s4tk.tuning.renameTuning",
+					"group": "S4TK"
+				},
+				{
 					"when": "resourceFilename =~ /\\.stbl(\\.json)?$/",
 					"command": "s4tk.workspace.setDefaultStbl",
 					"group": "S4TK"
@@ -353,6 +364,11 @@
 				{
 					"when": "resourceFilename =~ /^((?!\\.SimData).)*\\.xml$/",
 					"command": "s4tk.tuning.cloneNewName",
+					"group": "S4TK"
+				},
+				{
+					"when": "resourceFilename =~ /^((?!\\.SimData).)*\\.xml$/",
+					"command": "s4tk.tuning.renameTuning",
 					"group": "S4TK"
 				},
 				{
