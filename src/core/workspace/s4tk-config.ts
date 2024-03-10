@@ -53,6 +53,7 @@ export interface S4TKConfig {
 
   workspaceSettings: {
     overrideIndexRoot?: string;
+    setSimDataNames: boolean;
   };
 }
 
@@ -89,7 +90,9 @@ const _CONFIG_TRANSFORMER: ConfigTransformer = {
     },
   },
   workspaceSettings: {
-    defaults: {},
+    defaults: {
+      setSimDataNames: false,
+    },
   },
 };
 
@@ -186,8 +189,7 @@ function _getObjectProxy<T extends object>(target: T | undefined, {
   getConverter = (_, value) => value
 }: ConfigPropertyTransformer<T>): T {
   return new Proxy<T>(target ?? {} as T, {
-    //@ts-ignore I genuinely do not understand why TS doesn't like this
-    get(target, prop: keyof T) {
+    get(target, prop: Exclude<keyof T, number>) {
       return getConverter(prop, target[prop] ?? defaults[prop]);
     },
   }) as T;

@@ -1,4 +1,5 @@
 import { existsSync } from "fs";
+import sanitize from "sanitize-filename";
 import * as vscode from "vscode";
 
 /**
@@ -12,6 +13,16 @@ export function findOpenDocument(uri: vscode.Uri): vscode.TextDocument | undefin
   return vscode.workspace.textDocuments.find(document => {
     return document.uri.toString() === expectedUriString;
   });
+}
+
+/**
+ * Sanitizes and removes the author prefix from the given filename.
+ *
+ * @param filename a raw filename
+ * @returns the simplified filename
+ */
+export function simplifyTuningFilename(filename: string) {
+  return sanitize(`${filename.replace(/^[^:]*:/, "")}.xml`, { replacement: '_', })
 }
 
 /**
