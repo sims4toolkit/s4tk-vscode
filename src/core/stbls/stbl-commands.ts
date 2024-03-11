@@ -58,7 +58,7 @@ export async function addStringToDefaultStbl(workspace: S4TKWorkspace) {
     return;
   }
 
-  const uri = vscode.Uri.parse(workspace.resolvePath(defaultStringTable));
+  const uri = vscode.Uri.file(workspace.resolvePath(defaultStringTable));
   addStringToStbl(uri);
 }
 

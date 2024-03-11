@@ -1,6 +1,6 @@
 {
 	"name": "s4tk-vscode",
-	"version": "0.2.3",
+	"version": "0.2.4",
 	"displayName": "Sims 4 Toolkit",
 	"description": "Sims 4 Toolkit support for VS Code.",
 	"icon": "media/assets/s4tk-icon.png",
