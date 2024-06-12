@@ -4,9 +4,13 @@ import { runBuild } from "#building/build-runner";
 import * as stbls from "#stbls/stbl-commands";
 import { convertFolderToProject } from "#workspace/folder-to-project";
 import S4TKWorkspaceManager from "#workspace/workspace-manager";
+import { isURI } from "./isURI";
 
 export default function registerWorkspaceCommands() {
   vscode.commands.registerCommand(S4TKCommand.workspace.build, async (uri?: vscode.Uri) => {
+    if (!isURI(uri)) {
+      uri = undefined;
+    }
     const workspace = await S4TKWorkspaceManager.chooseWorkspace(uri);
     if (workspace) runBuild(workspace, "build", "Build");
   });
