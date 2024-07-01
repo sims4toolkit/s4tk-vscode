@@ -4,7 +4,7 @@ import * as vscode from "vscode";
 import { fnv64 } from "@s4tk/hashing";
 import { formatAsHexString } from "@s4tk/hashing/formatting";
 import { SimDataResource, XmlResource } from "@s4tk/models";
-import { replaceEntireDocument } from "#helpers/fs";
+import { replaceEntireDocument, simplifyTuningFilename } from "#helpers/fs";
 import { insertXmlKeyOverrides } from "#indexing/inference";
 import { reduceBits } from "#helpers/hashing";
 import { maxBitsForClass } from "#diagnostics/helpers";
@@ -78,7 +78,7 @@ async function _renameTuningAndSimData(srcUri: vscode.Uri, operation: "clone" | 
 
   const tuningFsPath = path.join(
     path.dirname(srcUri.fsPath),
-    `${newFilename.replace(/^[^:]*:/, "")}.xml`
+    simplifyTuningFilename(newFilename)
   );
 
   if (fs.existsSync(tuningFsPath)) {
