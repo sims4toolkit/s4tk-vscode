@@ -1,5 +1,4 @@
 {
-  "$schema": "http://json-schema.org/schema",
   "definitions": {
     "32bitNumber": {
       "type": "string",
