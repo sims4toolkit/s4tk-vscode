@@ -1,0 +1,136 @@
+{
+	//#region <T>
+	"Create <T> node (without name)": {
+		"scope": "xml",
+		"prefix": "<T",
+		"description": "<T>{{value}}</T>",
+		"body": [
+			"<T>$0</T>"
+		],
+	},
+	"Create <T> node (with name)": {
+		"scope": "xml",
+		"prefix": "<T n",
+		"body": [
+			"<T n=\"$1\">$0</T>"
+		],
+	},
+	//#endregion
+
+	//#region <E>
+	"Create <E> node (without name)": {
+		"scope": "xml",
+		"prefix": "<E",
+		"description": "<E>{{value}}</E>",
+		"body": [
+			"<E>$0</E>"
+		],
+	},
+	"Create <E> node (with name)": {
+		"scope": "xml",
+		"prefix": "<E n",
+		"body": [
+			"<E n=\"$1\">$0</E>"
+		],
+	},
+	//#endregion
+
+	//#region <U>
+	"Create <U> node (without name)": {
+		"scope": "xml",
+		"prefix": "<U",
+		"body": [
+			"<U>",
+			"  $0",
+			"</U>",
+		],
+	},
+	"Create <U> node (with name)": {
+		"scope": "xml",
+		"prefix": "<U n",
+		"body": [
+			"<U n=\"$1\">",
+			"  $0",
+			"</U>",
+		],
+	},
+	//#endregion
+
+	//#region <L>
+	"Create <L> node (without name)": {
+		"scope": "xml",
+		"prefix": "<L",
+		"body": [
+			"<L>",
+			"  $0",
+			"</L>",
+		],
+	},
+	"Create <L> node (with name)": {
+		"scope": "xml",
+		"prefix": "<L n",
+		"body": [
+			"<L n=\"$1\">",
+			"  $0",
+			"</L>",
+		],
+	},
+	//#endregion
+	
+	//#region <V>
+	"Create <V> node (without name)": {
+		"scope": "xml",
+		"prefix": "<V",
+		"body": [
+			"<V t=\"$1\">",
+			"  $0",
+			"</V>",
+		],
+	},
+	"Create <V> node (with name)": {
+		"scope": "xml",
+		"prefix": "<V n",
+		"body": [
+			"<V n=\"$1\" t=\"$2\">",
+			"  $0",
+			"</V>",
+		],
+	},
+	//#endregion
+
+	//#region <C>
+	"Create <C> node": {
+		"scope": "xml",
+		"prefix": "<C",
+		"body": [
+			"<C n=\"$1\">",
+			"  $0",
+			"</C>",
+		],
+	},
+	//#endregion
+
+	//#region <M>
+	"Create <M> node": {
+		"scope": "xml",
+		"prefix": "<M",
+		"body": [
+			"<M n=\"$1\" s=\"$2\">",
+			"  $0",
+			"</M>",
+		],
+	},
+	//#endregion
+
+	//#region <I>
+	"Create <I> node": {
+		"scope": "xml",
+		"prefix": "<I",
+		"body": [
+			"<I c=\"$1\" i=\"$2\" m=\"$3\" n=\"$4\" s=\"$5\">",
+			"  $0",
+			"</I>",
+		],
+	},
+	//#endregion
+}
