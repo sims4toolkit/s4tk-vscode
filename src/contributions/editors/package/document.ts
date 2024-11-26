@@ -8,6 +8,7 @@ import { inferTuningMetadata } from '#indexing/inference';
 import ViewOnlyDocument from '../view-only/document';
 import PackageResourceContentProvider from './package-fs';
 import type { PackageIndex, PackageIndexEntry, PackageIndexGroup } from './types';
+import { S4TKSettings } from '#helpers/settings';
 
 /**
  * Document containing binary DBPF data.
@@ -200,7 +201,9 @@ function _getVirtualContent(entry: ResourceKeyPair): string {
   if (entry.value instanceof models.XmlResource) {
     return entry.value.content;
   } else if (entry.value instanceof models.SimDataResource) {
-    return entry.value.toXmlDocument().toXml();
+    return entry.value.toXmlDocument().toXml({
+      spacesPerIndent: S4TKSettings.getSpacesPerIndent()
+    });
   } else if (entry.value instanceof models.StringTableResource) {
     const json = StringTableJson.fromBinary(entry.key, entry.value);
     return json.stringify();

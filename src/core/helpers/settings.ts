@@ -23,6 +23,6 @@ export namespace S4TKSettings {
   }
 
   export function getSpacesPerIndent(): number {
-    return vscode.workspace.getConfiguration("editor").get("tabSpaces") ?? 2;
+    return vscode.workspace.getConfiguration("editor").get("tabSize") ?? 2;
   }
 }

@@ -8,6 +8,7 @@ import { replaceEntireDocument } from "#helpers/fs";
 import { insertXmlKeyOverrides } from "#indexing/inference";
 import { reduceBits } from "#helpers/hashing";
 import { maxBitsForClass } from "#diagnostics/helpers";
+import { S4TKSettings } from "#helpers/settings";
 
 /**
  * Clones the tuning file (and its SimData, if it has one) at the given URI,
@@ -115,7 +116,9 @@ async function _renameTuningAndSimData(srcUri: vscode.Uri, operation: "clone" | 
   }
 
   writeRenamedFile(
-    tuning.getBuffer(), {
+    Buffer.from(tuning.dom.toXml({
+      spacesPerIndent: S4TKSettings.getSpacesPerIndent()
+    })), {
     original: srcUri,
     renamed: vscode.Uri.file(tuningFsPath)
   });
@@ -126,7 +129,9 @@ async function _renameTuningAndSimData(srcUri: vscode.Uri, operation: "clone" | 
     simdata.instance.name = newFilename;
 
     writeRenamedFile(
-      Buffer.from(simdata.toXmlDocument().toXml()), {
+      Buffer.from(simdata.toXmlDocument().toXml({
+        spacesPerIndent: S4TKSettings.getSpacesPerIndent()
+      })), {
       original: vscode.Uri.file(simdataSrc),
       renamed: vscode.Uri.file(simdataFsPath)
     });

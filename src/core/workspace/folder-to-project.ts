@@ -8,6 +8,7 @@ import { formatResourceType, formatResourceKey, formatAsHexString } from "@s4tk/
 import { findGlobMatches, parseKeyFromTgi } from "#building/resources";
 import StringTableJson from "#stbls/stbl-json";
 import * as inference from "#indexing/inference";
+import { S4TKSettings } from "#helpers/settings";
 
 /**
  * Prompts the user for a folder containing packages and/or loose TGI files and
@@ -147,7 +148,9 @@ function _processResource(key: ResourceKey, buffer: Buffer, destFolder: string) 
         ? SimDataResource.from(buffer)
         : SimDataResource.fromXml(buffer);
 
-      const xmlContent = simdata.toXmlDocument().toXml();
+      const xmlContent = simdata.toXmlDocument().toXml({
+        spacesPerIndent: S4TKSettings.getSpacesPerIndent()
+      });
 
       // TODO: insert group and instance override if tuning not found
 
