@@ -29,6 +29,14 @@ interface BuildZipInfo {
   };
 }
 
+export interface HashingRuleInfo {
+  bits: number;
+  className?: string;
+  instanceType?: string;
+  modulePath?: string;
+  tuningNameRegex?: string;
+}
+
 export interface ShellScriptInfo {
   command: string;
   workingDirectory?: string;
@@ -83,6 +91,7 @@ export interface S4TKConfig {
 
   workspaceSettings: {
     overrideIndexRoot?: string;
+    hashingRules: HashingRuleInfo[];
   };
 }
 
@@ -128,7 +137,9 @@ const _CONFIG_TRANSFORMER: ConfigTransformer = {
     },
   },
   workspaceSettings: {
-    defaults: {},
+    defaults: {
+      hashingRules: []
+    },
   },
 };
 

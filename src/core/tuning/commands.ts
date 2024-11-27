@@ -1,17 +1,16 @@
 import * as fs from "fs";
 import * as path from "path";
 import * as vscode from "vscode";
-import { fnv64 } from "@s4tk/hashing";
 import { formatAsHexString } from "@s4tk/hashing/formatting";
 import { SimDataResource, XmlResource } from "@s4tk/models";
 import { XmlCommentNode, XmlDocumentNode, XmlNode, XmlValueNode } from "@s4tk/xml-dom";
 import { replaceEntireDocument } from "#helpers/fs";
 import { insertXmlKeyOverrides } from "#indexing/inference";
-import { reduceBits } from "#helpers/hashing";
-import { maxBitsForClass } from "#diagnostics/helpers";
 import { S4TKSettings } from "#helpers/settings";
 import { sanitizeXmlComment } from "#helpers/xml";
 import type S4TKWorkspace from "#workspace/s4tk-workspace";
+import S4TKWorkspaceManager from "#workspace/workspace-manager";
+import { getTuningHash } from "./hashing";
 
 /**
  * Clones the tuning file (and its SimData, if it has one) at the given URI,
@@ -182,6 +181,7 @@ async function _renameTuningAndSimData(srcUri: vscode.Uri, operation: "clone" | 
   // later, especially replacing the XML DOM parsing with a regex that just
   // replaces the contents of the declaration line
   if (!fs.existsSync(srcUri.fsPath)) return;
+  const workspace = await S4TKWorkspaceManager.chooseWorkspace(srcUri);
 
   const tuning = XmlResource.from(fs.readFileSync(srcUri.fsPath));
   const originalFilename = tuning.root.name;
@@ -218,10 +218,9 @@ async function _renameTuningAndSimData(srcUri: vscode.Uri, operation: "clone" | 
 
   tuning.updateRoot(root => {
     root.name = newFilename;
-
-    root.id = tuning.root.tag === "I"
-      ? reduceBits(fnv64(newFilename), maxBitsForClass(tuning.root.attributes.c))
-      : fnv64(newFilename.replace(/\./g, "-"));
+    root.id = getTuningHash(root, {
+      hashingRules: workspace?.config.workspaceSettings.hashingRules
+    });
   });
 
   async function writeRenamedFile(content: Buffer, location: {

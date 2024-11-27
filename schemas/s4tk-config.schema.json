@@ -360,6 +360,41 @@
         "overrideIndexRoot": {
           "type": "string",
           "description": "The root to use for the resource index instead of `buildInstructions.source`. You likely do not have a use for this unless your project includes multiple packages that have files that override each other."
+        },
+        "hashingRules": {
+          "type": "array",
+          "description": "Custom rules to override the default tuning instance hashing behavior. All conditions must be met for a rule to apply to an instance tuning file (module tuning is not affected).",
+          "items": {
+            "type": "object",
+            "required": [
+              "bits"
+            ],
+            "additionalProperties": false,
+            "properties": {
+              "bits": {
+                "type": "integer",
+                "description": "Number of bits to hash with if a file matches the conditions of this rule.",
+                "minimum": 24,
+                "maximum": 64
+              },
+              "className": {
+                "type": "string",
+                "description": "Exact match that must be made in the 'c' attribute of the tuning file (case sensitive)."
+              },
+              "instanceType": {
+                "type": "string",
+                "description": "Exact match that must be made in the 'i' attribute of the tuning file (case sensitive)."
+              },
+              "modulePath": {
+                "type": "string",
+                "description": "Exact match that must be made in the 'm' attribute of the tuning file (case sensitive)."
+              },
+              "tuningNameRegex": {
+                "type": "string",
+                "description": "Regular expression that must match the 'n' attribute of the tuning file (case sensitive)."
+              }
+            }
+          }
         }
       }
     }
