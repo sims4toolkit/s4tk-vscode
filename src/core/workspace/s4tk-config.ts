@@ -33,6 +33,7 @@ export interface ShellScriptInfo {
   command: string;
   workingDirectory?: string;
   mustSucceed?: boolean;
+  enabled?: boolean;
 }
 
 export interface S4TKConfig {

@@ -11,7 +11,10 @@ import { FatalBuildError } from "./helpers";
 export function runPreBuildShellScripts(context: BuildContext) {
   const scripts = context.config.buildInstructions.additionalScripts?.runBeforeBuild;
   if (!scripts?.length) return;
-  scripts.forEach(script => _runShellScript(context, script, "before"));
+  scripts.forEach(script => {
+    if (script.enabled ?? true)
+      _runShellScript(context, script, "before")
+  });
 }
 
 /**

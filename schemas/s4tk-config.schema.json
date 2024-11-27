@@ -19,6 +19,11 @@
           "type": "boolean",
           "description": "Whether or not the build script depends on this script terminating successfully. If true, then the build script will stop with a fatal error if the script throws an exception. If false or omitted, then the build script will proceed with a warning.",
           "default": false
+        },
+        "enabled": {
+          "type": "boolean",
+          "description": "Whether or not this script is currently enabled. When disabled, it will be ignored. Enabled by default.",
+          "default": true
         }
       }
     }
