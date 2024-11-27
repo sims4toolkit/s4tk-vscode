@@ -10,6 +10,7 @@ import { randomFnv64 } from "#helpers/hashing";
 import { S4TKSettings } from "#helpers/settings";
 import StringTableJson from "#stbls/stbl-json";
 import * as inference from "#indexing/inference";
+import { S4TKConfig } from "#workspace/s4tk-config";
 import type S4TKWorkspace from "#workspace/s4tk-workspace";
 import { FatalBuildError, addAndGetItem } from "./helpers";
 import { parseKeyFromTgi } from "./resources";
@@ -23,19 +24,14 @@ import { prevalidateBuild } from "./prevalidation";
  * Builds the project and returns a BuildSummary object. If any errors occur,
  * they will not be thrown, but will be logged in the BuildSummary.
  * 
- * @param workspace Workspace being built
+ * @param workspace Config for build
  * @param mode Mode to build for
  */
 export async function buildProject(workspace: S4TKWorkspace, mode: BuildMode): Promise<BuildSummary> {
-  const summary = BuildSummary.create(workspace, mode);
-  const context = BuildContext.create(workspace, summary);
+  const configOverride = S4TKConfig.applyVariablesOnClone(workspace.config);
 
-  if (!workspace.active) {
-    summary.buildInfo.success = false;
-    summary.buildInfo.problems++;
-    summary.buildInfo.fatalErrorMessage = "S4TK config is not loaded";
-    return summary;
-  }
+  const summary = BuildSummary.create(workspace.config, mode);
+  const context = BuildContext.create(workspace, summary, { configOverride });
 
   try {
     prevalidateBuild(context);
@@ -320,13 +316,13 @@ function _resolveStringTables(context: PackageBuildContext) {
 
   _flattenStringTables(context);
 
-  if (context.workspace.config.stringTableSettings.generateMissingLocales)
+  if (context.config.stringTableSettings.generateMissingLocales)
     _generateStringTables(context);
 
-  if (context.workspace.config.stringTableSettings.mergeStringTablesInSamePackage)
+  if (context.config.stringTableSettings.mergeStringTablesInSamePackage)
     _mergeStringTables(context);
 
-  const { allowStringKeyOverrides } = context.workspace.config.stringTableSettings;
+  const { allowStringKeyOverrides } = context.config.stringTableSettings;
 
   context.stbls.forEach(stblRef => {
     _addToPackageInfo(context, stblRef.filepath, stblRef.stbl.key);
@@ -422,7 +418,7 @@ function _flattenStringTables(context: PackageBuildContext) {
   // overridden, i.e. if they are both in the new `include` list, so this will
   // not catch all possible errors
   const isInOverrideContext = context.pkgConfig.duplicateFilesFrom.length > 0;
-  const { allowResourceKeyOverrides } = context.workspace.config.buildSettings;
+  const { allowResourceKeyOverrides } = context.config.buildSettings;
   const overridesAllowed = isInOverrideContext || allowResourceKeyOverrides;
 
   const baseStbls = context.stbls.filter(stbl => !stbl.fragment);
@@ -516,7 +512,7 @@ function _addToPackageInfo(
   kwargs?: {
     inPackageName?: string;
   }) {
-  if (context.workspace.config.buildSettings.outputBuildSummary === "full") {
+  if (context.config.buildSettings.outputBuildSummary === "full") {
     let filename = BuildSummary.makeRelative(context.summary, filepath);
     if (kwargs?.inPackageName) filename += `[${kwargs.inPackageName}]`;
     context.pkgInfo.resources?.push({
@@ -535,7 +531,7 @@ function _addOrReplaceInPackage(context: PackageBuildContext, key: types.Resourc
     // that it's being overridden more than once by files in `include`, in which
     // case a fatal error should also be reported
     if (context.pkgConfig.duplicateFilesFrom.length < 1) {
-      if (!context.workspace.config.buildSettings.allowResourceKeyOverrides) {
+      if (!context.config.buildSettings.allowResourceKeyOverrides) {
         throw FatalBuildError(`More than one file is using the resource key ${hashFormat.formatResourceKey(key, "-")} in package '${context.pkgInfo.filename}', and buildSettings.allowResourceKeyOverrides is false. To see which files have the same keys, make sure your build summary type is set to "full".`, {
           addWarning: context.pkgConfig
         });

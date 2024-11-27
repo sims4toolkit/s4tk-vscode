@@ -29,6 +29,7 @@
 		"glob": "^10.2.2",
 		"jsonschema": "^1.4.1",
 		"jszip": "^3.10.1",
+		"just-clone": "^6.2.0",
 		"uuid": "^9.0.0"
 	},
 	"devDependencies": {

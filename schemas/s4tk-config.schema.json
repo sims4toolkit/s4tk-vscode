@@ -5,6 +5,37 @@
   ],
   "additionalProperties": false,
   "properties": {
+    "projectMetaData": {
+      "type": "object",
+      "description": "Optional metadata associated with this project.\n\nAny values can be inserted to build file names with mustache syntax (e.g. A Package filename of \"{{creatorName}}_{{modName}}\" would result in \"MyName_MyModName.package\"; A ZIP filename of \"{{modName}}_v{{modVersion}}\" would result in \"MyModName_v1.0.zip\").",
+      "required": [],
+      "additionalProperties": false,
+      "properties": {
+        "creator": {
+          "type": "string",
+          "description": "Name of the person who created this mod."
+        },
+        "modName": {
+          "type": "string",
+          "description": "Name of this mod."
+        },
+        "modVersion": {
+          "type": "string",
+          "description": "Current version number of this mod."
+        },
+        "customVariables": {
+          "type": "object",
+          "description": "Mapping of custom name/value pairs. Custom names must be alphanumeric only. Mustache syntax is supported for these just as it is for the default metadata.",
+          "propertyNames": {
+            "type": "string",
+            "pattern": "[a-zA-Z0-9]+"
+          },
+          "additionalProperties": {
+            "type": "string"
+          }
+        }
+      }
+    },
     "buildInstructions": {
       "type": "object",
       "description": "Information about where your source files are, how they should be built into packages, and where those packages should go.",

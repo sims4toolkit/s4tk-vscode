@@ -1,5 +1,6 @@
 import { existsSync } from "fs";
 import * as vscode from "vscode";
+import * as justClone from "just-clone";
 import S4TKAssets from "#assets";
 import { S4TKFilename } from "#constants";
 import { parseAndValidateJson } from "#helpers/schemas";
@@ -8,6 +9,15 @@ import { S4TKSettings } from "#helpers/settings";
 //#region Types
 
 export interface S4TKConfig {
+  projectMetaData: {
+    creator?: string;
+    modName?: string;
+    modVersion?: string;
+    customVariables?: {
+      [key: string]: string;
+    };
+  };
+
   buildInstructions: {
     source: string;
     destinations: string[];
@@ -57,6 +67,14 @@ export interface S4TKConfig {
 }
 
 const _CONFIG_TRANSFORMER: ConfigTransformer = {
+  projectMetaData: {
+    defaults: {
+      creator: "",
+      modName: "",
+      modVersion: "",
+      customVariables: {}
+    }
+  },
   buildInstructions: {
     defaults: {
       source: "",
@@ -94,6 +112,16 @@ const _CONFIG_TRANSFORMER: ConfigTransformer = {
 };
 
 export namespace S4TKConfig {
+  /**
+   * Clones the given config and applies the variables in its metadata to all
+   * value strings.
+   * 
+   * @param config Config to clone
+   */
+  export function applyVariablesOnClone(config: S4TKConfig): S4TKConfig {
+    return modify(_getDeepClone(config), _applyVariables);
+  }
+
   /**
    * Returns an empty object wrapped in an S4TKConfig proxy, so that default
    * values can be accessed in a type-safe way.
@@ -148,6 +176,72 @@ export namespace S4TKConfig {
    */
   export function stringify(config: S4TKConfig): string {
     return JSON.stringify(config, null, S4TKSettings.getSpacesPerIndent());
+  }
+
+  function _applyVariables(config: S4TKConfig) {
+    const variables = _getVariableMap(config);
+
+    function transformString(value: string): string {
+      let transformed = value;
+      variables.forEach((replacement, original) => {
+        // regex is safe because original is guaranteed to be alphanumeric only
+        const regex = new RegExp(`{{${original}}}`, "g");
+        transformed = transformed.replace(regex, replacement);
+      });
+      return transformed;
+    }
+
+    function handleNonStringValue(value: any): any {
+      if (value) {
+        if (Array.isArray(value)) return handleArray(value);
+        if (typeof value === "object") return handleObject(value);
+      }
+      return value
+    }
+
+    function handleArray(arr: any[]): any[] {
+      return arr.map(value => (typeof value === "string")
+        ? transformString(value)
+        : handleNonStringValue(value)
+      );
+    }
+
+    function handleObject(obj: { [key: string]: any; }): object {
+      for (const [key, value] of Object.entries(obj)) {
+        obj[key] = (typeof value === "string")
+          ? transformString(value)
+          : handleNonStringValue(value);
+      }
+      return obj;
+    }
+
+    return handleObject(config);
+  }
+
+  function _getDeepClone(config: S4TKConfig): S4TKConfig {
+    //@ts-ignore "_original" is a special case on the proxy
+    const clone = justClone<S4TKConfig>(config._original ?? config);
+    return _getConfigProxy(clone);
+  }
+
+  function _getVariableMap(config: S4TKConfig): Map<string, string> {
+    const data = config.projectMetaData;
+    const map = new Map<string, string>();
+
+    // pre-defined variables
+    map.set("creator", data.creator ?? "");
+    map.set("modName", data.modName ?? "");
+    map.set("modVersion", data.modVersion ?? "");
+
+    // custom variables
+    if (data.customVariables) {
+      for (const key in data.customVariables) {
+        const value = data.customVariables[key];
+        map.set(key, value);
+      }
+    }
+
+    return map;
   }
 }
 

@@ -1,19 +1,26 @@
 import { Package, StringTableResource } from "@s4tk/models";
 import { ResourceKey, ResourceKeyPair } from "@s4tk/models/types";
-import type S4TKWorkspace from "#workspace/s4tk-workspace";
+import { S4TKConfig } from "#workspace/s4tk-config";
+import S4TKWorkspace from "#workspace/s4tk-workspace";
 import { BuildSummary, ValidatedPackageInfo, WrittenPackageInfo } from "./summary";
 import { findGlobMatches } from "./resources";
 import { addAndGetItem } from "./helpers";
 
 export interface BuildContext {
-  /** Workspace containing the files that are being built. */
-  readonly workspace: S4TKWorkspace;
+  /** Config containing the build instructions. */
+  readonly config: S4TKConfig;
 
   /** Summary of the build process. */
   readonly summary: BuildSummary;
 
   /** Cache that maps tuning filenames (on disk) to their keys. */
   readonly tuningKeys: Map<string, ResourceKey>;
+
+  /** Absolute path to the root folder of the workspace. */
+  readonly workspaceRootPath: string;
+
+  /** Function that resolves a path relative to the workspace root. */
+  readonly resolvePath: (relativePath: string, isGlob?: boolean) => string;
 }
 
 export interface PackageBuildContext extends BuildContext {
@@ -45,12 +52,18 @@ export namespace BuildContext {
    * 
    * @param workspace Workspace being built
    * @param summary Summary to add to context
+   * @param options Optional arguments
    */
-  export function create(workspace: S4TKWorkspace, summary: BuildSummary): BuildContext {
+  export function create(workspace: S4TKWorkspace, summary: BuildSummary, options?: {
+    /** Config to use instead of `workspace.config` for build. */
+    configOverride?: S4TKConfig;
+  }): BuildContext {
     return {
-      workspace,
+      config: options?.configOverride ?? workspace.config,
       summary,
       tuningKeys: new Map(),
+      workspaceRootPath: workspace.rootUri.fsPath,
+      resolvePath: (p, g?) => workspace.resolvePath(p, g),
     };
   }
 
@@ -63,15 +76,17 @@ export namespace BuildContext {
    */
   export function forPackage(context: BuildContext, pkgConfig: ValidatedPackageInfo): PackageBuildContext {
     return {
-      workspace: context.workspace,
+      config: context.config,
       summary: context.summary,
       tuningKeys: context.tuningKeys,
+      workspaceRootPath: context.workspaceRootPath,
+      resolvePath: context.resolvePath,
       filepaths: findGlobMatches(pkgConfig.include, pkgConfig.exclude, "supported"),
       pkg: new Package(),
       pkgConfig: pkgConfig,
       pkgInfo: addAndGetItem(context.summary.written.packages, {
         filename: pkgConfig.filename,
-        resources: context.workspace.config.buildSettings.outputBuildSummary === "full"
+        resources: context.config.buildSettings.outputBuildSummary === "full"
           ? []
           : undefined,
       }),

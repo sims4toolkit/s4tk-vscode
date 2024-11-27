@@ -1,7 +1,7 @@
 import * as vscode from "vscode";
 import { S4TKFilename } from "#constants";
 import { S4TKSettings } from "#helpers/settings";
-import S4TKWorkspace from "#workspace/s4tk-workspace";
+import type S4TKWorkspace from "#workspace/s4tk-workspace";
 import { BuildMode, BuildSummary } from "./summary";
 import { buildProject } from "./builder";
 
@@ -21,7 +21,10 @@ export async function runBuild(workspace: S4TKWorkspace, mode: BuildMode, readab
   }, async (progress) => {
     progress.report({ increment: 0 });
 
-    const summary = await buildProject(workspace, mode);
+    const summary = workspace.active
+      ? await buildProject(workspace, mode)
+      : _failBuildForInactiveWorkspace(workspace, mode);
+
     const buildSummaryUri = await _outputBuildSummary(workspace, summary);
 
     if (summary.buildInfo.success) {
@@ -48,6 +51,14 @@ export async function runBuild(workspace: S4TKWorkspace, mode: BuildMode, readab
 
     progress.report({ increment: 100 });
   });
+}
+
+function _failBuildForInactiveWorkspace(workspace: S4TKWorkspace, mode: BuildMode): BuildSummary {
+  const summary = BuildSummary.create(workspace.config, mode);
+  summary.buildInfo.success = false;
+  summary.buildInfo.problems++;
+  summary.buildInfo.fatalErrorMessage = "S4TK config is not loaded";
+  return summary;
 }
 
 async function _outputBuildSummary(workspace: S4TKWorkspace, summary: BuildSummary): Promise<vscode.Uri | undefined> {

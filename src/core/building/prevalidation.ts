@@ -1,5 +1,4 @@
 import * as fs from "fs";
-import * as vscode from "vscode";
 import { resolveGlobPattern } from "#helpers/fs";
 import { FatalBuildError, addAndGetItem } from "./helpers";
 import { findGlobMatches } from "./resources";
@@ -26,11 +25,11 @@ export function prevalidateBuild(context: BuildContext) {
 //#region Validation Helpers
 
 function _validateBuildSource(context: BuildContext) {
-  const original = context.workspace.config.buildInstructions.source;
+  const original = context.config.buildInstructions.source;
 
   const resolved = (original
-    ? context.workspace.resolvePath(original)
-    : context.workspace.rootUri.fsPath) ?? '';
+    ? context.resolvePath(original)
+    : context.workspaceRootPath) ?? '';
 
   context.summary.config.source.original = original;
   context.summary.config.source.resolved = resolved;
@@ -47,8 +46,8 @@ function _validateBuildSource(context: BuildContext) {
 }
 
 function _validateBuildDestinations(context: BuildContext) {
-  const { destinations } = context.workspace.config.buildInstructions;
-  const { overrideDestinations } = context.workspace.config.releaseSettings;
+  const { destinations } = context.config.buildInstructions;
+  const { overrideDestinations } = context.config.releaseSettings;
   const useOverrides = context.summary.buildInfo.mode === "release" && overrideDestinations.length >= 1;
   const originals = useOverrides ? overrideDestinations : destinations;
   const propName = useOverrides ? 'releaseSettings.overrideDestinations' : 'buildInstructions.destinations';
@@ -57,10 +56,10 @@ function _validateBuildDestinations(context: BuildContext) {
     `${propName} cannot be empty`
   );
 
-  const { allowFolderCreation } = context.workspace.config.buildSettings;
+  const { allowFolderCreation } = context.config.buildSettings;
   const seenPaths = new Set<string>();
   originals.forEach((original, i) => {
-    const resolved = context.workspace.resolvePath(original);
+    const resolved = context.resolvePath(original);
     const destination = addAndGetItem(context.summary.config.destinations, { original, resolved });
 
     if (!resolved) throw FatalBuildError(
@@ -85,8 +84,8 @@ function _validateBuildDestinations(context: BuildContext) {
 
 function _validateBuildPackages(context: BuildContext) {
   const summary = context.summary;
-  const { packages } = context.workspace.config.buildInstructions;
-  const { buildSettings } = context.workspace.config;
+  const { packages } = context.config.buildInstructions;
+  const { buildSettings } = context.config;
   const propName = "buildInstructions.packages";
 
   if (packages.length < 1) throw FatalBuildError(
@@ -194,7 +193,7 @@ function _validateBuildPackages(context: BuildContext) {
 
 function _validateBuildRelease(context: BuildContext) {
   const summary = context.summary;
-  const { releaseSettings } = context.workspace.config;
+  const { releaseSettings } = context.config;
 
   const seenZipNames = new Set<string>();
   const availablePkgs = new Set<string>(
@@ -243,7 +242,7 @@ function _validateBuildRelease(context: BuildContext) {
       if (!zipInfo.otherFiles?.[arrName]?.length) return [];
 
       return zipInfo.otherFiles[arrName]!.map((original, j) => {
-        const resolved = context.workspace.resolvePath(original, true) ?? '';
+        const resolved = context.resolvePath(original, true) ?? '';
 
         if (!resolved) throw FatalBuildError(
           `${zipIndex}.otherFiles.${arrName}[${j}] could not be resolved as a valid path (${original})`, {
