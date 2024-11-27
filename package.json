@@ -168,6 +168,11 @@
 		"configuration": {
 			"title": "Sims 4 Toolkit",
 			"properties": {
+				"s4tk.autoCopyNewStrings": {
+					"type": "boolean",
+					"default": true,
+					"description": "Whether strings added via the 'Add New String' command should automatically be copied to the clipboard. If false, a dialog will appear allowing you to copy."
+				},
 				"s4tk.showCopyConfirmMessage": {
 					"type": "boolean",
 					"default": true,

@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - Added code snippets for all tunable nodes in XML (T, E, U, L, V, I, M, C).
 - Added `projectMetaData` and the ability to use variables in S4TK config.
+- Added `s4tk.autoCopyNewStrings` setting; when true, automically copy strings created with "Add New String" to the clipboard.
 ### Changed
 - Documents created with "Clone With New Name" command will now automatically open.
 ### Fixed

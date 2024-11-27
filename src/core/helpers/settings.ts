@@ -1,6 +1,7 @@
 import * as vscode from "vscode";
 
 export interface S4TKSettings {
+  autoCopyNewStrings: boolean;
   showCopyConfirmMessage: boolean;
   showConfigLoadedMessage: boolean;
   showConfigUnloadedMessage: boolean;

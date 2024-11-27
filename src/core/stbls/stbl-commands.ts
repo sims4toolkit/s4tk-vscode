@@ -5,6 +5,7 @@ import { formatStringKey } from "@s4tk/hashing/formatting";
 import S4TKWorkspace from "#workspace/s4tk-workspace";
 import StringTableProxy from "#stbls/stbl-proxy";
 import StringTableJson from "#stbls/stbl-json";
+import { S4TKSettings } from "#helpers/settings";
 
 /**
  * Adds a string to a specific STBL by its URI.
@@ -32,14 +33,21 @@ export async function addStringToStbl(uri: vscode.Uri) {
     const key = stbl.addValue(input);
     await vscode.workspace.fs.writeFile(uri, stbl.serialize());
 
-    const clickToCopy = "Copy as XML";
-    vscode.window.showInformationMessage(
-      `Added new string to '${stblBasename}'`,
-      clickToCopy,
-    ).then(value => {
-      if (value === clickToCopy)
-        vscode.env.clipboard.writeText(`${formatStringKey(key)}<!--${input}-->`);
-    });
+    const confirmationMsg = `Added string to '${stblBasename}'`;
+    const textToCopy = `${formatStringKey(key)}<!--${input}-->`;
+    const copyTextToClipboard = () => vscode.env.clipboard.writeText(textToCopy);
+
+    if (S4TKSettings.get("autoCopyNewStrings")) {
+      copyTextToClipboard();
+      vscode.window.showInformationMessage(`${confirmationMsg} and copied to clipboard.`);
+    } else {
+      const clickToCopy = "Copy as XML";
+      vscode.window.showInformationMessage(confirmationMsg, clickToCopy)
+        .then(value => {
+          if (value === clickToCopy)
+            copyTextToClipboard();
+        });
+    }
   } catch (e) {
     vscode.window.showErrorMessage(`Could not add string to '${stblBasename}' [${e}]`);
   }
