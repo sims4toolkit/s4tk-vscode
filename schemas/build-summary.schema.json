@@ -20,6 +20,35 @@
           "description": "Whether or not this path is being ignored by the build script."
         }
       }
+    },
+    "shellScript": {
+      "type": "object",
+      "properties": {
+        "workingDirectory": {
+          "type": "string",
+          "description": "The directory in which the command was run."
+        },
+        "command": {
+          "type": "string",
+          "description": "The command that was run."
+        },
+        "stdout": {
+          "type": "string",
+          "description": "The output to stdout."
+        },
+        "stderr": {
+          "type": "string",
+          "description": "The output to stderr."
+        },
+        "error": {
+          "type": "string",
+          "description": "The exception that was thrown."
+        },
+        "warning": {
+          "type": "string",
+          "description": "Something about this script that doesn't seem right."
+        }
+      }
     }
   },
   "type": "object",
@@ -59,10 +88,51 @@
         }
       }
     },
+    "scriptsRun": {
+      "type": "object",
+      "description": "Information about the additional scripts that were run before and after the build script.",
+      "properties": {
+        "before": {
+          "type": "array",
+          "description": "Scripts that were run before the build script.",
+          "items": {
+            "$ref": "#/definitions/shellScript"
+          }
+        },
+        "after": {
+          "type": "array",
+          "description": "Scripts that were run after the build script.",
+          "items": {
+            "$ref": "#/definitions/shellScript"
+          }
+        }
+      }
+    },
     "config": {
       "type": "object",
       "description": "Information about how the config was parsed while preparing for the build process.",
       "properties": {
+        "variableReplacements": {
+          "type": "array",
+          "description": "List of variable replacements that were made.",
+          "items": {
+            "type": "object",
+            "properties": {
+              "original": {
+                "type": "string",
+                "description": "The text before variable replacement."
+              },
+              "resolved": {
+                "type": "string",
+                "description": "The text after variable replacement."
+              },
+              "warning": {
+                "type": "string",
+                "description": "Something about this text replacement that doesn't seem right."
+              }
+            }
+          }
+        },
         "source": {
           "$ref": "#/definitions/validatedPath",
           "description": "The folder that contains all of this project's source files."

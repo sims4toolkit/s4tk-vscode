@@ -14,7 +14,13 @@ export interface BuildSummary {
     fatalErrorMessage?: string;
   };
 
+  scriptsRun: {
+    before: ShellScriptSummary[];
+    after: ShellScriptSummary[];
+  };
+
   config: {
+    variableReplacements: ValidatedPath[];
     source: ValidatedPath;
     destinations: ValidatedPath[];
     packages: ValidatedPackageInfo[];
@@ -72,6 +78,15 @@ export interface WrittenResourceInfo {
   type: string;
 }
 
+export interface ShellScriptSummary extends Warnable {
+  workingDirectory: string;
+  command: string;
+  stdout?: string;
+  stderr?: string;
+  output?: string[];
+  error?: string;
+}
+
 //#endregion
 
 //#region Functions
@@ -91,7 +106,12 @@ export namespace BuildSummary {
         success: true,
         problems: 0,
       },
+      scriptsRun: {
+        before: [],
+        after: []
+      },
       config: {
+        variableReplacements: [],
         source: {
           original: "",
           resolved: "",

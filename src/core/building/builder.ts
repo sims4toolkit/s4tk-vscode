@@ -17,6 +17,7 @@ import { parseKeyFromTgi } from "./resources";
 import { BuildMode, BuildSummary } from "./summary";
 import { BuildContext, PackageBuildContext, StringTableReference } from "./context";
 import { prevalidateBuild } from "./prevalidation";
+import { runPostBuildShellScripts, runPreBuildShellScripts } from "./shell-script-runner";
 
 //#region Exported Functions
 
@@ -28,14 +29,15 @@ import { prevalidateBuild } from "./prevalidation";
  * @param mode Mode to build for
  */
 export async function buildProject(workspace: S4TKWorkspace, mode: BuildMode): Promise<BuildSummary> {
-  const configOverride = S4TKConfig.applyVariablesOnClone(workspace.config);
-
   const summary = BuildSummary.create(workspace.config, mode);
+  const configOverride = S4TKConfig.applyVariablesOnClone(workspace.config, { summary });
   const context = BuildContext.create(workspace, summary, { configOverride });
 
   try {
+    runPreBuildShellScripts(context);
     prevalidateBuild(context);
     await _buildValidatedProject(context);
+    runPostBuildShellScripts(context);
   } catch (err) {
     summary.buildInfo.success = false;
     summary.buildInfo.problems++;

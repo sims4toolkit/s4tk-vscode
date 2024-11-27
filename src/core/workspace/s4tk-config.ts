@@ -5,8 +5,35 @@ import S4TKAssets from "#assets";
 import { S4TKFilename } from "#constants";
 import { parseAndValidateJson } from "#helpers/schemas";
 import { S4TKSettings } from "#helpers/settings";
+import type { BuildSummary, ValidatedPath } from "#building/summary";
 
 //#region Types
+
+interface BuildPackageInfo {
+  filename: string;
+  duplicateFilesFrom?: string[];
+  include: string[];
+  exclude?: string[];
+  doNotGenerate?: boolean;
+  doNotWrite?: boolean;
+}
+
+interface BuildZipInfo {
+  filename: string;
+  internalFolder?: string;
+  doNotGenerate?: boolean;
+  packages: string[];
+  otherFiles?: {
+    include?: string[];
+    exclude?: string[];
+  };
+}
+
+export interface ShellScriptInfo {
+  command: string;
+  workingDirectory?: string;
+  mustSucceed?: boolean;
+}
 
 export interface S4TKConfig {
   projectMetaData: {
@@ -21,14 +48,11 @@ export interface S4TKConfig {
   buildInstructions: {
     source: string;
     destinations: string[];
-    packages: {
-      filename: string;
-      duplicateFilesFrom?: string[];
-      include: string[];
-      exclude?: string[];
-      doNotGenerate?: boolean;
-      doNotWrite?: boolean;
-    }[];
+    packages: BuildPackageInfo[];
+    additionalScripts?: {
+      runBeforeBuild?: ShellScriptInfo[];
+      runAfterBuild?: ShellScriptInfo[];
+    };
   };
 
   buildSettings: {
@@ -42,16 +66,7 @@ export interface S4TKConfig {
 
   releaseSettings: {
     overrideDestinations: string[];
-    zips: {
-      filename: string;
-      internalFolder?: string;
-      doNotGenerate?: boolean;
-      packages: string[];
-      otherFiles?: {
-        include?: string[];
-        exclude?: string[];
-      };
-    }[];
+    zips: BuildZipInfo[];
   };
 
   stringTableSettings: {
@@ -117,9 +132,13 @@ export namespace S4TKConfig {
    * value strings.
    * 
    * @param config Config to clone
+   * @param options Optional arguments
    */
-  export function applyVariablesOnClone(config: S4TKConfig): S4TKConfig {
-    return modify(_getDeepClone(config), _applyVariables);
+  export function applyVariablesOnClone(config: S4TKConfig, options?: {
+    /** BuildSummary to write variable replacements to. */
+    summary?: BuildSummary,
+  }): S4TKConfig {
+    return modify(_getDeepClone(config), c => _applyVariables(c, options?.summary));
   }
 
   /**
@@ -178,17 +197,31 @@ export namespace S4TKConfig {
     return JSON.stringify(config, null, S4TKSettings.getSpacesPerIndent());
   }
 
-  function _applyVariables(config: S4TKConfig) {
+  function _applyVariables(config: S4TKConfig, summary: BuildSummary | undefined) {
     const variables = _getVariableMap(config);
 
-    function transformString(value: string): string {
-      let transformed = value;
-      variables.forEach((replacement, original) => {
+    function transformString(original: string): string {
+      let resolved = original;
+
+      variables.forEach((value, name) => {
         // regex is safe because original is guaranteed to be alphanumeric only
-        const regex = new RegExp(`{{${original}}}`, "g");
-        transformed = transformed.replace(regex, replacement);
+        const regex = new RegExp(`{{${name}}}`, "g");
+        resolved = resolved.replace(regex, value);
       });
-      return transformed;
+
+      if (summary) {
+        const stillHasVar = resolved.includes("{{") || resolved.includes("}}");
+        if (resolved !== original || stillHasVar) {
+          const validated: ValidatedPath = { original, resolved };
+          if (stillHasVar) {
+            validated.warning = "Resolved path still contains variables.";
+            summary.buildInfo.problems++;
+          }
+          summary.config.variableReplacements.push(validated);
+        }
+      }
+
+      return resolved;
     }
 
     function handleNonStringValue(value: any): any {

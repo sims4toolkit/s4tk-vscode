@@ -1,4 +1,28 @@
 {
+  "definitions": {
+    "shellScriptConfiguration": {
+      "type": "object",
+      "required": [
+        "command"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "command": {
+          "type": "string",
+          "description": "The shell command to run."
+        },
+        "workingDirectory": {
+          "type": "string",
+          "description": "Absolute or relative path to the folder in which to call the command. If omitted, then the workspace root will be used.\n\n[If path is relative, it is relative to the folder that contains your `s4tk.config.json`]"
+        },
+        "mustSucceed": {
+          "type": "boolean",
+          "description": "Whether or not the build script depends on this script terminating successfully. If true, then the build script will stop with a fatal error if the script throws an exception. If false or omitted, then the build script will proceed with a warning.",
+          "default": false
+        }
+      }
+    }
+  },
   "type": "object",
   "required": [
     "buildInstructions"
@@ -104,6 +128,28 @@
                 "type": "boolean",
                 "description": "Whether or not this package should be written to disk. If true, then it won't be. Whether or not it is still generated in memory, however, depends on the value of `doNotGenerate`. If `doNotWrite` is true but `doNotGenerate` is false, then packages with this one in their `duplicateFilesFrom` list can still be built.",
                 "default": false
+              }
+            }
+          }
+        },
+        "additionalScripts": {
+          "type": "object",
+          "description": "Additional shell scripts to run before/after building.",
+          "required": [],
+          "additionalProperties": false,
+          "properties": {
+            "runBeforeBuild": {
+              "type": "array",
+              "description": "List of scripts to run before the build script starts.",
+              "items": {
+                "$ref": "#/definitions/shellScriptConfiguration"
+              }
+            },
+            "runAfterBuild": {
+              "type": "array",
+              "description": "List of scripts to run after the build script finishes.",
+              "items": {
+                "$ref": "#/definitions/shellScriptConfiguration"
               }
             }
           }
