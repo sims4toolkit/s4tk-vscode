@@ -16,9 +16,10 @@ import { S4TKSettings } from "#helpers/settings";
  * of bits will be generated as well.
  * 
  * @param srcUri URI of source file to clone
+ * @returns Array of created URIs, if any (undefined if not)
  */
-export async function cloneWithNewName(srcUri: vscode.Uri) {
-  _renameTuningAndSimData(srcUri, "clone");
+export async function cloneWithNewName(srcUri: vscode.Uri): Promise<vscode.Uri[] | undefined> {
+  return _renameTuningAndSimData(srcUri, "clone");
 }
 
 /**
@@ -27,9 +28,10 @@ export async function cloneWithNewName(srcUri: vscode.Uri) {
  * number of bits will be generated as well.
  * 
  * @param srcUri URI of source file to clone
+ * @returns Array of created URIs, if any (undefined if not)
  */
-export async function renameTuningFile(srcUri: vscode.Uri) {
-  _renameTuningAndSimData(srcUri, "rename");
+export async function renameTuningFile(srcUri: vscode.Uri): Promise<vscode.Uri[] | undefined> {
+  return _renameTuningAndSimData(srcUri, "rename");
 }
 
 /**
@@ -53,7 +55,7 @@ export async function overrideTgiComment(
 
 //#region Helpers
 
-async function _renameTuningAndSimData(srcUri: vscode.Uri, operation: "clone" | "rename") {
+async function _renameTuningAndSimData(srcUri: vscode.Uri, operation: "clone" | "rename"): Promise<vscode.Uri[] | undefined> {
   // TODO: this function is pretty ugly, but it works, probably wanna refactor
   // later, especially replacing the XML DOM parsing with a regex that just
   // replaces the contents of the declaration line
@@ -100,27 +102,29 @@ async function _renameTuningAndSimData(srcUri: vscode.Uri, operation: "clone" | 
       : fnv64(newFilename.replace(/\./g, "-"));
   });
 
-  function writeRenamedFile(content: Buffer, location: {
+  async function writeRenamedFile(content: Buffer, location: {
     original: vscode.Uri;
     renamed: vscode.Uri,
   }) {
     if (operation === "clone") {
-      vscode.workspace.fs.writeFile(location.renamed, content);
+      await vscode.workspace.fs.writeFile(location.renamed, content);
     } else if (operation === "rename") {
-      vscode.workspace.fs.rename(location.original, location.renamed, {
+      await vscode.workspace.fs.rename(location.original, location.renamed, {
         overwrite: true
-      }).then(() => {
-        vscode.workspace.fs.writeFile(location.renamed, content);
       });
+
+      await vscode.workspace.fs.writeFile(location.renamed, content);
     }
   }
 
-  writeRenamedFile(
+  const newTuningUri = vscode.Uri.file(tuningFsPath);
+  const createdUris = [newTuningUri];
+  await writeRenamedFile(
     Buffer.from(tuning.dom.toXml({
       spacesPerIndent: S4TKSettings.getSpacesPerIndent()
     })), {
     original: srcUri,
-    renamed: vscode.Uri.file(tuningFsPath)
+    renamed: newTuningUri
   });
 
   if (hasSimdata) {
@@ -128,14 +132,18 @@ async function _renameTuningAndSimData(srcUri: vscode.Uri, operation: "clone" | 
     const simdata = SimDataResource.fromXml(fs.readFileSync(simdataSrc));
     simdata.instance.name = newFilename;
 
-    writeRenamedFile(
+    const newSimDataUri = vscode.Uri.file(simdataFsPath);
+    createdUris.push(newSimDataUri);
+    await writeRenamedFile(
       Buffer.from(simdata.toXmlDocument().toXml({
         spacesPerIndent: S4TKSettings.getSpacesPerIndent()
       })), {
       original: vscode.Uri.file(simdataSrc),
-      renamed: vscode.Uri.file(simdataFsPath)
+      renamed: newSimDataUri
     });
   }
+
+  return createdUris;
 }
 
 //#endregion

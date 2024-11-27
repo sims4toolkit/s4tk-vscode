@@ -59,7 +59,14 @@ export default function registerTuningCommands() {
 
   vscode.commands.registerCommand(S4TKCommand.tuning.cloneNewName,
     async (srcUri?: vscode.Uri) => {
-      if (srcUri) cloneWithNewName(srcUri);
+      if (!srcUri) return;
+      const createdUris = await cloneWithNewName(srcUri);
+      if (!createdUris?.length) return;
+      createdUris.forEach(uri => {
+        try {
+          vscode.window.showTextDocument(uri);
+        } catch (_) { }
+      });
     }
   );
 
