@@ -64,7 +64,7 @@ export async function overrideTgiComment(
 export function restoreStringCommentsForFiles(filepaths: string[], workspace: S4TKWorkspace) {
   const commentMap = workspace.getStringCommentsMap();
   if (commentMap.size < 1) return vscode.window.showErrorMessage(
-    "No strings found in stringTableSettings.commentRestoration.sources"
+    "No string tables with strings found in stringTableSettings.commentRestoration.sources"
   );
 
   if (filepaths.length === 1) {

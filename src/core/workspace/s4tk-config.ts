@@ -77,7 +77,7 @@ export interface S4TKConfig {
     mergeStringTablesInSamePackage: boolean;
     commentRestoration: {
       locale?: StringTableLocaleName;
-      sources: string[];
+      sources?: string[];
     }
   };
 
@@ -124,9 +124,7 @@ const _CONFIG_TRANSFORMER: ConfigTransformer = {
       defaultStringTable: "",
       generateMissingLocales: true,
       mergeStringTablesInSamePackage: true,
-      commentRestoration: {
-        sources: []
-      },
+      commentRestoration: {},
     },
   },
   workspaceSettings: {

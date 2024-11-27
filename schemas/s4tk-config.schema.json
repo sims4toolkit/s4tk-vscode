@@ -334,10 +334,8 @@
         },
         "commentRestoration": {
           "type": "object",
-          "description": "Settings to use for string comment restoration. If not set, then string comment restoration cannot be done.",
-          "required": [
-            "sources"
-          ],
+          "description": "Settings to use for string comment restoration.",
+          "required": [],
           "additionalProperties": false,
           "properties": {
             "locale": {
@@ -346,11 +344,9 @@
             },
             "sources": {
               "type": "array",
-              "description": "List of absolute or relative paths to folders containing string tables (binary, JSON, or in packages) to use when restoring string comments.\n\n[If path is relative, it is relative to the folder that contains your `s4tk.config.json`]",
-              "minItems": 1,
+              "description": "List of absolute or relative paths to folders containing string tables (binary, JSON, or in packages) to use when restoring string comments. If omitted, then the source folder is used.\n\nNOTE: For efficiency, it is highly recommended to set this to a folder containing your strings, and only your strings.\n\n[If path is relative, it is relative to the folder that contains your `s4tk.config.json`]",
               "items": {
-                "type": "string",
-                "minLength": 1
+                "type": "string"
               }
             }
           }

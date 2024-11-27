@@ -147,8 +147,11 @@ export default class S4TKWorkspace implements vscode.Disposable {
   getStringCommentsMap(): Map<number, string> {
     const settings = this.config.stringTableSettings.commentRestoration;
     const localeName = settings.locale ?? S4TKSettings.get("defaultStringTableLocale");
-    const sources = settings.sources.map(source => this.resolvePath(source));
-    return loadAllStringsInFolders(sources, StringTableLocale[localeName]);
+    const sources = settings.sources?.map(source => this.resolvePath(source));
+    return loadAllStringsInFolders(
+      sources?.length ? sources : [this.rootUri.fsPath],
+      StringTableLocale[localeName]
+    );
   }
 
   /**
