@@ -16,6 +16,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added "Restore String Comments in All Files" command to commnd palette.
 - Added `stringTableSettings.commentRestoration` to S4TK config to customize string comment restoration.
 - Added ability to modify default file hashing behavior with `workspaceSettings.hashingRules` in config.
+- Added status bar item for building the current active S4TK project (supports multiple workspaces).
 ### Changed
 - Documents created with "Clone With New Name" command will now automatically open.
 - Any XML comments that can be copied to clipboard will now be sanitized, ensuring they can be pasted safely without syntax errors.

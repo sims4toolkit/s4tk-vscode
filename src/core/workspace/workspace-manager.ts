@@ -35,7 +35,8 @@ class _S4TKWorkspaceManager implements vscode.Disposable {
    * @param uri Root URI of workspace to add
    */
   addWorkspace(uri: vscode.Uri) {
-    const workspace = new S4TKWorkspace(uri, () => this._onSomeConfigChanged());
+    const workspace = new S4TKWorkspace(uri);
+    workspace.addCallbackOnConfigChange(() => this._onSomeConfigChanged);
     this._workspaces.set(uri.fsPath, workspace);
   }
 

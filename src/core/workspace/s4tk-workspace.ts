@@ -12,6 +12,8 @@ import StringTableJson from "#stbls/stbl-json";
 import { MessageButton, handleMessageButtonClick } from "./messaging";
 import { loadAllStringsInFolders } from "#stbls/string-map-loader";
 
+type ConfigChangedCallback = (workspace: S4TKWorkspace, previousConfig: S4TKConfig | undefined) => void;
+
 /**
  * A model for a single workspace folder that contains an S4TK project.
  */
@@ -21,14 +23,12 @@ export default class S4TKWorkspace implements vscode.Disposable {
   private _index: ResourceIndex;
   private _disposables: vscode.Disposable[] = [];
   private _isSavingConfig = false;
+  private readonly _configChangedCallbacks: ConfigChangedCallback[] = [];
   get config(): S4TKConfig { return this._activeConfig ?? S4TKWorkspace._blankConfig; }
   get active(): boolean { return Boolean(this._activeConfig); }
   get index(): ResourceIndex { return this._index; }
 
-  constructor(
-    public readonly rootUri: vscode.Uri,
-    private readonly _onConfigChange: () => void,
-  ) {
+  constructor(public readonly rootUri: vscode.Uri) {
     this.loadConfig({ showNoConfigError: false });
     this._index = new ResourceIndex(undefined);
     this._disposables.push(this._index);
@@ -41,6 +41,23 @@ export default class S4TKWorkspace implements vscode.Disposable {
   }
 
   //#region Public Methods
+
+  /**
+   * Adds the given function as a callback when the config changes.
+   * 
+   * @param cb Callback to add
+   * @param options Optional arguments
+   */
+  addCallbackOnConfigChange(cb: ConfigChangedCallback, options?: {
+    /**
+     * If true, then do not add the function again if it is already in the
+     * callback list. False by default.
+     */
+    doNotRepeat?: boolean;
+  }) {
+    if (options?.doNotRepeat && this._configChangedCallbacks.findIndex(c => c === cb) > -1) return;
+    this._configChangedCallbacks.push(cb);
+  }
 
   /**
    * Inserts a new package instructions object to the build instructions of the
@@ -189,6 +206,16 @@ export default class S4TKWorkspace implements vscode.Disposable {
   }
 
   /**
+   * Removes the given function from the callback list, if it is in it.
+   * 
+   * @param cb Callback to remove
+   */
+  removeCallbackOnConfigChange(cb: ConfigChangedCallback) {
+    const index = this._configChangedCallbacks.findIndex(c => c === cb);
+    if (index >= 0) this._configChangedCallbacks.splice(index, 1);
+  }
+
+  /**
    * Resolves a path that is either absolute or relative to the root URI of this
    * workspace. 
    * 
@@ -262,8 +289,9 @@ export default class S4TKWorkspace implements vscode.Disposable {
       getIndexRoot(config)
     );
 
+    const previousConfig = this._activeConfig
     this._activeConfig = config;
-    this._onConfigChange();
+    this._configChangedCallbacks.forEach(cb => cb(this, previousConfig));
   }
 
   private _startFsWatcher() {
