@@ -4,6 +4,7 @@ import { runBuild } from "#building/build-runner";
 import * as stbls from "#stbls/stbl-commands";
 import { convertFolderToProject } from "#workspace/folder-to-project";
 import S4TKWorkspaceManager from "#workspace/workspace-manager";
+import { formatAllSourceFiles } from "#workspace/commands";
 
 export default function registerWorkspaceCommands() {
   vscode.commands.registerCommand(S4TKCommand.workspace.build, async (uri?: vscode.Uri) => {
@@ -65,4 +66,9 @@ export default function registerWorkspaceCommands() {
   });
 
   vscode.commands.registerCommand(S4TKCommand.workspace.folderToProject, convertFolderToProject);
+
+  vscode.commands.registerCommand(S4TKCommand.workspace.formatAllXmlFiles, async (uri?: vscode.Uri) => {
+    const workspace = await S4TKWorkspaceManager.chooseWorkspace(uri);
+    if (workspace) formatAllSourceFiles(workspace);
+  });
 }

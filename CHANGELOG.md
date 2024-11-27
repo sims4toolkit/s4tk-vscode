@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added `projectMetaData` and the ability to use variables in S4TK config.
 - Added `s4tk.autoCopyNewStrings` setting; when true, automically copy strings created with "Add New String" to the clipboard.
 - Added support for running scripts before/after builds with `buildInstructions.additionalScripts`.
+- Added "Format All Source XML Files" command.
 ### Changed
 - Documents created with "Clone With New Name" command will now automatically open.
 ### Fixed

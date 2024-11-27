@@ -59,6 +59,7 @@ export namespace S4TKCommand {
     addNewString: "s4tk.workspace.addNewString",
     folderToProject: "s4tk.workspace.folderToProject",
     refreshIndex: "s4tk.workspace.refreshIndex",
+    formatAllXmlFiles: "s4tk.workspace.formatAllXmlFiles",
   };
 }
 

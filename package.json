@@ -160,6 +160,11 @@
 				"category": "S4TK Workspace"
 			},
 			{
+				"command": "s4tk.workspace.formatAllXmlFiles",
+				"title": "Format All Source XML Files",
+				"category": "S4TK Workspace"
+			},
+			{
 				"command": "s4tk.workspace.refreshIndex",
 				"title": "Refresh Project Index",
 				"category": "S4TK Workspace"

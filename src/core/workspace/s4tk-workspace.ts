@@ -1,5 +1,6 @@
 import * as fs from "fs";
 import * as path from "path";
+import * as glob from "glob";
 import * as vscode from "vscode";
 import S4TKAssets from "#assets";
 import { findOpenDocument, replaceEntireDocument, resolveGlobPattern } from "#helpers/fs";
@@ -121,6 +122,21 @@ export default class S4TKWorkspace implements vscode.Disposable {
     stblJson.insertDefaultMetadata();
     const stblBuffer = Buffer.from(stblJson.stringify());
     createFile(stblBuffer, "src", "strings", "default.stbl.json");
+  }
+
+  /**
+   * Finds all files in the source directory set in the config. If glob pattern
+   * is provided, then results will be filtered by it.
+   * 
+   * @param globPattern Glob pattern to filter files by, if any
+   */
+  getAllSourceFiles(globPattern?: string): string[] {
+    const resolvedGlobPattern = this.resolvePath(
+      path.join(this.config.buildInstructions.source, globPattern ?? "**/*"),
+      true
+    );
+
+    return glob.sync(resolvedGlobPattern);
   }
 
   /**
