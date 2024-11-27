@@ -5,10 +5,11 @@ import { ResourceKey } from "@s4tk/models/types";
 import { Package, RawResource, SimDataResource, StringTableResource } from "@s4tk/models";
 import { BinaryResourceType, SimDataGroup, TuningResourceType } from "@s4tk/models/enums";
 import { formatResourceType, formatResourceKey, formatAsHexString } from "@s4tk/hashing/formatting";
-import { findGlobMatches, parseKeyFromTgi } from "#building/resources";
+import { findGlobMatches } from "#building/resources";
 import StringTableJson from "#stbls/stbl-json";
 import * as inference from "#indexing/inference";
 import { S4TKSettings } from "#helpers/settings";
+import { parseKeyFromTgi } from "#helpers/file-names";
 
 /**
  * Prompts the user for a folder containing packages and/or loose TGI files and

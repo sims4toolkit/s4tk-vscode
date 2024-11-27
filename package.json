@@ -100,6 +100,12 @@
 				"enablement": "resourceFilename =~ /^((?!\\.SimData).)*\\.xml$/"
 			},
 			{
+				"command": "s4tk.tuning.restoreStringComments",
+				"title": "Restore String Comments",
+				"category": "S4TK Workspace",
+				"enablement": "resourceFilename =~ /^.*\\.xml$/"
+			},
+			{
 				"command": "s4tk.ts4Files.createStblBinary",
 				"title": "Create String Table (Binary)",
 				"category": "TS4 Files"
@@ -167,6 +173,11 @@
 			{
 				"command": "s4tk.workspace.refreshIndex",
 				"title": "Refresh Project Index",
+				"category": "S4TK Workspace"
+			},
+			{
+				"command": "s4tk.workspace.restoreStringCommentsAllFiles",
+				"title": "Restore String Comments in All Files",
 				"category": "S4TK Workspace"
 			}
 		],
@@ -331,6 +342,11 @@
 					"group": "S4TK"
 				},
 				{
+					"when": "resourceFilename =~ /^.*\\.xml$/",
+					"command": "s4tk.tuning.restoreStringComments",
+					"group": "S4TK"
+				},
+				{
 					"when": "resourceFilename =~ /\\.stbl(\\.json)?$/",
 					"command": "s4tk.workspace.setDefaultStbl",
 					"group": "S4TK"
@@ -380,6 +396,11 @@
 				{
 					"when": "resourceFilename =~ /^((?!\\.SimData).)*\\.xml$/",
 					"command": "s4tk.tuning.renameTuning",
+					"group": "S4TK"
+				},
+				{
+					"when": "resourceFilename =~ /^.*\\.xml$/",
+					"command": "s4tk.tuning.restoreStringComments",
 					"group": "S4TK"
 				},
 				{

@@ -6,6 +6,7 @@ import S4TKAssets from "#assets";
 import { randomFnv32, randomFnv64 } from "#helpers/hashing";
 import { parseAndValidateJson } from "#helpers/schemas";
 import { S4TKSettings } from "#helpers/settings";
+import { sanitizeXmlComment } from "#helpers/xml";
 
 /**
  * A string table JSON that follows the `stbl.schema.json` schema.
@@ -162,13 +163,22 @@ export default class StringTableJson {
   }
 
   /**
+   * Calls the given function on every string entry.
+   * 
+   * @param fn Function to call on every string entry
+   */
+  forEach(fn: (entry: StringTableJsonEntry) => void) {
+    this._entries.forEach(fn);
+  }
+
+  /**
    * Returns the XML string to use for the entry at the given index.
    * 
    * @param index Index of entry to get XML for
    */
   getEntryXml(index: number): string {
     const entry = this._entries[index];
-    return entry ? `${entry.key}<!--${entry.value}-->` : '';
+    return entry ? `${entry.key}<!--${sanitizeXmlComment(entry.value)}-->` : '';
   }
 
   /**

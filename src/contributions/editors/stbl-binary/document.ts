@@ -3,9 +3,9 @@ import * as vscode from 'vscode';
 import { StringTableResource } from '@s4tk/models';
 import { StringTableLocale } from '@s4tk/models/enums';
 import { formatAsHexString } from '@s4tk/hashing/formatting';
+import { parseKeyFromTgi } from "#helpers/file-names";
 import { S4TKSettings } from '#helpers/settings';
 import StringTableJson from '#stbls/stbl-json';
-import { parseKeyFromTgi } from '#building/resources';
 import ViewOnlyDocument from '../view-only/document';
 
 /**

@@ -2,6 +2,7 @@ import * as vscode from "vscode";
 import { S4TKCommand } from "#constants";
 import { runBuild } from "#building/build-runner";
 import * as stbls from "#stbls/stbl-commands";
+import * as tuningCommands from "#tuning/commands";
 import { convertFolderToProject } from "#workspace/folder-to-project";
 import S4TKWorkspaceManager from "#workspace/workspace-manager";
 import { formatAllSourceFiles } from "#workspace/commands";
@@ -70,5 +71,15 @@ export default function registerWorkspaceCommands() {
   vscode.commands.registerCommand(S4TKCommand.workspace.formatAllXmlFiles, async (uri?: vscode.Uri) => {
     const workspace = await S4TKWorkspaceManager.chooseWorkspace(uri);
     if (workspace) formatAllSourceFiles(workspace);
+  });
+
+  vscode.commands.registerCommand(S4TKCommand.workspace.restoreStringCommentsAllFiles, async (uri?: vscode.Uri) => {
+    const workspace = await S4TKWorkspaceManager.chooseWorkspace(uri);
+    if (!workspace?.active) return vscode.window.showErrorMessage(
+      "Cannot restore comments because no S4TK config is loaded."
+    );
+
+    const filepaths = workspace?.getAllSourceFiles("**/*.xml");
+    tuningCommands.restoreStringCommentsForFiles(filepaths, workspace);
   });
 }

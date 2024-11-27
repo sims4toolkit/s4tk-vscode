@@ -45,6 +45,7 @@ export namespace S4TKCommand {
     overrideInstance: "s4tk.tuning.overrideInstance",
     overrideType: "s4tk.tuning.overrideType",
     renameTuning: "s4tk.tuning.renameTuning",
+    restoreStringComments: "s4tk.tuning.restoreStringComments",
   };
 
   export const workspace = {
@@ -60,6 +61,7 @@ export namespace S4TKCommand {
     folderToProject: "s4tk.workspace.folderToProject",
     refreshIndex: "s4tk.workspace.refreshIndex",
     formatAllXmlFiles: "s4tk.workspace.formatAllXmlFiles",
+    restoreStringCommentsAllFiles: "s4tk.workspace.restoreStringCommentsAllFiles",
   };
 }
 

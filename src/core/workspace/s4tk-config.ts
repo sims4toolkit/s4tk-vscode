@@ -75,6 +75,10 @@ export interface S4TKConfig {
     defaultStringTable: string;
     generateMissingLocales: boolean;
     mergeStringTablesInSamePackage: boolean;
+    commentRestoration: {
+      locale?: StringTableLocaleName;
+      sources: string[];
+    }
   };
 
   workspaceSettings: {
@@ -120,6 +124,9 @@ const _CONFIG_TRANSFORMER: ConfigTransformer = {
       defaultStringTable: "",
       generateMissingLocales: true,
       mergeStringTablesInSamePackage: true,
+      commentRestoration: {
+        sources: []
+      },
     },
   },
   workspaceSettings: {

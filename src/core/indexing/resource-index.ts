@@ -3,6 +3,7 @@ import { sync as globSync } from "glob";
 import { resolveGlobPattern } from "#helpers/fs";
 import type { TuningMetadata } from "./types";
 import { inferKeyFromMetadata, inferTuningMetadata } from "./inference";
+import { sanitizeXmlComment } from "#helpers/xml";
 
 /**
  * Keeps track of all resources within a workspace's source folder.
@@ -71,7 +72,7 @@ export default class ResourceIndex implements vscode.Disposable {
     const key = inferKeyFromMetadata(metadata);
     if (key.key.instance == undefined) return;
     return metadata.attrs?.n
-      ? `${key.key.instance}<!--${metadata.attrs?.n}-->`
+      ? `${key.key.instance}<!--${sanitizeXmlComment(metadata.attrs?.n)}-->`
       : key.key.instance.toString();
   }
 

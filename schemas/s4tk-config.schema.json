@@ -26,6 +26,29 @@
           "default": true
         }
       }
+    },
+    "stringTableLocale": {
+      "type": "string",
+      "enum": [
+        "English",
+        "ChineseSimplified",
+        "ChineseTraditional",
+        "Czech",
+        "Danish",
+        "Dutch",
+        "Finnish",
+        "French",
+        "German",
+        "Italian",
+        "Japanese",
+        "Korean",
+        "Norwegian",
+        "Polish",
+        "Portuguese",
+        "Russian",
+        "Spanish",
+        "Swedish"
+      ]
     }
   },
   "type": "object",
@@ -308,6 +331,29 @@
           "type": "boolean",
           "description": "Whether or not all of the string tables of the same locale being written to the same package should be merged.",
           "default": true
+        },
+        "commentRestoration": {
+          "type": "object",
+          "description": "Settings to use for string comment restoration. If not set, then string comment restoration cannot be done.",
+          "required": [
+            "sources"
+          ],
+          "additionalProperties": false,
+          "properties": {
+            "locale": {
+              "$ref": "#/definitions/stringTableLocale",
+              "description": "Locale to use when restoring string comments. By default, uses the locale set in the S4TK VSC configuration `defaultStringTableLocale` (English by default)."
+            },
+            "sources": {
+              "type": "array",
+              "description": "List of absolute or relative paths to folders containing string tables (binary, JSON, or in packages) to use when restoring string comments.\n\n[If path is relative, it is relative to the folder that contains your `s4tk.config.json`]",
+              "minItems": 1,
+              "items": {
+                "type": "string",
+                "minLength": 1
+              }
+            }
+          }
         }
       }
     },

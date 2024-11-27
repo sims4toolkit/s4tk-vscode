@@ -4,11 +4,14 @@ import * as vscode from "vscode";
 import { fnv64 } from "@s4tk/hashing";
 import { formatAsHexString } from "@s4tk/hashing/formatting";
 import { SimDataResource, XmlResource } from "@s4tk/models";
+import { XmlCommentNode, XmlDocumentNode, XmlNode, XmlValueNode } from "@s4tk/xml-dom";
 import { replaceEntireDocument } from "#helpers/fs";
 import { insertXmlKeyOverrides } from "#indexing/inference";
 import { reduceBits } from "#helpers/hashing";
 import { maxBitsForClass } from "#diagnostics/helpers";
 import { S4TKSettings } from "#helpers/settings";
+import { sanitizeXmlComment } from "#helpers/xml";
+import type S4TKWorkspace from "#workspace/s4tk-workspace";
 
 /**
  * Clones the tuning file (and its SimData, if it has one) at the given URI,
@@ -53,7 +56,126 @@ export async function overrideTgiComment(
   if (newContent) replaceEntireDocument(editor, newContent, false);
 }
 
+/**
+ * Restores comments in the XML (tuning or SimData) files at the given paths.
+ * 
+ * @param filepaths Paths to XML files to restore comments in
+ */
+export function restoreStringCommentsForFiles(filepaths: string[], workspace: S4TKWorkspace) {
+  const commentMap = workspace.getStringCommentsMap();
+  if (commentMap.size < 1) return vscode.window.showErrorMessage(
+    "No strings found in stringTableSettings.commentRestoration.sources"
+  );
+
+  if (filepaths.length === 1) {
+    _restoreStringCommentsForSingleFile(filepaths[0], commentMap);
+  } else {
+    _restoreStringCommentsForMultipleFiles(filepaths, commentMap);
+  }
+}
+
 //#region Helpers
+
+function _restoreStringCommentsForSingleFile(filepath: string, commentMap: Map<number, string>) {
+  const filename = path.basename(filepath);
+
+  try {
+    _restoreStringCommentsForFile(filepath, commentMap);
+    vscode.window.showInformationMessage(`String comments restored in '${filename}'`);
+  } catch (_) {
+    vscode.window.showErrorMessage(`Failed to restore string comments in '${filename}'`);
+  }
+}
+
+function _restoreStringCommentsForMultipleFiles(filepaths: string[], commentMap: Map<number, string>) {
+  let failed = 0;
+  let succeeded = 0;
+
+  filepaths.forEach(filepath => {
+    try {
+      _restoreStringCommentsForFile(filepath, commentMap);
+      ++succeeded;
+    } catch (_) {
+      ++failed;
+    }
+  });
+
+  if (succeeded) {
+    if (failed) {
+      vscode.window.showWarningMessage(
+        `Comments restored in some XML files [${succeeded} succeeded; ${failed} failed]`
+      );
+    } else {
+      vscode.window.showInformationMessage(
+        `Comments restored in all XML files [${succeeded} succeeded]`
+      );
+    }
+  } else {
+    vscode.window.showErrorMessage(failed
+      ? `Comments not restored in any XML files [${failed} failed]`
+      : "Cannot restore comments because no XML files were found."
+    );
+  }
+}
+
+function _restoreStringCommentsForFile(filepath: string, commentMap: Map<number, string>) {
+  if (!fs.existsSync(filepath)) return;
+
+  const buffer = fs.readFileSync(filepath);
+  const doc = XmlDocumentNode.from(buffer);
+  if (!_canRestoreComments(doc)) return;
+  const keyRegex = /^0x[0-9a-f]{1,8}$/i;
+
+  function processNode(node: XmlNode) {
+    if (!(node.hasChildren && node.numChildren > 0)) return;
+
+    let commentToRestore: string | undefined;
+
+    node.children.forEach(child => {
+      if (child.hasChildren) {
+        processNode(child);
+      } else if (child instanceof XmlValueNode) {
+        if (typeof child.value === "string" && keyRegex.test(child.value)) {
+          const stringKey = parseInt(child.value, 16);
+          const stringValue = commentMap.get(stringKey);
+          if (stringValue != undefined)
+            commentToRestore = sanitizeXmlComment(stringValue);
+        }
+      } else if (child instanceof XmlCommentNode) {
+        if (commentToRestore != undefined) {
+          child.value = commentToRestore;
+          commentToRestore = undefined;
+        }
+      }
+    });
+
+    if (commentToRestore != undefined) {
+      node.children.push(new XmlCommentNode(commentToRestore));
+    }
+  }
+
+  processNode(doc);
+
+  fs.writeFileSync(filepath, doc.toXml({
+    spacesPerIndent: S4TKSettings.getSpacesPerIndent()
+  }));
+}
+
+function _canRestoreComments(doc: XmlDocumentNode): boolean {
+  try {
+    const rootTag = doc.children.find(c => c.tag)?.tag;
+    switch (rootTag) {
+      case "I":
+      case "M":
+      case "SimData":
+        return true;
+      default:
+        return false;
+    }
+  } catch (_) {
+    return false;
+  }
+}
 
 async function _renameTuningAndSimData(srcUri: vscode.Uri, operation: "clone" | "rename"): Promise<vscode.Uri[] | undefined> {
   // TODO: this function is pretty ugly, but it works, probably wanna refactor

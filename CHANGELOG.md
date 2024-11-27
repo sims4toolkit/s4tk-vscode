@@ -11,9 +11,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added `projectMetaData` and the ability to use variables in S4TK config.
 - Added `s4tk.autoCopyNewStrings` setting; when true, automically copy strings created with "Add New String" to the clipboard.
 - Added support for running scripts before/after builds with `buildInstructions.additionalScripts`.
-- Added "Format All Source XML Files" command.
+- Added "Format All Source XML Files" command to commnd palette.
+- Added "Restore String Comments" command to context menus for XML files.
+- Added "Restore String Comments in All Files" command to commnd palette.
+- Added `stringTableSettings.restorationSources` to S4TK config to power new string comment restoration commands.
 ### Changed
 - Documents created with "Clone With New Name" command will now automatically open.
+- Any XML comments that can be copied to clipboard will now be sanitized, ensuring they can be pasted safely without syntax errors.
 ### Fixed
 - Fixed issue where formatting a file would not respect the "Tab Size" setting.
 ### Removed

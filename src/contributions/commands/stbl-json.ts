@@ -42,6 +42,7 @@ export default function registerStblJsonCommands() {
   vscode.commands.registerCommand(S4TKCommand.stblJson.copyEntry,
     (stblJson: StringTableJson, entryIndex: number) => {
       const xml = stblJson.getEntryXml(entryIndex);
+      // xml sanitized in getEntryXml
       vscode.env.clipboard.writeText(xml);
       if (S4TKSettings.get("showCopyConfirmMessage"))
         vscode.window.showInformationMessage(`Copied: ${xml}`);

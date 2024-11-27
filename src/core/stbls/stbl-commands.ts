@@ -6,6 +6,7 @@ import S4TKWorkspace from "#workspace/s4tk-workspace";
 import StringTableProxy from "#stbls/stbl-proxy";
 import StringTableJson from "#stbls/stbl-json";
 import { S4TKSettings } from "#helpers/settings";
+import { sanitizeXmlComment } from "#helpers/xml";
 
 /**
  * Adds a string to a specific STBL by its URI.
@@ -34,7 +35,7 @@ export async function addStringToStbl(uri: vscode.Uri) {
     await vscode.workspace.fs.writeFile(uri, stbl.serialize());
 
     const confirmationMsg = `Added string to '${stblBasename}'`;
-    const textToCopy = `${formatStringKey(key)}<!--${input}-->`;
+    const textToCopy = `${formatStringKey(key)}<!--${sanitizeXmlComment(input)}-->`;
     const copyTextToClipboard = () => vscode.env.clipboard.writeText(textToCopy);
 
     if (S4TKSettings.get("autoCopyNewStrings")) {

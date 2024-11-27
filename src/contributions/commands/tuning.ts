@@ -3,7 +3,7 @@ import { XmlDocumentNode } from "@s4tk/xml-dom";
 import { S4TKCommand } from "#constants";
 import { replaceEntireDocument } from "#helpers/fs";
 import { S4TKSettings } from "#helpers/settings";
-import { cloneWithNewName, overrideTgiComment, renameTuningFile } from "#tuning/commands";
+import * as tuningCommands from "#tuning/commands";
 import S4TKWorkspaceManager from "#workspace/workspace-manager";
 
 export default function registerTuningCommands() {
@@ -24,21 +24,21 @@ export default function registerTuningCommands() {
   vscode.commands.registerCommand(S4TKCommand.tuning.overrideType,
     (editor?: vscode.TextEditor, value?: number) => {
       if (!(editor?.document && value != undefined)) return;
-      overrideTgiComment(editor, "type", value);
+      tuningCommands.overrideTgiComment(editor, "type", value);
     }
   );
 
   vscode.commands.registerCommand(S4TKCommand.tuning.overrideGroup,
     (editor?: vscode.TextEditor, value?: number) => {
       if (!(editor?.document && value != undefined)) return;
-      overrideTgiComment(editor, "group", value);
+      tuningCommands.overrideTgiComment(editor, "group", value);
     }
   );
 
   vscode.commands.registerCommand(S4TKCommand.tuning.overrideInstance,
     (editor?: vscode.TextEditor, value?: bigint) => {
       if (!(editor?.document && value != undefined)) return;
-      overrideTgiComment(editor, "instance", value);
+      tuningCommands.overrideTgiComment(editor, "instance", value);
     }
   );
 
@@ -48,6 +48,7 @@ export default function registerTuningCommands() {
       const workspace = S4TKWorkspaceManager.getWorkspaceContainingUri(uri);
       const ref = workspace?.index.getTuningReference(uri);
       if (ref) {
+        // ref already sanitized in getTuningReference
         vscode.env.clipboard.writeText(ref);
         if (S4TKSettings.get("showCopyConfirmMessage"))
           vscode.window.showInformationMessage(`Copied: ${ref}`);
@@ -60,7 +61,7 @@ export default function registerTuningCommands() {
   vscode.commands.registerCommand(S4TKCommand.tuning.cloneNewName,
     async (srcUri?: vscode.Uri) => {
       if (!srcUri) return;
-      const createdUris = await cloneWithNewName(srcUri);
+      const createdUris = await tuningCommands.cloneWithNewName(srcUri);
       if (!createdUris?.length) return;
       createdUris.forEach(uri => {
         try {
@@ -72,7 +73,20 @@ export default function registerTuningCommands() {
 
   vscode.commands.registerCommand(S4TKCommand.tuning.renameTuning,
     async (srcUri?: vscode.Uri) => {
-      if (srcUri) renameTuningFile(srcUri);
+      if (srcUri) tuningCommands.renameTuningFile(srcUri);
+    }
+  );
+
+  vscode.commands.registerCommand(S4TKCommand.tuning.restoreStringComments,
+    async (srcUri?: vscode.Uri) => {
+      if (!srcUri) return;
+
+      const workspace = await S4TKWorkspaceManager.chooseWorkspace(srcUri);
+      if (!workspace?.active) return vscode.window.showErrorMessage(
+        "Cannot restore comments because no S4TK config is loaded."
+      );
+
+      tuningCommands.restoreStringCommentsForFiles([srcUri.fsPath], workspace);
     }
   );
 }

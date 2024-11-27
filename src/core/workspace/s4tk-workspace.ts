@@ -2,6 +2,7 @@ import * as fs from "fs";
 import * as path from "path";
 import * as glob from "glob";
 import * as vscode from "vscode";
+import { StringTableLocale } from "@s4tk/models/enums";
 import S4TKAssets from "#assets";
 import { findOpenDocument, replaceEntireDocument, resolveGlobPattern } from "#helpers/fs";
 import { S4TKSettings } from "#helpers/settings";
@@ -9,6 +10,7 @@ import ResourceIndex from "#indexing/resource-index";
 import { S4TKConfig } from "#workspace/s4tk-config";
 import StringTableJson from "#stbls/stbl-json";
 import { MessageButton, handleMessageButtonClick } from "./messaging";
+import { loadAllStringsInFolders } from "#stbls/string-map-loader";
 
 /**
  * A model for a single workspace folder that contains an S4TK project.
@@ -140,6 +142,16 @@ export default class S4TKWorkspace implements vscode.Disposable {
   }
 
   /**
+   * Returns a map of all strings to use for comment restoration.
+   */
+  getStringCommentsMap(): Map<number, string> {
+    const settings = this.config.stringTableSettings.commentRestoration;
+    const localeName = settings.locale ?? S4TKSettings.get("defaultStringTableLocale");
+    const sources = settings.sources.map(source => this.resolvePath(source));
+    return loadAllStringsInFolders(sources, StringTableLocale[localeName]);
+  }
+
+  /**
    * Loads the config into the workspace if it exists and is valid. If it does
    * not exist or is not valid, then the config becomes unloaded.
    * 
@@ -181,7 +193,6 @@ export default class S4TKWorkspace implements vscode.Disposable {
    * @param isGlob Whether or not this is for a glob pattern
    */
   resolvePath(relativePath: string, isGlob: boolean = false): string {
-    // FIXME: unsure if this is correct
     if (isGlob) {
       return resolveGlobPattern(this.rootUri, relativePath);
     } else {
