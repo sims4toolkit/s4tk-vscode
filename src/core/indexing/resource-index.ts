@@ -40,6 +40,13 @@ export default class ResourceIndex implements vscode.Disposable {
   }
 
   /**
+   * Returns a list of all metadata for every tracked tuning file.
+   */
+  getAllFileMetadata(): TuningMetadata[] {
+    return [...this._pathsToDefinitions.values()];
+  }
+
+  /**
    * Returns info about the tuning file at the given URI, if it exists.
    * 
    * @param uri URI of tuning to get definition for
