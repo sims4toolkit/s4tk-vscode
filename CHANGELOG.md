@@ -21,6 +21,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 - Documents created with "Clone With New Name" command will now automatically open.
 - Any XML comments that can be copied to clipboard will now be sanitized, ensuring they can be pasted safely without syntax errors.
+- Warnings now display in STBL JSON files for improper usage of newlines.
 ### Fixed
 - Fixed issue where formatting a file would not respect the "Tab Size" setting.
 ### Removed

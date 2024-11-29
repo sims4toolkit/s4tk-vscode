@@ -1,5 +1,5 @@
 import * as vscode from "vscode";
-import { diagnoseXmlDocument } from "#diagnostics/diagnose";
+import { diagnoseStblJsonDocument, diagnoseXmlDocument } from "#diagnostics/diagnose";
 
 export default function initializeDiagnostics(context: vscode.ExtensionContext): void {
   const collection = vscode.languages.createDiagnosticCollection("s4tk");
@@ -11,13 +11,13 @@ export default function initializeDiagnostics(context: vscode.ExtensionContext):
 
   context.subscriptions.push(
     vscode.window.onDidChangeActiveTextEditor(editor => {
-      if (editor) diagnoseXmlDocument(editor.document, collection);
+      if (editor?.document) _dispatchDiagnosis(editor.document, collection);
     })
   );
 
   context.subscriptions.push(
     vscode.workspace.onDidChangeTextDocument(e => {
-      diagnoseXmlDocument(e.document, collection);
+      _dispatchDiagnosis(e.document, collection);
     })
   );
 
@@ -26,4 +26,12 @@ export default function initializeDiagnostics(context: vscode.ExtensionContext):
       collection.delete(document.uri);
     })
   );
+}
+
+function _dispatchDiagnosis(document: vscode.TextDocument, collection: vscode.DiagnosticCollection) {
+  if (document.fileName.endsWith(".xml")) {
+    diagnoseXmlDocument(document, collection);
+  } else if (document.fileName.endsWith(".stbl.json")) {
+    diagnoseStblJsonDocument(document, collection);
+  }
 }

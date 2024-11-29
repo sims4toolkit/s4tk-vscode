@@ -15,4 +15,6 @@ export const DiagnosticKey = {
   simDataInvalidFormat: "s4tk:simDataInvalidFormat",
   simDataTypeIncorrect: "s4tk:simDataTypeIncorrect",
   unpairedSimData: "s4tk:unpairedSimData",
+  // STBL JSON
+  improperStringNewline: "s4tk:improperStringNewline",
 };

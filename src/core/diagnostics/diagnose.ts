@@ -21,26 +21,46 @@ export async function diagnoseXmlDocument(
   document: vscode.TextDocument,
   collection: vscode.DiagnosticCollection
 ) {
-  if (!document.uri.fsPath.endsWith(".xml")) return;
-  const workspace = S4TKWorkspaceManager.getWorkspaceContainingUri(document.uri);
-  if (!workspace) return;
+  try {
+    const workspace = S4TKWorkspaceManager.getWorkspaceContainingUri(document.uri);
+    if (!workspace) return;
 
-  const metadata = document.uri.fsPath.endsWith(".SimData.xml")
-    ? inf.inferSimDataMetadata(document.uri)
-    : inf.inferTuningMetadata(document.uri);
-  const key = inf.inferKeyFromMetadata(metadata, workspace.index);
+    const metadata = document.uri.fsPath.endsWith(".SimData.xml")
+      ? inf.inferSimDataMetadata(document.uri)
+      : inf.inferTuningMetadata(document.uri);
+    const key = inf.inferKeyFromMetadata(metadata, workspace.index);
 
-  const diagnostics: vscode.Diagnostic[] = [];
-  _diagnoseMetadata(metadata, key, document, diagnostics);
-  if (metadata.kind === "tuning") {
-    _diagnoseTuningDocument(workspace, metadata, key, document, diagnostics);
-  } else {
-    _diagnoseSimDataDocument(workspace, metadata, key, document, diagnostics);
-  }
-  collection.set(document.uri, diagnostics);
+    const diagnostics: vscode.Diagnostic[] = [];
+    _diagnoseMetadata(metadata, key, document, diagnostics);
+    if (metadata.kind === "tuning") {
+      _diagnoseTuningDocument(workspace, metadata, key, document, diagnostics);
+    } else {
+      _diagnoseSimDataDocument(workspace, metadata, key, document, diagnostics);
+    }
+    collection.set(document.uri, diagnostics);
+  } catch (_) { }
 }
 
-//#region Diagnose Helper Functions
+/**
+ * Runs diagnostics on the given STBL JSON document.
+ * 
+ * @param document Document to run diagnostics on
+ * @param collection Collection to add diagnostics to
+ */
+export async function diagnoseStblJsonDocument(
+  document: vscode.TextDocument,
+  collection: vscode.DiagnosticCollection
+) {
+  try {
+    const workspace = S4TKWorkspaceManager.getWorkspaceContainingUri(document.uri);
+    if (!workspace) return;
+    const diagnostics: vscode.Diagnostic[] = [];
+    _diagnoseStblJsonDocument(workspace, document, diagnostics);
+    collection.set(document.uri, diagnostics);
+  } catch (_) { }
+}
+
+//#region Diagnose XML Helper Functions
 
 function _diagnoseMetadata(
   metadata: infTypes.XmlMetadata,
@@ -254,6 +274,37 @@ function _diagnoseSimDataDocument(
     );
     diagnostic.code = DiagnosticKey.simDataIdMismatch;
     diagnostics.push(diagnostic);
+  }
+}
+
+//#endregion
+
+//#region Diagnose STBL JSON Helper Functions
+
+function _diagnoseStblJsonDocument(
+  workspace: S4TKWorkspace,
+  document: vscode.TextDocument,
+  diagnostics: vscode.Diagnostic[]
+) {
+  const newlineRegex = /(?<!\\)(?:\\\\)*(\\n)/g;
+  for (let i = 0; i < document.lineCount; ++i) {
+    const line = document.lineAt(i);
+    const matches = [...line.text.matchAll(newlineRegex)];
+    matches.forEach(match => {
+      const newlineEndPos = (match.index ?? 0) + match[0].length;
+      const newlineStartPos = newlineEndPos - 2;
+      const diagnostic = new vscode.Diagnostic(
+        new vscode.Range(
+          new vscode.Position(i, newlineStartPos),
+          new vscode.Position(i, newlineEndPos)
+        ),
+        "Literal newline characters ('\\n') are not supported in-game. Replace with '\\\\n' or '<br>'.",
+        vscode.DiagnosticSeverity.Error
+      );
+      diagnostic.code = DiagnosticKey.improperStringNewline;
+      diagnostics.push(diagnostic);
+    });
+
   }
 }
 
