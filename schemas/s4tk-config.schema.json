@@ -363,35 +363,53 @@
         },
         "hashingRules": {
           "type": "array",
-          "description": "Custom rules to override the default tuning instance hashing behavior. All conditions must be met for a rule to apply to an instance tuning file (module tuning is not affected).",
+          "description": "Custom rules to override the default instance tuning hashing behavior. All conditions must be met for associated rules to apply to a tuning file. The first set of conditions that are met will apply, and no others will be checked.",
           "items": {
             "type": "object",
             "required": [
-              "bits"
+              "conditions"
             ],
             "additionalProperties": false,
+            "minProperties": 2,
             "properties": {
+              "conditions": {
+                "type": "object",
+                "description": "Conditions that must be met for the associated hashing rules to apply to a tuning file.",
+                "required": [],
+                "additionalProperties": false,
+                "minProperties": 1,
+                "properties": {
+                  "className": {
+                    "type": "string",
+                    "description": "Exact match that must be made in the 'c' attribute of the tuning file (case sensitive)."
+                  },
+                  "instanceType": {
+                    "type": "string",
+                    "description": "Exact match that must be made in the 'i' attribute of the tuning file (case sensitive)."
+                  },
+                  "modulePath": {
+                    "type": "string",
+                    "description": "Exact match that must be made in the 'm' attribute of the tuning file (case sensitive)."
+                  },
+                  "tuningNameRegex": {
+                    "type": "string",
+                    "description": "Regular expression that must match the 'n' attribute of the tuning file (case sensitive; regex modifier flags not supported).\n\nFor help with regexes (regular expressions), refer to https://regex101.com (using the ECMAScript flavor)."
+                  }
+                }
+              },
               "bits": {
                 "type": "integer",
-                "description": "Number of bits to hash with if a file matches the conditions of this rule.",
+                "description": "Number of bits to hash with.",
                 "minimum": 24,
                 "maximum": 64
               },
-              "className": {
+              "transformText": {
                 "type": "string",
-                "description": "Exact match that must be made in the 'c' attribute of the tuning file (case sensitive)."
+                "description": "JavaScript statement that modifies a variable called `filename` (of type string) into another string to use for hashing.\n\nIf the statement causes an exception or does not evaluate to a string, this setting will be ignored."
               },
-              "instanceType": {
+              "transformHash": {
                 "type": "string",
-                "description": "Exact match that must be made in the 'i' attribute of the tuning file (case sensitive)."
-              },
-              "modulePath": {
-                "type": "string",
-                "description": "Exact match that must be made in the 'm' attribute of the tuning file (case sensitive)."
-              },
-              "tuningNameRegex": {
-                "type": "string",
-                "description": "Regular expression that must match the 'n' attribute of the tuning file (case sensitive)."
+                "description": "JavaScript statement that modifies a variable called `hash` (of type bigint) into another bigint to use for the tuning instance ID.\n\nIf the statement causes an exception or does not evaluate to a bigint, this setting will be ignored."
               }
             }
           }

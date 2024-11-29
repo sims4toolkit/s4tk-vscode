@@ -15,12 +15,10 @@ export function getTuningHash(root: XmlNode, options?: {
   hashingRules?: HashingRuleInfo[];
 }): bigint {
   if (root.tag === "M") return _getModuleTuningHash(root.name);
-
-  const maxBits = (options?.hashingRules?.length
-    ? _getCustomRulesRequiredBits(root, options.hashingRules)
-    : undefined) ?? maxBitsForClass(root.attributes.c);
-
-  return _getDefaultTuningHash(root.name, maxBits);
+  const rule = _getCustomHashingRule(root, options?.hashingRules);
+  return rule !== undefined
+    ? _getInstanceTuningHashWithRule(root, rule)
+    : _getInstanceTuningHash(root.name, maxBitsForClass(root.attributes.c));
 }
 
 //#region Helpers
@@ -29,17 +27,39 @@ function _getModuleTuningHash(filename: string): bigint {
   return fnv64(filename.replace(/\./g, "-"));
 }
 
-function _getDefaultTuningHash(filename: string, maxBits: number): bigint {
+function _getInstanceTuningHash(filename: string, maxBits: number): bigint {
   return reduceBits(fnv64(filename), maxBits);
 }
 
-function _getCustomRulesRequiredBits(root: XmlNode, hashingRules: HashingRuleInfo[]): number | undefined {
+function _getCustomHashingRule(root: XmlNode, hashingRules: HashingRuleInfo[] | undefined): HashingRuleInfo | undefined {
+  if (!hashingRules?.length) return;
   for (const rule of hashingRules) {
-    if (rule.className && rule.className !== root.attributes.c) continue;
-    if (rule.instanceType && rule.instanceType !== root.attributes.i) continue;
-    if (rule.modulePath && rule.modulePath !== root.attributes.m) continue;
-    if (rule.tuningNameRegex && !(new RegExp(rule.tuningNameRegex).test(root.name))) continue;
-    return rule.bits;
+    const { className, instanceType, modulePath, tuningNameRegex } = rule.conditions;
+    if (className && className !== root.attributes.c) continue;
+    if (instanceType && instanceType !== root.attributes.i) continue;
+    if (modulePath && modulePath !== root.attributes.m) continue;
+    if (tuningNameRegex && !(new RegExp(tuningNameRegex).test(root.name))) continue;
+    return rule;
+  }
+}
+
+function _getInstanceTuningHashWithRule(root: XmlNode, rule: HashingRuleInfo): bigint {
+  const textToHash = rule.transformText
+    ? _safeTransform("filename", rule.transformText, root.name, "string")
+    : root.name;
+  const bitsToHashWith = rule.bits ?? maxBitsForClass(root.attributes.c);
+  const hash = _getInstanceTuningHash(textToHash, bitsToHashWith);
+  return rule.transformHash
+    ? _safeTransform("hash", rule.transformHash, hash, "bigint")
+    : hash;
+}
+
+function _safeTransform<T>(arg: string, logic: string, value: T, type: "bigint" | "string"): T {
+  try {
+    const newValue = Function(arg, `return (${logic});`)(value);
+    return typeof newValue === type ? newValue : value;
+  } catch (_) {
+    return value;
   }
 }
 

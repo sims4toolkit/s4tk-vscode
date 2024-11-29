@@ -30,11 +30,15 @@ interface BuildZipInfo {
 }
 
 export interface HashingRuleInfo {
-  bits: number;
-  className?: string;
-  instanceType?: string;
-  modulePath?: string;
-  tuningNameRegex?: string;
+  conditions: {
+    className?: string;
+    instanceType?: string;
+    modulePath?: string;
+    tuningNameRegex?: string;
+  };
+  bits?: number;
+  transformText?: string;
+  transformHash?: string;
 }
 
 export interface ShellScriptInfo {
