@@ -6,7 +6,7 @@ export default function initializeDiagnostics(context: vscode.ExtensionContext):
   context.subscriptions.push(collection);
 
   if (vscode.window.activeTextEditor) {
-    diagnoseXmlDocument(vscode.window.activeTextEditor.document, collection);
+    _dispatchDiagnosis(vscode.window.activeTextEditor.document, collection);
   }
 
   context.subscriptions.push(
