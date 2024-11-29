@@ -12,7 +12,7 @@ export default function registerRunBuildStatusBarItem(context: vscode.ExtensionC
   _statusBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 0);
   _statusBarItem.command = S4TKCommand.workspace.build;
   _statusBarItem.name = "Run S4TK Build";
-  _statusBarItem.text = "$(play) S4TK";
+  _statusBarItem.text = "$(play) Run S4TK Build";
   context.subscriptions.push(_statusBarItem);
   context.subscriptions.push(vscode.window.onDidChangeActiveTextEditor(_onActiveEditorChanged));
   _checkForInitialWorkspace();
@@ -46,7 +46,7 @@ function _updateStatusBarTextForWorkspace(workspace: S4TKWorkspace) {
   const workspaceName = workspace.config.projectMetaData.modName
     ? workspace.config.projectMetaData.modName
     : path.basename(workspace.rootUri.fsPath);
-  _statusBarItem.text = `$(play) S4TK (${workspaceName})`;
+  _statusBarItem.text = `$(play) Run S4TK Build (${workspaceName})`;
 }
 
 function _toggleStatusBarItemForWorkspace(workspace: S4TKWorkspace) {
