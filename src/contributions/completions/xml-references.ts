@@ -17,7 +17,7 @@ export default function registerXmlCompletionProvider(context: vscode.ExtensionC
 
   const stringRefCompletionProvider = vscode.languages.registerCompletionItemProvider("xml", {
     provideCompletionItems(document, position, token, context) {
-      // TODO: implement
+      // TODO: implement; requires stbl index to be built, can also be used for comment restoration, settings should change
       return [];
     }
   });
