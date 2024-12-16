@@ -29,7 +29,7 @@ export default class TuningDefinitionProvider implements vscode.DefinitionProvid
     if (!workspace) return;
 
     const id = document.getText(range);
-    const metadata = workspace.index.getMetadataFromId(id);
+    const metadata = workspace.tuningIndex.getMetadataFromId(id);
     if (metadata?.range == undefined || metadata?.uri == undefined) return;
 
     return {

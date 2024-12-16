@@ -46,7 +46,7 @@ export default function registerTuningCommands() {
     async (uri?: vscode.Uri) => {
       if (!uri) return;
       const workspace = S4TKWorkspaceManager.getWorkspaceContainingUri(uri);
-      const ref = workspace?.index.getTuningReference(uri);
+      const ref = workspace?.tuningIndex.getTuningReference(uri);
       if (ref) {
         // ref already sanitized in getTuningReference
         vscode.env.clipboard.writeText(ref);

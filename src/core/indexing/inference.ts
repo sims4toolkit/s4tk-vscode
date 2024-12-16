@@ -3,7 +3,7 @@ import * as vscode from "vscode";
 import { ResourceKey } from "@s4tk/models/types";
 import { BinaryResourceType, SimDataGroup, TuningResourceType } from "@s4tk/models/enums";
 import { findOpenDocument } from "#helpers/fs";
-import type ResourceIndex from "./resource-index";
+import type TuningIndex from "./tuning-index";
 import type { XmlMetadata, TuningMetadata, SimDataMetadata, InferredResourceKey, ResourceKeySources } from "./types";
 
 /*
@@ -30,7 +30,7 @@ const _HEADER_REGEX = /^\s*<([IMS])/m;
  * @param metadata Known meta data about the file to get the key for
  * @param index Existing index, if available (required for SimData)
  */
-export function inferKeyFromMetadata(metadata: XmlMetadata, index?: ResourceIndex): InferredResourceKey {
+export function inferKeyFromMetadata(metadata: XmlMetadata, index?: TuningIndex): InferredResourceKey {
   if (metadata.uri) {
     const filenameKey = parseKeyFromTgiFilename(metadata.uri.path);
     if (filenameKey) return {

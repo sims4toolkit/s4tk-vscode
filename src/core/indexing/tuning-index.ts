@@ -6,9 +6,9 @@ import { inferKeyFromMetadata, inferTuningMetadata } from "./inference";
 import { sanitizeXmlComment } from "#helpers/xml";
 
 /**
- * Keeps track of all resources within a workspace's source folder.
+ * Keeps track of all tuning resources within a workspace's source folder.
  */
-export default class ResourceIndex implements vscode.Disposable {
+export default class TuningIndex implements vscode.Disposable {
   private _watcherDisposables: vscode.Disposable[] = [];
   private _pathsToDefinitions = new Map<string, TuningMetadata>();
   private _instancesToPaths = new Map<string, string[]>();

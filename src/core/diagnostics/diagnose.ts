@@ -28,7 +28,7 @@ export async function diagnoseXmlDocument(
     const metadata = document.uri.fsPath.endsWith(".SimData.xml")
       ? inf.inferSimDataMetadata(document.uri)
       : inf.inferTuningMetadata(document.uri);
-    const key = inf.inferKeyFromMetadata(metadata, workspace.index);
+    const key = inf.inferKeyFromMetadata(metadata, workspace.tuningIndex);
 
     const diagnostics: vscode.Diagnostic[] = [];
     _diagnoseMetadata(metadata, key, document, diagnostics);
@@ -86,7 +86,7 @@ function _diagnoseTuningDocument(
   document: vscode.TextDocument,
   diagnostics: vscode.Diagnostic[]
 ) {
-  if (metadata.attrs?.s && workspace.index.isIdRepeated(metadata.attrs.s)) {
+  if (metadata.attrs?.s && workspace.tuningIndex.isIdRepeated(metadata.attrs.s)) {
     const diagnostic = new vscode.Diagnostic(
       _findRangeForAttr(metadata, document, "s", metadata.attrs.s),
       `The tuning ID ${metadata.attrs.s} is in use by more than one file.`,
@@ -237,7 +237,7 @@ function _diagnoseSimDataDocument(
 
   const tuningUri = document.uri.fsPath.replace(".SimData.xml", ".xml");
   const tuningExists = fs.existsSync(tuningUri);
-  const tuningMetadata = workspace.index.getMetadataFromUri(tuningUri);
+  const tuningMetadata = workspace.tuningIndex.getMetadataFromUri(tuningUri);
 
   if (!tuningExists) {
     const diagnostic = new vscode.Diagnostic(

@@ -6,7 +6,7 @@ export default function registerXmlCompletionProvider(context: vscode.ExtensionC
   const tuningRefCompletionProvider = vscode.languages.registerCompletionItemProvider("xml", {
     provideCompletionItems(document, position, token, context) {
       const workspace = S4TKWorkspaceManager.getWorkspaceContainingUri(document.uri);
-      const allMetadata = workspace?.index.getAllFileMetadata() ?? [];
+      const allMetadata = workspace?.tuningIndex.getAllFileMetadata() ?? [];
       return allMetadata
         .filter(metadata => metadata.attrs?.s && metadata.attrs.n)
         .map(metadata => new vscode.CompletionItem(

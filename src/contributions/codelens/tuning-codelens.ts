@@ -52,7 +52,7 @@ export default class TuningCodeLensProvider extends BaseCodeLensProvider {
       ? inference.inferSimDataMetadata(editor.document.uri)
       : inference.inferTuningMetadata(editor.document.uri);
 
-    const keyInfo = inference.inferKeyFromMetadata(metadata, workspace.index);
+    const keyInfo = inference.inferKeyFromMetadata(metadata, workspace.tuningIndex);
 
     if (metadata.comment?.type == undefined) {
       const typeDisplay = keyInfo.key.type != undefined
