@@ -67,7 +67,7 @@ export default abstract class IndexBase implements vscode.Disposable {
 
   private async _indexSourceFolder() {
     if (!this._sourceFolder) return;
-    for (const globPattern in this._globPatterns) {
+    for (const globPattern of this._globPatterns) {
       const resolvedPattern = resolveGlobPattern(this._sourceFolder, globPattern);
       glob.sync(resolvedPattern).forEach(filepath => {
         try {
@@ -83,7 +83,7 @@ export default abstract class IndexBase implements vscode.Disposable {
 
   private _startFsWatchers() {
     if (!this._sourceFolder) return;
-    for (const globPattern in this._globPatterns) {
+    for (const globPattern of this._globPatterns) {
       const fsPattern = new vscode.RelativePattern(this._sourceFolder, globPattern);
       const watcher = vscode.workspace.createFileSystemWatcher(fsPattern);
       watcher.onDidChange(e => this._onFileChanged(e), this, this._watcherDisposables);
