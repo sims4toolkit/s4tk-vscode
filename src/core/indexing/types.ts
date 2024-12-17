@@ -38,6 +38,7 @@ export interface StringMetadata {
   stbl: StringTableMetadata;
   key: number;
   value: string;
+  range?: vscode.Range;
 }
 
 export interface StringTableMetadata {

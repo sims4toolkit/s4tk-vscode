@@ -1,12 +1,12 @@
 import * as fs from "fs";
 import * as vscode from "vscode";
-import IndexBase from "./index-base";
-import { StringMetadata, StringTableMetadata } from "./types";
+import { StringTableResource } from "@s4tk/models";
 import { StringTableLocale } from "@s4tk/models/enums";
 import { S4TKSettings } from "#helpers/settings";
-import StringTableJson from "#stbls/stbl-json";
-import { StringTableResource } from "@s4tk/models";
 import { parseKeyFromTgi } from "#helpers/file-names";
+import StringTableJson from "#stbls/stbl-json";
+import IndexBase from "./index-base";
+import { StringMetadata, StringTableMetadata } from "./types";
 
 const _FILE_PATTERNS = ["**/*.stbl", "**/*.stbl.json", "**/220557DA*.binary"];
 
@@ -157,6 +157,7 @@ export default class StringIndex extends IndexBase {
   }
 
   private _addString(key: number, value: string, stbl: StringTableMetadata) {
+    // TODO: implement range for keys in stbl jsons
     if (!this._keysToStrings.has(key)) {
       this._keysToStrings.set(key, new Set());
     }
