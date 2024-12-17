@@ -1,6 +1,7 @@
+import * as vscode from "vscode";
+import { formatStringKey } from "@s4tk/hashing/formatting";
 import { sanitizeXmlComment } from "#helpers/xml";
 import S4TKWorkspaceManager from "#workspace/workspace-manager";
-import * as vscode from "vscode";
 
 export default function registerXmlCompletionProvider(context: vscode.ExtensionContext) {
   const tuningRefCompletionProvider = vscode.languages.registerCompletionItemProvider("xml", {
@@ -17,8 +18,12 @@ export default function registerXmlCompletionProvider(context: vscode.ExtensionC
 
   const stringRefCompletionProvider = vscode.languages.registerCompletionItemProvider("xml", {
     provideCompletionItems(document, position, token, context) {
-      // TODO: implement; requires stbl index to be built, can also be used for comment restoration, settings should change
-      return [];
+      const workspace = S4TKWorkspaceManager.getWorkspaceContainingUri(document.uri);
+      const allMetadata = workspace?.stringIndex.getAllStringMetadata() ?? [];
+      return allMetadata
+        .map(({ key, value }) => new vscode.CompletionItem(
+          `${formatStringKey(key)}<!--${sanitizeXmlComment(value)}-->`
+        ));
     }
   });
 

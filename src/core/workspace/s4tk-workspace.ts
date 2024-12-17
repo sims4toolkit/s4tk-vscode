@@ -7,6 +7,7 @@ import S4TKAssets from "#assets";
 import { findOpenDocument, replaceEntireDocument, resolveGlobPattern } from "#helpers/fs";
 import { S4TKSettings } from "#helpers/settings";
 import TuningIndex from "#indexing/tuning-index";
+import StringIndex from "#indexing/string-index";
 import { S4TKConfig } from "#workspace/s4tk-config";
 import StringTableJson from "#stbls/stbl-json";
 import { MessageButton, handleMessageButtonClick } from "./messaging";
@@ -21,17 +22,20 @@ export default class S4TKWorkspace implements vscode.Disposable {
   private static readonly _blankConfig: S4TKConfig = S4TKConfig.blankProxy();
   private _activeConfig?: S4TKConfig;
   private _tuningIndex: TuningIndex;
+  private _stringIndex: StringIndex;
   private _disposables: vscode.Disposable[] = [];
   private _isSavingConfig = false;
   private readonly _configChangedCallbacks: ConfigChangedCallback[] = [];
   get config(): S4TKConfig { return this._activeConfig ?? S4TKWorkspace._blankConfig; }
   get active(): boolean { return Boolean(this._activeConfig); }
   get tuningIndex(): TuningIndex { return this._tuningIndex; }
+  get stringIndex(): StringIndex { return this._stringIndex; }
 
   constructor(public readonly rootUri: vscode.Uri) {
     this.loadConfig({ showNoConfigError: false });
     this._tuningIndex = new TuningIndex(undefined);
-    this._disposables.push(this._tuningIndex);
+    this._stringIndex = new StringIndex(undefined);
+    this._disposables.push(this._tuningIndex, this._stringIndex);
     this._startFsWatcher();
   }
 
@@ -266,15 +270,21 @@ export default class S4TKWorkspace implements vscode.Disposable {
       if (newSrc) {
         const oldResolved = path.resolve(this.rootUri.fsPath, oldSrc);
         const newResolved = path.resolve(this.rootUri.fsPath, newSrc);
-        if (oldResolved !== newResolved)
-          this._tuningIndex.updateSourceFolder(vscode.Uri.file(newResolved));
+        if (oldResolved !== newResolved) {
+          const uri = vscode.Uri.file(newResolved);
+          this._tuningIndex.updateSourceFolder(uri);
+          this._stringIndex.updateSourceFolder(uri);
+        }
+
       }
 
       // intentionally not clearing index if newSrc is falsey, config might have
       // a syntax error but the source is the same as before
     } else if (newSrc) {
       const newResolved = path.resolve(this.rootUri.fsPath, newSrc);
-      this._tuningIndex.updateSourceFolder(vscode.Uri.file(newResolved));
+      const uri = vscode.Uri.file(newResolved);
+      this._tuningIndex.updateSourceFolder(uri);
+      this._stringIndex.updateSourceFolder(uri);
     }
   }
 

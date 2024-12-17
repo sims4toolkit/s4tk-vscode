@@ -4,6 +4,8 @@ import { inferKeyFromMetadata, inferTuningMetadata } from "./inference";
 import { TuningMetadata } from "./types";
 import IndexBase from "./index-base";
 
+const _FILE_PATTERNS = ["**/*.xml"];
+
 /**
  * Keeps track of tuning files within a workspace.
  */
@@ -14,7 +16,7 @@ export default class TuningIndex extends IndexBase {
   //#region Lifecycle
 
   constructor(sourceFolder?: vscode.Uri) {
-    super(["**/*.xml"], sourceFolder);
+    super(_FILE_PATTERNS, sourceFolder);
   }
 
   //#endregion

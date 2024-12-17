@@ -1,5 +1,6 @@
 import * as vscode from "vscode";
 import { ResourceKey } from "@s4tk/models/types";
+import { StringTableLocale } from "@s4tk/models/enums";
 
 //#region Public Types
 
@@ -31,6 +32,16 @@ export interface ResourceKeySources {
   type: string;
   group: string;
   instance: string;
+}
+
+export interface StringMetadata {
+  stbl: StringTableMetadata;
+  key: number;
+  value: string;
+}
+
+export interface StringTableMetadata {
+  uri: vscode.Uri;
 }
 
 //#endregion

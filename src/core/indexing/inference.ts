@@ -2,6 +2,7 @@ import * as fs from "fs";
 import * as vscode from "vscode";
 import { ResourceKey } from "@s4tk/models/types";
 import { BinaryResourceType, SimDataGroup, TuningResourceType } from "@s4tk/models/enums";
+import { parseKeyFromTgi } from "#helpers/file-names";
 import { findOpenDocument } from "#helpers/fs";
 import type TuningIndex from "./tuning-index";
 import type { XmlMetadata, TuningMetadata, SimDataMetadata, InferredResourceKey, ResourceKeySources } from "./types";
@@ -16,7 +17,6 @@ import type { XmlMetadata, TuningMetadata, SimDataMetadata, InferredResourceKey,
 */
 
 const _MAX_LINES = 5;
-const _TGI_REGEX = /(?<t>[a-f\d]{8}).(?<g>[a-f\d]{8}).(?<i>[a-f\d]{16})/i;
 const _S4TK_COMMENT_REGEX = /<!--\s*S4TK[^-]+-->/i;
 const _S4TK_TYPE_REGEX = /type:\s*([a-f0-9]{1,8})/i;
 const _S4TK_GROUP_REGEX = /group:\s*([a-f0-9]{1,8})/i;
@@ -32,7 +32,7 @@ const _HEADER_REGEX = /^\s*<([IMS])/m;
  */
 export function inferKeyFromMetadata(metadata: XmlMetadata, index?: TuningIndex): InferredResourceKey {
   if (metadata.uri) {
-    const filenameKey = parseKeyFromTgiFilename(metadata.uri.path);
+    const filenameKey = parseKeyFromTgi(metadata.uri.path);
     if (filenameKey) return {
       key: filenameKey,
       sources: {
@@ -163,21 +163,6 @@ export function inferSimDataMetadata(uriOrContent: vscode.Uri | string): SimData
   }
 
   return metadata;
-}
-
-/**
- * Parses a resource key from the given filename, if possible.
- * 
- * @param filename Name of file that may or may not contain a TGI
- */
-export function parseKeyFromTgiFilename(filename: string): ResourceKey | undefined {
-  const groups = _TGI_REGEX.exec(filename)?.groups;
-
-  if (groups) return {
-    type: parseInt(groups.t, 16),
-    group: parseInt(groups.g, 16),
-    instance: BigInt("0x" + groups.i),
-  };
 }
 
 /**
